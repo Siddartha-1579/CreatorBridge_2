@@ -1,0 +1,137 @@
+import React from "react"
+import { Link, useNavigate } from "react-router-dom"
+import { Building2, Wand2, ShieldCheck, ArrowRight, CheckCircle2 } from "lucide-react"
+import { CreatorBridgeLogo } from "@/components/common/CreatorBridgeLogo"
+
+export const AuthLandingPage: React.FC = () => {
+  const navigate = useNavigate()
+
+  return (
+    <div className="min-h-screen bg-[#FFFDFD] py-16 px-4 sm:px-6 lg:px-8 flex flex-col justify-center">
+      <div className="max-w-4xl mx-auto w-full">
+        {/* Header with Official CreatorBridge Logo */}
+        <div className="text-center mb-12">
+          <div className="mb-6 flex justify-center">
+            <CreatorBridgeLogo size="lg" />
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-[#111111] tracking-tight">
+            Select Your Marketplace Portal
+          </h1>
+          <p className="mt-3 text-sm sm:text-base text-[#4B4652] max-w-xl mx-auto leading-relaxed">
+            Choose how you will engage on CreatorBridge. Creators and brands have dedicated workspaces, verification flows, and tooling.
+          </p>
+        </div>
+
+        {/* Dual Choice Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
+          {/* Creator Portal Card */}
+          <div
+            onClick={() => navigate("/auth/creator")}
+            className="group relative rounded-3xl border-2 border-[#F4E7FF] bg-white p-8 shadow-sm hover:border-[#9A6ADF] hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col justify-between"
+          >
+            <div className="absolute top-5 right-5 h-8 w-8 rounded-full bg-[#F4E7FF] flex items-center justify-center text-[#9A6ADF] group-hover:bg-[#9A6ADF] group-hover:text-white transition-colors">
+              <ArrowRight className="h-4 w-4" />
+            </div>
+
+            <div>
+              <div className="h-14 w-14 rounded-2xl bg-[#F4E7FF] border border-[#D8B8FF] flex items-center justify-center text-[#9A6ADF] mb-6 group-hover:scale-105 transition-transform">
+                <Wand2 className="h-7 w-7" />
+              </div>
+              <span className="text-xs font-bold tracking-wider uppercase text-[#9A6ADF] bg-[#F4E7FF] px-2.5 py-1 rounded-full border border-[#D8B8FF]">
+                For Artists & Prompt Engineers
+              </span>
+              <h2 className="text-2xl font-bold text-[#111111] mt-3 mb-2">
+                Join as an AI Creator
+              </h2>
+              <p className="text-xs sm:text-sm text-[#4B4652] leading-relaxed mb-6">
+                Build your verified AI portfolio, document your toolchains (Midjourney, Runway, ComfyUI), and get hired for commercial generative campaigns.
+              </p>
+
+              <ul className="space-y-2.5 text-xs text-[#4B4652] mb-8">
+                <li className="flex items-center space-x-2">
+                  <CheckCircle2 className="h-4 w-4 text-[#9A6ADF] flex-shrink-0" />
+                  <span>Showcase AI generation workflows & model configs</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <CheckCircle2 className="h-4 w-4 text-[#9A6ADF] flex-shrink-0" />
+                  <span>Verified Creator Level tiers (Explorer to Master)</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <CheckCircle2 className="h-4 w-4 text-[#9A6ADF] flex-shrink-0" />
+                  <span>Direct campaign proposals and escrow milestones</span>
+                </li>
+              </ul>
+            </div>
+
+            <button className="w-full py-3 px-6 rounded-xl bg-[#9A6ADF] hover:bg-[#8552D4] text-white font-semibold text-xs shadow-sm transition-all flex items-center justify-center space-x-2 cursor-pointer">
+              <span>Continue to Creator Hub</span>
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* Brand & Agency Portal Card */}
+          <div
+            onClick={() => navigate("/auth/brand")}
+            className="group relative rounded-3xl border-2 border-[#F4E7FF] bg-white p-8 shadow-sm hover:border-[#9A6ADF] hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col justify-between"
+          >
+            <div className="absolute top-5 right-5 h-8 w-8 rounded-full bg-[#F4E7FF] flex items-center justify-center text-[#9A6ADF] group-hover:bg-[#9A6ADF] group-hover:text-white transition-colors">
+              <ArrowRight className="h-4 w-4" />
+            </div>
+
+            <div>
+              <div className="h-14 w-14 rounded-2xl bg-[#F4E7FF] border border-[#D8B8FF] flex items-center justify-center text-[#9A6ADF] mb-6 group-hover:scale-105 transition-transform">
+                <Building2 className="h-7 w-7" />
+              </div>
+              <span className="text-xs font-bold tracking-wider uppercase text-[#111111] bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">
+                For Brands & Creative Agencies
+              </span>
+              <h2 className="text-2xl font-bold text-[#111111] mt-3 mb-2">
+                Join as Brand / Agency
+              </h2>
+              <p className="text-xs sm:text-sm text-[#4B4652] leading-relaxed mb-6">
+                Publish multi-modal creative briefs, discover creators by specific model capabilities, and manage studio deliverables under enterprise governance.
+              </p>
+
+              <ul className="space-y-2.5 text-xs text-[#4B4652] mb-8">
+                <li className="flex items-center space-x-2">
+                  <CheckCircle2 className="h-4 w-4 text-[#9A6ADF] flex-shrink-0" />
+                  <span>AI-assisted creative brief formulation</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <CheckCircle2 className="h-4 w-4 text-[#9A6ADF] flex-shrink-0" />
+                  <span>Explainable creator match scores & tool filtering</span>
+                </li>
+                <li className="flex items-center space-x-2">
+                  <CheckCircle2 className="h-4 w-4 text-[#9A6ADF] flex-shrink-0" />
+                  <span>Project workspaces with asset versioning</span>
+                </li>
+              </ul>
+            </div>
+
+            <button className="w-full py-3 px-6 rounded-xl bg-[#111111] hover:bg-[#9A6ADF] text-white font-semibold text-xs shadow-sm transition-all flex items-center justify-center space-x-2 cursor-pointer">
+              <span>Continue to Brand Hub</span>
+              <ArrowRight className="h-4 w-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Security & Footer Info */}
+        <div className="flex flex-col sm:flex-row items-center justify-between text-xs text-[#4B4652] pt-6 border-t border-[#F4E7FF]">
+          <div className="flex items-center space-x-2 mb-4 sm:mb-0">
+            <ShieldCheck className="h-4 w-4 text-[#9A6ADF]" />
+            <span>Protected by Cloudflare Turnstile & Supabase PostgreSQL RLS</span>
+          </div>
+          <div className="flex items-center space-x-4">
+            <Link to="/auth/forgot-password" className="hover:text-[#9A6ADF] transition-colors">
+              Forgot Password?
+            </Link>
+            <span>•</span>
+            <Link to="/" className="hover:text-[#9A6ADF] transition-colors">
+              Return to Homepage
+            </Link>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

@@ -1,0 +1,22 @@
+{
+  "name": "hacxlerate-2026-marketplace",
+  "version": "1.0.0",
+  "description": "HacXLerate 2026 - AI Content Creator Marketplace Architecture Foundation",
+  "private": true,
+  "scripts": {
+    "dev": "npm --prefix frontend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:backend": "cd backend && uvicorn app.main:app --reload --port 8000",
+    "build": "npm --prefix frontend run build",
+    "build:frontend": "npm --prefix frontend run build",
+    "test:backend": "cd backend && python -m pytest app/tests",
+    "test": "npm run test:backend"
+  },
+  "keywords": [
+    "ai-marketplace",
+    "fastapi",
+    "react",
+    "supabase",
+    "hacxlerate"
+  ]
+}

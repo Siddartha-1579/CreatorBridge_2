@@ -1,0 +1,113 @@
+@import "tailwindcss";
+
+html {
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+:root {
+  color-scheme: light;
+  --cb-white: #FFFFFF;
+  --cb-off-white: #FFFDFD;
+  --cb-lavender-soft: #F4E7FF;
+  --cb-lavender: #D8B8FF;
+  --cb-purple: #9A6ADF;
+  --cb-purple-hover: #8655cb;
+  --cb-peach: #FFD7A8;
+  --cb-peach-soft: #FFF4E5;
+  --cb-text-primary: #111111;
+  --cb-text-secondary: #4B4652;
+}
+
+@theme {
+  --color-cb-white: #FFFFFF;
+  --color-cb-off-white: #FFFDFD;
+  --color-cb-lavender-soft: #F4E7FF;
+  --color-cb-lavender: #D8B8FF;
+  --color-cb-purple: #9A6ADF;
+  --color-cb-purple-hover: #8655cb;
+  --color-cb-peach: #FFD7A8;
+  --color-cb-peach-soft: #FFF4E5;
+  --color-cb-text-primary: #111111;
+  --color-cb-text-secondary: #4B4652;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  background-color: #FFFDFD;
+  color: #111111;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* CreatorBridge Light Brand Gradients & Subtle Accents */
+.bg-cb-off-white {
+  background-color: #FFFDFD;
+}
+
+.bg-cb-lavender-soft {
+  background-color: #F4E7FF;
+}
+
+.bg-cb-lavender {
+  background-color: #D8B8FF;
+}
+
+.bg-cb-purple {
+  background-color: #9A6ADF;
+}
+
+.bg-cb-peach {
+  background-color: #FFD7A8;
+}
+
+.text-cb-primary {
+  color: #111111;
+}
+
+.text-cb-secondary {
+  color: #4B4652;
+}
+
+.text-cb-purple {
+  color: #9A6ADF;
+}
+
+.border-cb-lavender {
+  border-color: #D8B8FF;
+}
+
+.border-cb-lavender-soft {
+  border-color: #F4E7FF;
+}
+
+.border-cb-peach {
+  border-color: #FFD7A8;
+}
+
+/* Subtle Lavender + Peach Ambient Glows (No dark or neon cyan) */
+.cb-glow-subtle {
+  box-shadow: 0 10px 40px -15px rgba(154, 106, 223, 0.12);
+}
+
+.cb-glow-card {
+  box-shadow: 0 4px 24px -2px rgba(154, 106, 223, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.03);
+}
+
+.cb-glow-button {
+  box-shadow: 0 4px 14px 0 rgba(154, 106, 223, 0.35);
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
