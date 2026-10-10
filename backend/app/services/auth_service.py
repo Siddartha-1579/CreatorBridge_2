@@ -35,7 +35,9 @@ class AuthService(BaseService):
             if role == UserRole.CREATOR:
                 return "/creator/onboarding"
             return "/brand/onboarding"
-        return "/dashboard"
+        if role == UserRole.CREATOR:
+            return "/creator/dashboard"
+        return "/brand/dashboard"
 
     def _generate_token(self, user: UserResponse) -> str:
         """Generates a valid JWT signed with the Supabase JWT secret, with fallback to dev token."""

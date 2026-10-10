@@ -181,7 +181,9 @@ class CampaignBriefResponse(BaseDomainModel, CampaignBriefBase):
 class AIBriefGenerationRequest(BaseModel):
     """Request payload to synthesize a campaign idea into a structured brief."""
     campaign_name: Optional[str] = None
-    campaign_idea: str
+    campaign_idea: Optional[str] = None
+    raw_prompt: Optional[str] = None
+    prompt: Optional[str] = None
     template_category: Optional[str] = None
     objectives: List[str] = Field(default_factory=list)
     primary_objective: Optional[str] = None
@@ -198,6 +200,10 @@ class AIBriefGenerationRequest(BaseModel):
     deliverables: List[DeliverableItem] = Field(default_factory=list)
     styles: List[str] = Field(default_factory=list)
     commercial_intent: Optional[str] = None
+
+    @property
+    def effective_idea(self) -> str:
+        return self.campaign_idea or self.raw_prompt or self.prompt or self.campaign_name or "Generative brand campaign"
 
 
 class AIBriefGenerationResponse(BaseModel):

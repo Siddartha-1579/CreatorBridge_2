@@ -257,7 +257,7 @@ Transform the following campaign concept into a complete, professional AI Creati
 Campaign Name: {request.campaign_name or 'Untitled'}
 Brand / Product: {request.brand_or_product_name or request.product_or_service or 'Brand'}
 Description: {request.product_description or 'Not specified'}
-Idea: {request.campaign_idea}
+Idea: {getattr(request, 'effective_idea', None) or request.campaign_idea or 'Generative brand campaign'}
 Primary Objective: {request.primary_objective or (request.objectives[0] if request.objectives else 'Growth')}
 Target Audience: {request.target_audience or 'Digital consumers'}
 Target Market: {request.target_market or 'Global'}
@@ -374,7 +374,7 @@ Return a valid JSON object matching this schema:
             algo = self._build_16_sections(
                 title=parsed.get("refined_title", "Campaign Brief"),
                 product=request.brand_or_product_name or "Brand Product",
-                idea=request.campaign_idea,
+                idea=getattr(request, "effective_idea", None) or request.campaign_idea or "Campaign Concept",
                 audience=request.target_audience or "Modern Digital Consumers",
                 obj=parsed.get("suggested_objectives", ["Awareness"]),
                 deliverables=deliverables,
@@ -406,7 +406,8 @@ Return a valid JSON object matching this schema:
         """High-fidelity algorithmic synthesis when external LLMs are unavailable."""
         product = request.brand_or_product_name or request.product_or_service or "NextGen Experience"
         category = request.campaign_category or request.template_category or "Creative"
-        idea = request.campaign_idea.strip()
+        idea_val = getattr(request, "effective_idea", None) or request.campaign_idea or "Campaign Concept"
+        idea = idea_val.strip()
         audience = request.target_audience or "Modern Digital Consumers"
 
         # 1. Title synthesis

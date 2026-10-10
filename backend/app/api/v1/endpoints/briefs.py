@@ -137,3 +137,15 @@ async def validate_brief_payload(
     """Evaluates brief for blocking publication requirements and improvement suggestions."""
     result = brief_service.validate_brief(brief)
     return ApiResponse(success=True, data=result)
+
+
+@router.post("/{brief_id}/validate", response_model=ApiResponse[BriefValidationResult], summary="Validate existing campaign brief")
+async def validate_brief_by_id(
+    brief_id: UUID = Path(...),
+    current_user: AuthenticatedUser = Depends(require_role([UserRole.BRAND, UserRole.AGENCY])),
+) -> ApiResponse[BriefValidationResult]:
+    """Evaluates an existing brief by ID for blocking publication requirements."""
+    brief = await brief_service.get_brief_by_id(brief_id=brief_id, current_user_id=current_user.id)
+    create_payload = CampaignBriefCreate(**brief.model_dump())
+    result = brief_service.validate_brief(create_payload)
+    return ApiResponse(success=True, data=result)

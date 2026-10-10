@@ -1,6 +1,6 @@
 import React from "react"
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
-import { AuthProvider } from "@/hooks/useAuth"
+import { AuthProvider, useAuth } from "@/hooks/useAuth"
 
 // Layouts
 import { RootLayout } from "@/layouts/RootLayout"
@@ -43,6 +43,14 @@ import { BrandProjectsPage } from "@/pages/brand/BrandProjectsPage"
 // Settings & Infrastructure
 import { IntegrationsSettingsPage } from "@/pages/settings/IntegrationsSettingsPage"
 
+const DashboardRedirect: React.FC = () => {
+  const { user, isAuthenticated } = useAuth()
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/auth" replace />
+  }
+  return <Navigate to={user.role === "CREATOR" ? "/creator/dashboard" : "/brand/dashboard"} replace />
+}
+
 export const App: React.FC = () => {
   return (
     <AuthProvider>
@@ -63,7 +71,8 @@ export const App: React.FC = () => {
           <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
 
-          {/* Legacy Redirects */}
+          {/* Legacy & Shared Redirects */}
+          <Route path="/dashboard" element={<DashboardRedirect />} />
           <Route path="/login" element={<Navigate to="/auth" replace />} />
           <Route path="/register" element={<Navigate to="/auth" replace />} />
 
@@ -80,6 +89,7 @@ export const App: React.FC = () => {
               <Route path="/creator/portfolio" element={<CreatorPortfolioPage />} />
               <Route path="/creator/studio" element={<CreatorStudioPage />} />
               <Route path="/creator/projects" element={<CreatorProjectsPage />} />
+              <Route path="/creator/settings" element={<Navigate to="/creator/settings/integrations" replace />} />
               <Route path="/creator/settings/integrations" element={<IntegrationsSettingsPage />} />
             </Route>
           </Route>
@@ -95,6 +105,7 @@ export const App: React.FC = () => {
               <Route path="/brand/discover" element={<BrandDiscoverPage />} />
               <Route path="/brand/campaigns" element={<BrandCampaignsPage />} />
               <Route path="/brand/projects" element={<BrandProjectsPage />} />
+              <Route path="/brand/settings" element={<Navigate to="/brand/settings/integrations" replace />} />
               <Route path="/brand/settings/integrations" element={<IntegrationsSettingsPage />} />
             </Route>
           </Route>

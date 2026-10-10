@@ -1,16 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from "react"
 import { useNavigate, useParams, Link } from "react-router-dom"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import { useAuth } from "@/hooks/useAuth"
 import { briefsService } from "@/services/briefs.service"
 import { intelligenceService } from "@/services/intelligence.service"
 import type {
-  CampaignBrief,
   CampaignBriefCreate,
   DeliverableItem,
-  CreativeDirection,
-  CreatorCapabilityRequirements,
-  CommercialTerms,
   BriefAIMetadata,
   BriefValidationResult,
   CreativeDirectionOption,
@@ -32,9 +28,6 @@ import {
   ShieldCheck,
   Plus,
   Trash2,
-  Layers,
-  DollarSign,
-  Calendar,
   Eye,
   Send,
   Loader2,
@@ -44,10 +37,7 @@ import {
   RefreshCw,
   Edit3,
   X,
-  FileText,
-  Sliders,
   Sparkle,
-  Lock,
 } from "lucide-react"
 
 // Campaign Objectives options
@@ -135,7 +125,7 @@ const BRIEF_SECTION_METADATA: { id: string; title: string; hint: string }[] = [
 export const BrandBriefBuilderPage: React.FC = () => {
   const { briefId } = useParams<{ briefId?: string }>()
   const navigate = useNavigate()
-  const { user } = useAuth()
+  const { user: _user } = useAuth()
 
   // Wizard state: 1 to 5
   const [currentStep, setCurrentStep] = useState<number>(1)
