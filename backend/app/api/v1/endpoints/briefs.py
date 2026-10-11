@@ -18,6 +18,11 @@ from app.schemas.brief import (
     RegenerateSectionRequest,
     RegenerateSectionResponse,
     BriefValidationResult,
+    GenerateCoverImageRequest,
+    GenerateCoverImageResponse,
+    CampaignApplicationCreate,
+    CampaignApplicationUpdate,
+    CampaignApplicationResponse,
 )
 from app.services import brief_service, ai_brief_service
 
@@ -28,10 +33,26 @@ router = APIRouter()
 async def list_briefs(
     skip: int = Query(0, ge=0),
     limit: int = Query(20, ge=1, le=100),
+    content_type: Optional[str] = Query(None),
+    category: Optional[str] = Query(None),
+    min_budget_cents: Optional[int] = Query(None),
+    max_budget_cents: Optional[int] = Query(None),
+    tool: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
 ) -> ApiResponse[List[CampaignBriefResponse]]:
-    """Lists publicly accessible and published campaign briefs for creators."""
-    briefs = await brief_service.list_briefs(skip=skip, limit=limit)
+    """Lists publicly accessible and published campaign briefs for creators with optional filtering."""
+    briefs = await brief_service.list_briefs(
+        skip=skip,
+        limit=limit,
+        content_type=content_type,
+        category=category,
+        min_budget_cents=min_budget_cents,
+        max_budget_cents=max_budget_cents,
+        tool=tool,
+        search=search,
+    )
     return ApiResponse(success=True, data=briefs)
+
 
 
 @router.get("/mine", response_model=ApiResponse[List[CampaignBriefResponse]], summary="List brand's campaign briefs")
@@ -150,3 +171,57 @@ async def validate_brief_by_id(
     create_payload = CampaignBriefCreate(**brief.model_dump())
     result = brief_service.validate_brief(create_payload)
     return ApiResponse(success=True, data=result)
+
+
+@router.post("/{brief_id}/cover-image", response_model=ApiResponse[GenerateCoverImageResponse], summary="Synthesize campaign cover image")
+async def generate_cover_image(
+    brief_id: UUID = Path(...),
+    request: GenerateCoverImageRequest = Body(default_factory=GenerateCoverImageRequest),
+    current_user: AuthenticatedUser = Depends(require_role([UserRole.BRAND, UserRole.AGENCY])),
+) -> ApiResponse[GenerateCoverImageResponse]:
+    """Generates a visual campaign cover image using AI provider and attaches it to the brief."""
+    result = await brief_service.generate_cover_image(brief_id=brief_id, brand_id=current_user.id, request=request)
+    return ApiResponse(success=True, data=result, message="Campaign cover image synthesized successfully")
+
+
+@router.post("/{brief_id}/apply", response_model=ApiResponse[CampaignApplicationResponse], summary="Apply to campaign brief")
+async def apply_to_brief(
+    brief_id: UUID = Path(...),
+    data: CampaignApplicationCreate = Body(...),
+    current_user: AuthenticatedUser = Depends(require_role([UserRole.CREATOR])),
+) -> ApiResponse[CampaignApplicationResponse]:
+    """Allows an authenticated creator to submit an application/proposal to a published campaign."""
+    app_result = await brief_service.apply_to_brief(brief_id=brief_id, creator_id=current_user.id, data=data)
+    return ApiResponse(success=True, data=app_result, message="Application submitted successfully")
+
+
+@router.get("/{brief_id}/applications", response_model=ApiResponse[List[CampaignApplicationResponse]], summary="List applications for brief")
+async def list_applications_for_brief(
+    brief_id: UUID = Path(...),
+    current_user: AuthenticatedUser = Depends(require_role([UserRole.BRAND, UserRole.AGENCY])),
+) -> ApiResponse[List[CampaignApplicationResponse]]:
+    """Retrieves all creator proposals/applications submitted for a brand's campaign brief."""
+    apps = await brief_service.list_applications_for_brief(brief_id=brief_id, brand_id=current_user.id)
+    return ApiResponse(success=True, data=apps)
+
+
+@router.get("/applications/my", response_model=ApiResponse[List[CampaignApplicationResponse]], summary="List creator's applications")
+@router.get("/applications/mine", response_model=ApiResponse[List[CampaignApplicationResponse]], summary="List creator's applications (alias)")
+async def list_my_applications(
+    current_user: AuthenticatedUser = Depends(require_role([UserRole.CREATOR])),
+) -> ApiResponse[List[CampaignApplicationResponse]]:
+    """Retrieves all applications submitted by the authenticated creator."""
+    apps = await brief_service.list_my_applications(creator_id=current_user.id)
+    return ApiResponse(success=True, data=apps)
+
+
+@router.patch("/applications/{application_id}/status", response_model=ApiResponse[CampaignApplicationResponse], summary="Update application status")
+async def update_application_status(
+    application_id: UUID = Path(...),
+    data: CampaignApplicationUpdate = Body(...),
+    current_user: AuthenticatedUser = Depends(require_role([UserRole.BRAND, UserRole.AGENCY])),
+) -> ApiResponse[CampaignApplicationResponse]:
+    """Updates application status (e.g. ACCEPTED, SHORTLISTED, REJECTED) and initializes collaboration workspace on accept."""
+    updated = await brief_service.update_application_status(application_id=application_id, brand_id=current_user.id, data=data)
+    return ApiResponse(success=True, data=updated, message=f"Application status updated to {data.status.value}")
+

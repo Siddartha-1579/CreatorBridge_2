@@ -249,6 +249,35 @@ def init_db():
             """
         )
 
+        # 9. campaign_applications (persistent creator proposals & bids)
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS campaign_applications (
+                id TEXT PRIMARY KEY,
+                brief_id TEXT NOT NULL,
+                creator_id TEXT NOT NULL,
+                brand_id TEXT NOT NULL,
+                proposed_rate_cents INTEGER,
+                pitch TEXT NOT NULL,
+                relevant_skills TEXT DEFAULT '[]',
+                relevant_tools TEXT DEFAULT '[]',
+                portfolio_item_ids TEXT DEFAULT '[]',
+                estimated_days INTEGER,
+                status TEXT NOT NULL DEFAULT 'PENDING',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                UNIQUE(brief_id, creator_id)
+            )
+            """
+        )
+
+        # Migration: ensure cover_image_url column exists in campaign_briefs
+        cursor.execute("PRAGMA table_info(campaign_briefs)")
+        columns = [row[1] for row in cursor.fetchall()]
+        if "cover_image_url" not in columns:
+            cursor.execute("ALTER TABLE campaign_briefs ADD COLUMN cover_image_url TEXT")
+            logger.info("Migrated campaign_briefs table: added cover_image_url column")
+
         conn.commit()
         logger.info(f"Persistent database schema initialized at {DB_PATH}")
 

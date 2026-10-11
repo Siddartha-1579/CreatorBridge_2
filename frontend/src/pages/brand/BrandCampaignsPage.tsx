@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from "react"
 import { Link, useNavigate } from "react-router-dom"
 import { briefsService } from "@/services/briefs.service"
-import type { CampaignBrief } from "@/types"
+import type { CampaignBrief, CampaignApplication } from "@/types"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -24,6 +24,10 @@ import {
   Briefcase,
   ChevronRight,
   TrendingUp,
+  Inbox,
+  X,
+  Check,
+  Loader2,
 } from "lucide-react"
 
 export const BrandCampaignsPage: React.FC = () => {
@@ -33,6 +37,41 @@ export const BrandCampaignsPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [activeTab, setActiveTab] = useState<"ALL" | "PUBLISHED" | "DRAFT">("ALL")
+  const [inspectingBrief, setInspectingBrief] = useState<CampaignBrief | null>(null)
+  const [briefApplications, setBriefApplications] = useState<CampaignApplication[]>([])
+  const [loadingApps, setLoadingApps] = useState(false)
+  const [updatingAppId, setUpdatingAppId] = useState<string | null>(null)
+
+  const handleOpenApplications = async (brief: CampaignBrief) => {
+    setInspectingBrief(brief)
+    setLoadingApps(true)
+    try {
+      const apps = await briefsService.listApplicationsForBrief(brief.id)
+      setBriefApplications(apps || [])
+    } catch (err: any) {
+      console.error("Failed to load applications for brief:", err)
+      setBriefApplications([])
+    } finally {
+      setLoadingApps(false)
+    }
+  }
+
+  const handleUpdateApplicationStatus = async (appId: string, status: "ACCEPTED" | "SHORTLISTED" | "REJECTED") => {
+    setUpdatingAppId(appId)
+    try {
+      const updated = await briefsService.updateApplicationStatus(appId, { status })
+      setBriefApplications((prev) => prev.map((a) => (a.id === appId ? updated : a)))
+      if (status === "ACCEPTED") {
+        alert("Proposal accepted! An active project collaboration workspace has been initialized in 'Active Projects'.")
+      }
+    } catch (err: any) {
+      console.error("Failed to update proposal status:", err)
+      alert(err.message || "Failed to update proposal status.")
+    } finally {
+      setUpdatingAppId(null)
+    }
+  }
+
 
   const loadCampaigns = async () => {
     setLoading(true)
@@ -358,6 +397,18 @@ export const BrandCampaignsPage: React.FC = () => {
                         Projects
                       </Button>
                     </Link>
+
+                    {isPublished && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleOpenApplications(camp)}
+                        className="w-full sm:w-auto text-xs gap-1.5 border-[#9A6ADF]/40 text-[#7B42BC] hover:bg-[#F4E7FF]/40 font-bold"
+                      >
+                        <Inbox className="h-3.5 w-3.5 text-[#9A6ADF]" />
+                        Proposals
+                      </Button>
+                    )}
                   </div>
                 </div>
               </Card>
@@ -365,6 +416,134 @@ export const BrandCampaignsPage: React.FC = () => {
           })}
         </div>
       )}
+
+      {/* Brand Proposals Review Modal */}
+      {inspectingBrief && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
+          <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl sm:p-8">
+            <button
+              type="button"
+              onClick={() => setInspectingBrief(null)}
+              className="absolute top-5 right-5 rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="mb-6">
+              <span className="rounded-full bg-[#F4E7FF] px-2.5 py-0.5 text-xs font-bold text-[#9A6ADF]">
+                Creator Proposals
+              </span>
+              <h2 className="mt-2 text-xl font-bold text-slate-900">
+                Applications for: {inspectingBrief.title}
+              </h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Review tailored proposals, rates, and specialized capabilities submitted by creators.
+              </p>
+            </div>
+
+            {loadingApps ? (
+              <div className="py-12 flex flex-col items-center justify-center space-y-2">
+                <Loader2 className="h-6 w-6 animate-spin text-[#9A6ADF]" />
+                <p className="text-xs text-slate-500">Loading submitted applications...</p>
+              </div>
+            ) : briefApplications.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-slate-200 p-8 text-center">
+                <Inbox className="mx-auto h-8 w-8 text-slate-300" />
+                <h4 className="mt-2 text-xs font-bold text-slate-700">No proposals received yet</h4>
+                <p className="mt-1 text-xs text-slate-500">
+                  Creators discovering this campaign in the Creator Hub will appear here once they apply.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {briefApplications.map((app) => (
+                  <div
+                    key={app.id}
+                    className="rounded-2xl border border-[#F4E7FF] bg-slate-50/50 p-4 transition hover:bg-white hover:shadow-xs space-y-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-xs font-bold text-slate-900">
+                          {app.creator_name || "Generative AI Creator"}
+                        </span>
+                        {app.creator_specialization && (
+                          <span className="ml-2 text-[11px] text-purple-700 font-medium">
+                            • {app.creator_specialization}
+                          </span>
+                        )}
+                      </div>
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                          app.status === "ACCEPTED"
+                            ? "bg-emerald-100 text-emerald-800"
+                            : app.status === "SHORTLISTED"
+                            ? "bg-purple-100 text-purple-800"
+                            : app.status === "REJECTED"
+                            ? "bg-rose-100 text-rose-800"
+                            : "bg-amber-100 text-amber-800"
+                        }`}
+                      >
+                        {app.status}
+                      </span>
+                    </div>
+
+                    <p className="text-xs text-slate-600 bg-white p-3 rounded-xl border border-slate-100 whitespace-pre-wrap">
+                      "{app.pitch}"
+                    </p>
+
+                    <div className="flex flex-wrap items-center justify-between text-xs pt-1">
+                      <div className="space-x-3 text-slate-500">
+                        <span>
+                          Proposed Fee:{" "}
+                          <strong className="text-slate-900">
+                            {app.proposed_rate_cents ? `$${(app.proposed_rate_cents / 100).toLocaleString()}` : "Standard"}
+                          </strong>
+                        </span>
+                        {app.estimated_days && (
+                          <span>
+                            Delivery: <strong className="text-slate-900">{app.estimated_days} days</strong>
+                          </span>
+                        )}
+                      </div>
+
+                      {app.status === "PENDING" && (
+                        <div className="flex items-center space-x-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={updatingAppId === app.id}
+                            onClick={() => handleUpdateApplicationStatus(app.id, "SHORTLISTED")}
+                            className="text-[11px] h-7 px-2.5 rounded-lg border-purple-200 text-purple-700 hover:bg-purple-50"
+                          >
+                            Shortlist
+                          </Button>
+                          <Button
+                            size="sm"
+                            disabled={updatingAppId === app.id}
+                            onClick={() => handleUpdateApplicationStatus(app.id, "ACCEPTED")}
+                            className="text-[11px] h-7 px-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold"
+                          >
+                            Accept & Start Project
+                          </Button>
+                        </div>
+                      )}
+
+                      {app.status === "ACCEPTED" && (
+                        <Link to="/brand/projects">
+                          <Button size="sm" className="text-[11px] h-7 px-2.5 rounded-lg bg-[#9A6ADF] text-white">
+                            Open Collaboration Workspace →
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
+

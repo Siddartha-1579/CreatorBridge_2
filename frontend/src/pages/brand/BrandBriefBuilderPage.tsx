@@ -210,6 +210,8 @@ export const BrandBriefBuilderPage: React.FC = () => {
   const [thingsToAvoid, setThingsToAvoid] = useState<string>("Plastic skin shaders, warped logos, jittery motion artifacts")
   const [competitorRestrictions, setCompetitorRestrictions] = useState<string>("Do not mention or display direct category competitors")
   const [suggestedDirections, setSuggestedDirections] = useState<CreativeDirectionOption[]>([])
+  const [coverImageUrl, setCoverImageUrl] = useState<string>("")
+  const [isGeneratingCoverImage, setIsGeneratingCoverImage] = useState<boolean>(false)
 
   // Step 4: Creator & Commercial Requirements
   const [preferredNiches, setPreferredNiches] = useState<string[]>(["AI Filmmakers", "Motion Designers", "3D Artists"])
@@ -319,6 +321,9 @@ export const BrandBriefBuilderPage: React.FC = () => {
         if (b.ai_metadata) {
           setAiMetadata(b.ai_metadata)
         }
+        if (b.cover_image_url) {
+          setCoverImageUrl(b.cover_image_url)
+        }
       } catch (err) {
         console.error("Failed to load draft brief:", err)
       }
@@ -397,10 +402,12 @@ export const BrandBriefBuilderPage: React.FC = () => {
       deadline: contentDeliveryDeadline ? new Date(contentDeliveryDeadline).toISOString() : undefined,
       required_tools: ["Runway Gen-3", "Midjourney v6.1"],
       ai_metadata: aiMetadata,
+      cover_image_url: coverImageUrl || undefined,
       is_public: statusOverride === "PUBLISHED",
       status: statusOverride || "DRAFT",
     }
   }, [
+    coverImageUrl,
     title,
     brandOrProductName,
     productDescription,
@@ -563,6 +570,34 @@ export const BrandBriefBuilderPage: React.FC = () => {
     setBrandGuidelines((prev) => (prev ? `${prev}\n\nVisual Theme: ${opt.visual_theme}` : `Visual Theme: ${opt.visual_theme}`))
     setStatusMessage(`Applied direction: ${opt.name}`)
     setTimeout(() => setStatusMessage(null), 3000)
+  }
+
+  // AI Generate Cover Image Action (Step 3)
+  const handleGenerateCoverImage = async () => {
+    setIsGeneratingCoverImage(true)
+    setErrorMessage(null)
+    try {
+      let currentId = savedBriefId
+      if (!currentId) {
+        const initialPayload = buildPayload("DRAFT")
+        const created = await briefsService.createBrief(initialPayload)
+        currentId = created.id
+        setSavedBriefId(created.id)
+      }
+      const res = await briefsService.generateCoverImage(currentId, {
+        custom_prompt: campaignIdea ? `${title}: ${campaignIdea}` : undefined,
+        style_preset: creativeStyle || "Editorial commercial advertising",
+        aspect_ratio: "16:9",
+      })
+      setCoverImageUrl(res.image_url)
+      setStatusMessage(`✨ Campaign cover image synthesized (${res.provider})!`)
+      setTimeout(() => setStatusMessage(null), 4000)
+    } catch (err: any) {
+      console.error("Failed to generate cover image:", err)
+      setErrorMessage(err.message || "AI cover image generation was unable to complete.")
+    } finally {
+      setIsGeneratingCoverImage(false)
+    }
   }
 
   // Generate Full 16-Section Brief (Step 5)
@@ -1532,6 +1567,72 @@ export const BrandBriefBuilderPage: React.FC = () => {
                   </div>
                 </div>
               )}
+
+              {/* Campaign Cover Artwork & Visual Hero Section */}
+              <div className="mb-6 rounded-2xl border border-purple-200/80 bg-gradient-to-br from-purple-50/40 via-slate-50 to-white p-5 shadow-sm">
+                <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+                  <div>
+                    <h3 className="flex items-center space-x-1.5 text-xs font-bold uppercase tracking-wider text-purple-900">
+                      <Sparkles className="h-3.5 w-3.5 text-purple-600" />
+                      <span>Campaign Cover Artwork & Visual Hero</span>
+                    </h3>
+                    <p className="mt-0.5 text-xs text-slate-500">
+                      Generate an editorial AI cover image with your configured provider, or supply a visual reference URL.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleGenerateCoverImage}
+                    disabled={isGeneratingCoverImage}
+                    className="inline-flex items-center space-x-1.5 rounded-xl bg-purple-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-purple-700 disabled:opacity-50"
+                  >
+                    {isGeneratingCoverImage ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span>Synthesizing Cover...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-3.5 w-3.5" />
+                        <span>✨ Synthesize AI Cover Image</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {coverImageUrl ? (
+                  <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center">
+                    <div className="relative h-36 w-64 flex-shrink-0 overflow-hidden rounded-xl border border-purple-200 bg-slate-100 shadow-sm">
+                      <img
+                        src={coverImageUrl}
+                        alt="Campaign Cover"
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      <label className="block text-[11px] font-semibold text-slate-700">Cover Image URL</label>
+                      <input
+                        type="url"
+                        value={coverImageUrl}
+                        onChange={(e) => setCoverImageUrl(e.target.value)}
+                        placeholder="https://..."
+                        className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-800 focus:border-purple-500 focus:outline-none"
+                      />
+                      <p className="text-[11px] font-medium text-emerald-600">✓ Cover art saved and attached to brief</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-3">
+                    <input
+                      type="url"
+                      value={coverImageUrl}
+                      onChange={(e) => setCoverImageUrl(e.target.value)}
+                      placeholder="Optional: Paste an image URL or click 'Synthesize AI Cover Image' above"
+                      className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs text-slate-800 focus:border-purple-500 focus:outline-none"
+                    />
+                  </div>
+                )}
+              </div>
 
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>

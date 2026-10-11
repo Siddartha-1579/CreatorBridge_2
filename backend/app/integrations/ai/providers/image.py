@@ -90,8 +90,8 @@ class OpenAIImageProvider(ImageProvider):
 
         return ImageGenerationResult(
             image_urls=[fallback_url],
-            model=f"{model}-simulated",
-            provider="openai-simulated",
+            model="curated_visual_engine",
+            provider="algorithmic_creative_engine",
             parameters_used={
                 "aspect_ratio": request.aspect_ratio or "1:1",
                 "width": request.width,
@@ -99,3 +99,4 @@ class OpenAIImageProvider(ImageProvider):
                 "prompt_theme": "curated-generative-sample",
             },
         )
+

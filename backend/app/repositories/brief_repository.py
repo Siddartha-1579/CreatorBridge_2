@@ -13,6 +13,8 @@ from app.schemas.brief import (
     CreatorCapabilityRequirements,
     CommercialTerms,
     BriefAIMetadata,
+    CampaignApplicationResponse,
+    ApplicationStatus,
 )
 from app.core.db import get_db_connection
 from app.core.logging import get_logger
@@ -64,6 +66,10 @@ def _row_to_brief(row) -> CampaignBriefResponse:
     raw_ai = json.loads(row["ai_metadata"]) if row["ai_metadata"] else {}
     ai_metadata = BriefAIMetadata(**raw_ai) if raw_ai else BriefAIMetadata()
 
+    cover_image_url = row["cover_image_url"] if "cover_image_url" in row.keys() else None
+    if not cover_image_url and creative_direction and creative_direction.visual_references:
+        cover_image_url = creative_direction.visual_references[0]
+
     return CampaignBriefResponse(
         id=UUID(row["id"]),
         brand_id=row["brand_id"],
@@ -93,8 +99,56 @@ def _row_to_brief(row) -> CampaignBriefResponse:
         deadline=deadline_dt,
         required_tools=json.loads(row["required_tools"]) if row["required_tools"] else [],
         ai_metadata=ai_metadata,
+        cover_image_url=cover_image_url,
         is_public=bool(row["is_public"]),
         status=status,
+        created_at=created_at_dt,
+        updated_at=updated_at_dt,
+    )
+
+
+def _row_to_application(row) -> CampaignApplicationResponse:
+    """Converts a SQLite database row to CampaignApplicationResponse model."""
+    created_at_dt = datetime.fromisoformat(row["created_at"]) if row["created_at"] else datetime.now(timezone.utc)
+    updated_at_dt = datetime.fromisoformat(row["updated_at"]) if row["updated_at"] else datetime.now(timezone.utc)
+    if created_at_dt.tzinfo is None:
+        created_at_dt = created_at_dt.replace(tzinfo=timezone.utc)
+    if updated_at_dt.tzinfo is None:
+        updated_at_dt = updated_at_dt.replace(tzinfo=timezone.utc)
+
+    status_str = row["status"]
+    try:
+        status = ApplicationStatus(status_str)
+    except Exception:
+        status = ApplicationStatus.PENDING
+
+    skills = json.loads(row["relevant_skills"]) if row["relevant_skills"] else []
+    tools = json.loads(row["relevant_tools"]) if row["relevant_tools"] else []
+    portfolios = json.loads(row["portfolio_item_ids"]) if row["portfolio_item_ids"] else []
+
+    creator_name = row["creator_name"] if "creator_name" in row.keys() else None
+    creator_handle = row["creator_handle"] if "creator_handle" in row.keys() else None
+    creator_avatar_url = row["creator_avatar_url"] if "creator_avatar_url" in row.keys() else None
+    creator_specialization = row["creator_specialization"] if "creator_specialization" in row.keys() else None
+    brief_title = row["brief_title"] if "brief_title" in row.keys() else None
+
+    return CampaignApplicationResponse(
+        id=UUID(row["id"]),
+        brief_id=row["brief_id"],
+        creator_id=row["creator_id"],
+        brand_id=row["brand_id"],
+        proposed_rate_cents=row["proposed_rate_cents"],
+        pitch=row["pitch"],
+        relevant_skills=skills,
+        relevant_tools=tools,
+        portfolio_item_ids=portfolios,
+        estimated_days=row["estimated_days"],
+        status=status,
+        creator_name=creator_name,
+        creator_handle=creator_handle,
+        creator_avatar_url=creator_avatar_url,
+        creator_specialization=creator_specialization,
+        brief_title=brief_title,
         created_at=created_at_dt,
         updated_at=updated_at_dt,
     )
@@ -242,13 +296,53 @@ class BriefRepository(BaseRepository[CampaignBriefResponse]):
             rows = cursor.fetchall()
             return [_row_to_brief(r) for r in rows]
 
-    async def list_published(self, skip: int = 0, limit: int = 20) -> List[CampaignBriefResponse]:
+    async def list_published(
+        self,
+        skip: int = 0,
+        limit: int = 20,
+        content_type: Optional[str] = None,
+        category: Optional[str] = None,
+        min_budget_cents: Optional[int] = None,
+        max_budget_cents: Optional[int] = None,
+        tool: Optional[str] = None,
+        search: Optional[str] = None,
+    ) -> List[CampaignBriefResponse]:
+        query = "SELECT * FROM campaign_briefs WHERE status = ? AND is_public = 1"
+        params: List[Any] = [BriefStatus.PUBLISHED.value]
+
+        if category and category.strip():
+            query += " AND campaign_category LIKE ?"
+            params.append(f"%{category.strip()}%")
+
+        if content_type and content_type.strip():
+            query += " AND (deliverables LIKE ? OR platforms LIKE ?)"
+            params.append(f"%{content_type.strip()}%")
+            params.append(f"%{content_type.strip()}%")
+
+        if min_budget_cents is not None:
+            query += " AND (budget_cents >= ? OR budget_cents IS NULL)"
+            params.append(min_budget_cents)
+
+        if max_budget_cents is not None:
+            query += " AND budget_cents <= ?"
+            params.append(max_budget_cents)
+
+        if tool and tool.strip():
+            query += " AND (required_tools LIKE ? OR creator_capabilities LIKE ?)"
+            params.append(f"%{tool.strip()}%")
+            params.append(f"%{tool.strip()}%")
+
+        if search and search.strip():
+            s = f"%{search.strip()}%"
+            query += " AND (title LIKE ? OR description LIKE ? OR brand_or_product_name LIKE ? OR campaign_idea LIKE ?)"
+            params.extend([s, s, s, s])
+
+        query += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
+        params.extend([limit, skip])
+
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(
-                "SELECT * FROM campaign_briefs WHERE status = ? AND is_public = 1 ORDER BY created_at DESC LIMIT ? OFFSET ?",
-                (BriefStatus.PUBLISHED.value, limit, skip),
-            )
+            cursor.execute(query, tuple(params))
             rows = cursor.fetchall()
             return [_row_to_brief(r) for r in rows]
 
@@ -286,8 +380,8 @@ class BriefRepository(BaseRepository[CampaignBriefResponse]):
                     preferred_language, campaign_category, primary_message, desired_cta,
                     platforms, deliverables, creative_direction, creator_capabilities,
                     commercial_terms, sections, budget_cents, start_date, deadline,
-                    required_tools, ai_metadata, is_public, status, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    required_tools, ai_metadata, cover_image_url, is_public, status, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     str(entity.id),
@@ -318,6 +412,7 @@ class BriefRepository(BaseRepository[CampaignBriefResponse]):
                     entity.deadline.isoformat() if entity.deadline else None,
                     json.dumps(entity.required_tools),
                     ai_json,
+                    entity.cover_image_url,
                     1 if entity.is_public else 0,
                     entity.status.value if hasattr(entity.status, "value") else str(entity.status),
                     now_str,
@@ -343,3 +438,98 @@ class BriefRepository(BaseRepository[CampaignBriefResponse]):
             cursor.execute("DELETE FROM campaign_briefs WHERE id = ?", (str(id),))
             conn.commit()
             return cursor.rowcount > 0
+
+    async def create_application(self, entity: CampaignApplicationResponse) -> CampaignApplicationResponse:
+        now_str = entity.created_at.isoformat()
+        updated_str = entity.updated_at.isoformat()
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT OR REPLACE INTO campaign_applications (
+                    id, brief_id, creator_id, brand_id, proposed_rate_cents,
+                    pitch, relevant_skills, relevant_tools, portfolio_item_ids,
+                    estimated_days, status, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    str(entity.id),
+                    str(entity.brief_id),
+                    str(entity.creator_id),
+                    str(entity.brand_id),
+                    entity.proposed_rate_cents,
+                    entity.pitch,
+                    json.dumps(entity.relevant_skills),
+                    json.dumps(entity.relevant_tools),
+                    json.dumps(entity.portfolio_item_ids),
+                    entity.estimated_days,
+                    entity.status.value if hasattr(entity.status, "value") else str(entity.status),
+                    now_str,
+                    updated_str,
+                ),
+            )
+            conn.commit()
+        return entity
+
+    async def get_application_by_id(self, application_id: UUID) -> Optional[CampaignApplicationResponse]:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM campaign_applications WHERE id = ?", (str(application_id),))
+            row = cursor.fetchone()
+            return _row_to_application(row) if row else None
+
+    async def get_application_by_brief_and_creator(self, brief_id: str, creator_id: str) -> Optional[CampaignApplicationResponse]:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT * FROM campaign_applications WHERE brief_id = ? AND creator_id = ?",
+                (str(brief_id), str(creator_id)),
+            )
+            row = cursor.fetchone()
+            return _row_to_application(row) if row else None
+
+    async def list_applications_for_brief(self, brief_id: str) -> List[CampaignApplicationResponse]:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT a.*, cp.full_name as creator_name, cp.handle as creator_handle,
+                       cp.avatar_url as creator_avatar_url, cp.primary_specialization as creator_specialization,
+                       cb.title as brief_title
+                FROM campaign_applications a
+                LEFT JOIN creator_profiles cp ON a.creator_id = cp.id OR a.creator_id = cp.user_id
+                LEFT JOIN campaign_briefs cb ON a.brief_id = cb.id
+                WHERE a.brief_id = ?
+                ORDER BY a.created_at DESC
+                """,
+                (str(brief_id),),
+            )
+            rows = cursor.fetchall()
+            return [_row_to_application(r) for r in rows]
+
+    async def list_applications_for_creator(self, creator_id: str) -> List[CampaignApplicationResponse]:
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT a.*, cb.title as brief_title
+                FROM campaign_applications a
+                LEFT JOIN campaign_briefs cb ON a.brief_id = cb.id
+                WHERE a.creator_id = ?
+                ORDER BY a.created_at DESC
+                """,
+                (str(creator_id),),
+            )
+            rows = cursor.fetchall()
+            return [_row_to_application(r) for r in rows]
+
+    async def update_application_status(self, application_id: UUID, status: ApplicationStatus) -> Optional[CampaignApplicationResponse]:
+        now_str = datetime.now(timezone.utc).isoformat()
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE campaign_applications SET status = ?, updated_at = ? WHERE id = ?",
+                (status.value if hasattr(status, "value") else str(status), now_str, str(application_id)),
+            )
+            conn.commit()
+        return await self.get_application_by_id(application_id)

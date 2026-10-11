@@ -21,7 +21,7 @@ interface RequestOptions extends RequestInit {
 class ApiClient {
   private baseUrl: string
 
-  constructor(baseUrl: string = import.meta.env.VITE_API_URL || "/api/v1") {
+  constructor(baseUrl: string = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "/api/v1") {
     this.baseUrl = baseUrl.replace(/\/$/, "")
   }
 
@@ -91,7 +91,25 @@ class ApiClient {
     if (!response.ok) {
       const errorData = responseData as ApiErrorResponse | null
       const errorCode = errorData?.error?.code || `HTTP_${response.status}`
-      const errorMessage = errorData?.error?.message || response.statusText || "Request failed"
+
+      let defaultMessage = "Request failed"
+      if (response.status === 401) {
+        defaultMessage = "Invalid credentials. Please verify your email and password."
+      } else if (response.status === 403) {
+        defaultMessage = "Access denied: your account role does not have permission for this portal."
+      } else if (response.status === 404) {
+        defaultMessage = "API endpoint not found (HTTP 404). Please ensure the backend server is reachable."
+      } else if (response.status === 405) {
+        defaultMessage = "Backend API is not reachable on this host (HTTP 405 Method Not Allowed). Please ensure the FastAPI backend is running and VITE_API_URL is configured."
+      } else if (response.status === 422) {
+        defaultMessage = "Validation error: please check your input and try again."
+      } else if (response.status >= 500) {
+        defaultMessage = `Server error (HTTP ${response.status}). Please try again shortly.`
+      }
+
+      const errorMessage =
+        errorData?.error?.message ||
+        (response.statusText && response.statusText.trim() ? response.statusText : defaultMessage)
       const errorDetails = errorData?.error?.details
 
       throw new ApiError(errorMessage, errorCode, response.status, errorDetails)

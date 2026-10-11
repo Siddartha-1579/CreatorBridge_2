@@ -23,10 +23,11 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ type }) => {
   const creatorLinks = [
     { to: "/creator/dashboard", label: "Creator Dashboard", icon: LayoutDashboard },
+    { to: "/creator/campaigns", label: "Find Campaigns", icon: Megaphone },
     { to: "/creator/profile", label: "Profile & Skills", icon: User },
     { to: "/creator/portfolio", label: "Portfolio", icon: FolderKanban },
     { to: "/creator/studio", label: "AI Creation Studio", icon: Wand2 },
-    { to: "/creator/projects", label: "Projects & Briefs", icon: Briefcase },
+    { to: "/creator/projects", label: "Projects & Bids", icon: Briefcase },
   ]
 
   const brandLinks = [

@@ -31,6 +31,8 @@ import { CreatorProfilePage } from "@/pages/creator/CreatorProfilePage"
 import { CreatorPortfolioPage } from "@/pages/creator/CreatorPortfolioPage"
 import { CreatorStudioPage } from "@/pages/creator/CreatorStudioPage"
 import { CreatorProjectsPage } from "@/pages/creator/CreatorProjectsPage"
+import { CreatorCampaignsPage } from "@/pages/creator/CreatorCampaignsPage"
+
 
 // Brand Pages
 import { BrandDashboardPage } from "@/pages/brand/BrandDashboardPage"
@@ -85,6 +87,7 @@ export const App: React.FC = () => {
             <Route element={<DashboardLayout />}>
               <Route path="/creator" element={<Navigate to="/creator/dashboard" replace />} />
               <Route path="/creator/dashboard" element={<CreatorDashboardPage />} />
+              <Route path="/creator/campaigns" element={<CreatorCampaignsPage />} />
               <Route path="/creator/profile" element={<CreatorProfilePage />} />
               <Route path="/creator/portfolio" element={<CreatorPortfolioPage />} />
               <Route path="/creator/studio" element={<CreatorStudioPage />} />

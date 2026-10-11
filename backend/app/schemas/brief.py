@@ -132,6 +132,7 @@ class CampaignBriefBase(BaseModel):
     deadline: Optional[datetime] = None
     required_tools: List[str] = Field(default_factory=list)
     ai_metadata: BriefAIMetadata = Field(default_factory=BriefAIMetadata)
+    cover_image_url: Optional[str] = None
     is_public: bool = True
 
 
@@ -168,6 +169,7 @@ class CampaignBriefUpdate(BaseModel):
     deadline: Optional[datetime] = None
     required_tools: Optional[List[str]] = None
     ai_metadata: Optional[BriefAIMetadata] = None
+    cover_image_url: Optional[str] = None
     is_public: Optional[bool] = None
     status: Optional[BriefStatus] = None
 
@@ -283,3 +285,60 @@ class BriefValidationResult(BaseModel):
     can_publish: bool
     blocking_errors: List[str] = Field(default_factory=list)
     warnings: List[str] = Field(default_factory=list)
+
+
+class GenerateCoverImageRequest(BaseModel):
+    """Request payload to synthesize a cover image for a campaign brief."""
+    custom_prompt: Optional[str] = None
+    style_preset: Optional[str] = None
+    aspect_ratio: str = "16:9"
+
+
+class GenerateCoverImageResponse(BaseModel):
+    """Response payload with the generated cover image asset."""
+    image_url: str
+    prompt_used: str
+    model: str
+    provider: str
+    saved_to_brief: bool = True
+
+
+class ApplicationStatus(str, Enum):
+    PENDING = "PENDING"
+    SHORTLISTED = "SHORTLISTED"
+    ACCEPTED = "ACCEPTED"
+    REJECTED = "REJECTED"
+
+
+class CampaignApplicationCreate(BaseModel):
+    """Payload submitted by a creator when proposing for a campaign brief."""
+    proposed_rate_cents: Optional[int] = None
+    pitch: str
+    relevant_skills: List[str] = Field(default_factory=list)
+    relevant_tools: List[str] = Field(default_factory=list)
+    portfolio_item_ids: List[str] = Field(default_factory=list)
+    estimated_days: Optional[int] = None
+
+
+class CampaignApplicationUpdate(BaseModel):
+    """Payload used by brands to accept, shortlist, or reject an application."""
+    status: ApplicationStatus
+
+
+class CampaignApplicationResponse(BaseDomainModel):
+    """Response payload for a campaign application."""
+    brief_id: str
+    creator_id: str
+    brand_id: str
+    proposed_rate_cents: Optional[int] = None
+    pitch: str
+    relevant_skills: List[str] = Field(default_factory=list)
+    relevant_tools: List[str] = Field(default_factory=list)
+    portfolio_item_ids: List[str] = Field(default_factory=list)
+    estimated_days: Optional[int] = None
+    status: ApplicationStatus = ApplicationStatus.PENDING
+    creator_name: Optional[str] = None
+    creator_handle: Optional[str] = None
+    creator_avatar_url: Optional[str] = None
+    creator_specialization: Optional[str] = None
+    brief_title: Optional[str] = None

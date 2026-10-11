@@ -118,6 +118,7 @@ export interface CampaignBrief {
   deadline?: string
   required_tools: string[]
   ai_metadata: BriefAIMetadata
+  cover_image_url?: string
   is_public: boolean
   status: BriefStatus
   created_at: string
@@ -151,11 +152,63 @@ export interface CampaignBriefCreate {
   deadline?: string
   required_tools?: string[]
   ai_metadata?: Partial<BriefAIMetadata>
+  cover_image_url?: string
   is_public?: boolean
   status?: BriefStatus
 }
 
 export interface CampaignBriefUpdate extends Partial<CampaignBriefCreate> {}
+
+export type ApplicationStatus = "PENDING" | "SHORTLISTED" | "ACCEPTED" | "REJECTED"
+
+export interface CampaignApplication {
+  id: string
+  brief_id: string
+  creator_id: string
+  brand_id: string
+  proposed_rate_cents?: number
+  pitch: string
+  relevant_skills: string[]
+  relevant_tools: string[]
+  portfolio_item_ids: string[]
+  estimated_days?: number
+  status: ApplicationStatus
+  creator_name?: string
+  creator_handle?: string
+  creator_avatar_url?: string
+  creator_specialization?: string
+  brief_title?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface CampaignApplicationCreate {
+  proposed_rate_cents?: number
+  pitch: string
+  relevant_skills?: string[]
+  relevant_tools?: string[]
+  portfolio_item_ids?: string[]
+  estimated_days?: number
+}
+
+export interface CampaignApplicationUpdate {
+  status: ApplicationStatus
+}
+
+export interface GenerateCoverImageRequest {
+  custom_prompt?: string
+  style_preset?: string
+  aspect_ratio?: string
+}
+
+export interface GenerateCoverImageResponse {
+  image_url: string
+  prompt_used: string
+  model: string
+  provider: string
+  saved_to_brief: boolean
+}
+
 
 export interface AIBriefGenerationRequest {
   campaign_name?: string

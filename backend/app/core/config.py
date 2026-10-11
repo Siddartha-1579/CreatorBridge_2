@@ -36,7 +36,12 @@ class Settings(BaseSettings):
     port: int = Field(default=8000, alias="PORT")
     frontend_url: str = Field(default="http://localhost:5173", alias="FRONTEND_URL")
     cors_origins: List[str] = Field(
-        default=["http://localhost:5173", "http://127.0.0.1:5173", "http://localhost:3000"],
+        default=[
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://localhost:3000",
+            "https://creatorbridge2.vercel.app",
+        ],
         alias="CORS_ORIGINS",
     )
 

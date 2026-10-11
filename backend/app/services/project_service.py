@@ -64,3 +64,7 @@ class ProjectService(BaseService):
         if not updated:
             raise NotFoundException("Project Workspace", project_id)
         return updated
+
+
+project_service = ProjectService()
+
