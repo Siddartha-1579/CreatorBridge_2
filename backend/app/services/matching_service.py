@@ -277,7 +277,13 @@ class MatchingService(BaseService):
         """
         creator = await self.creator_repo.get_by_user_id(user_id)
         if not creator:
-            # Fallback mock recommendations if creator profile not yet complete
+            try:
+                from uuid import UUID
+                creator = await self.creator_repo.get_by_id(UUID(user_id))
+            except Exception:
+                pass
+        if not creator:
+            # Fallback recommendations if creator profile not yet complete
             return self._fallback_brief_recommendations()
 
         briefs = await self.brief_repo.list_all(limit=10)

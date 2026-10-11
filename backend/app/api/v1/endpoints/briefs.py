@@ -35,6 +35,7 @@ async def list_briefs(
 
 
 @router.get("/mine", response_model=ApiResponse[List[CampaignBriefResponse]], summary="List brand's campaign briefs")
+@router.get("/my", response_model=ApiResponse[List[CampaignBriefResponse]], summary="List brand's campaign briefs (alias)")
 async def list_my_briefs(
     current_user: AuthenticatedUser = Depends(require_role([UserRole.BRAND, UserRole.AGENCY])),
 ) -> ApiResponse[List[CampaignBriefResponse]]:

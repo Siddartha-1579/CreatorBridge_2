@@ -135,9 +135,11 @@ class BriefService(BaseService):
         if not title or title.strip() == "" or title.strip() == "Untitled Creative Brief":
             blocking.append("Campaign title is required before publishing.")
 
-        description = getattr(brief, "description", "")
-        exec_summary = getattr(brief, "executive_summary", "")
-        if not description.strip() and not (exec_summary and exec_summary.strip()):
+        description = getattr(brief, "description", "") or ""
+        exec_summary = getattr(brief, "executive_summary", "") or ""
+        campaign_idea = getattr(brief, "campaign_idea", "") or ""
+        product_desc = getattr(brief, "product_description", "") or ""
+        if not description.strip() and not exec_summary.strip() and not campaign_idea.strip() and not product_desc.strip():
             blocking.append("A project description or executive summary is required.")
 
         deliverables: List[DeliverableItem] = getattr(brief, "deliverables", []) or []

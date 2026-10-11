@@ -1,15 +1,26 @@
 """Centralized application settings using Pydantic Settings."""
 
+from pathlib import Path
 from typing import List, Optional
 from pydantic import Field, AliasChoices
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+_CONFIG_DIR = Path(__file__).resolve().parent
+_BACKEND_DIR = _CONFIG_DIR.parent.parent
+_PROJECT_ROOT = _BACKEND_DIR.parent
+
+_ENV_FILES = (
+    str(_PROJECT_ROOT / ".env"),
+    str(_BACKEND_DIR / ".env"),
+    ".env",
+)
 
 
 class Settings(BaseSettings):
     """Central configuration for HacXLerate application."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=_ENV_FILES,
         env_file_encoding="utf-8",
         extra="ignore",
         case_sensitive=False,

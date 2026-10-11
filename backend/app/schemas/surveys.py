@@ -90,13 +90,13 @@ class SurveySchemaResponse(BaseModel):
 
 
 class SurveyDraftSaveRequest(BaseModel):
-    survey_type: str
+    survey_type: Optional[str] = None
     current_section_index: int = 0
     answers: Dict[str, Any] = Field(default_factory=dict)
 
 
 class SurveySubmitRequest(BaseModel):
-    survey_type: str
+    survey_type: Optional[str] = None
     answers: Dict[str, Any]
 
 

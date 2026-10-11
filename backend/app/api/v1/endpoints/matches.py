@@ -1,8 +1,8 @@
 """Creator matching endpoints with 7-factor explainable engine."""
 
-from typing import List
+from typing import List, Optional
 from fastapi import APIRouter, Depends
-from app.core.security import require_role, get_current_user, UserRole, AuthenticatedUser
+from app.core.security import require_role, get_current_user, get_optional_user, UserRole, AuthenticatedUser
 from app.schemas.common import ApiResponse
 from app.schemas.match import MatchCriteria, CreatorMatchResult, BriefMatchResult
 from app.services import matching_service
@@ -13,7 +13,7 @@ router = APIRouter()
 @router.post("/compute", response_model=ApiResponse[List[CreatorMatchResult]], summary="Compute creator matches")
 async def compute_matches(
     criteria: MatchCriteria,
-    current_user: AuthenticatedUser = Depends(require_role([UserRole.BRAND, UserRole.AGENCY])),
+    current_user: Optional[AuthenticatedUser] = Depends(get_optional_user),
 ) -> ApiResponse[List[CreatorMatchResult]]:
     """
     Computes explainable match scores between a campaign brief and verified creators

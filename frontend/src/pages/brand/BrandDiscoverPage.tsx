@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { useAuth } from "@/hooks/useAuth"
 import { creatorsService } from "@/services/creators.service"
 import { matchingService } from "@/services/matching.service"
 import { briefsService } from "@/services/briefs.service"
+import { projectsService } from "@/services/projects.service"
 import type { CreatorProfile, CreatorMatchResult, CampaignBrief } from "@/types"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -40,6 +41,8 @@ interface BrandDiscoverPageProps {
 export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicView = false }) => {
   const { user, isAuthenticated, isBrand } = useAuth()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const briefIdFromUrl = searchParams.get("briefId")
 
   const [creators, setCreators] = useState<CreatorProfile[]>([])
   const [briefs, setBriefs] = useState<CampaignBrief[]>([])
@@ -63,6 +66,8 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
   const [inviteBriefId, setInviteBriefId] = useState<string>("")
   const [inviteMessage, setInviteMessage] = useState<string>("")
   const [inviteSentSuccess, setInviteSentSuccess] = useState<boolean>(false)
+  const [isSendingInvite, setIsSendingInvite] = useState<boolean>(false)
+  const [inviteError, setInviteError] = useState<string | null>(null)
   const [shortlistedIds, setShortlistedIds] = useState<string[]>([])
 
   // Load creators and briefs
@@ -77,8 +82,9 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
         setCreators(creatorsList || [])
         setBriefs(briefsList || [])
 
-        // Initial default match computation
-        const initialBrief = briefsList && briefsList.length > 0 ? briefsList[0] : null
+        // Initial match computation respecting briefId in URL
+        const initialBrief = (briefIdFromUrl && briefsList?.find((b) => b.id === briefIdFromUrl)) ||
+                             (briefsList && briefsList.length > 0 ? briefsList[0] : null)
         const briefIdToUse = initialBrief ? initialBrief.id : "demo-brief-01"
         if (initialBrief) {
           setSelectedBriefId(initialBrief.id)
@@ -88,7 +94,10 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
         const matchRes = await matchingService.computeMatches({
           brief_id: briefIdToUse,
           required_tools: initialBrief?.required_tools?.length ? initialBrief.required_tools : ["Runway Gen-3", "Midjourney"],
-          required_skills: ["Cinematics", "Prompt Engineering"],
+          required_skills: initialBrief?.creator_capabilities?.required_capabilities || ["Cinematics", "Prompt Engineering"],
+          target_niches: initialBrief?.creator_capabilities?.preferred_niches || [],
+          target_platforms: initialBrief?.platforms || [],
+          max_budget_cents: initialBrief?.budget_cents,
         })
         setMatches(matchRes || [])
       } catch (err) {
@@ -98,11 +107,12 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
       }
     }
     loadData()
-  }, [])
+  }, [briefIdFromUrl])
 
   // Trigger matching engine when active campaign brief changes
   const handleBriefChange = async (briefId: string) => {
     setSelectedBriefId(briefId)
+    setInviteBriefId(briefId)
     setRefreshing(true)
     try {
       const activeBrief = briefs.find((b) => b.id === briefId)
@@ -135,16 +145,79 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
     }
     setInvitingCreator(creator)
     setInviteSentSuccess(false)
+    setInviteError(null)
     setInviteMessage(`Hi ${creator.full_name || creator.fullName || "there"}, we loved your portfolio on CreatorBridge and would like to invite you to collaborate on our upcoming campaign.`)
   }
 
-  const handleSendInvite = (e: React.FormEvent) => {
+  const handleSendInvite = async (e: React.FormEvent) => {
     e.preventDefault()
-    setInviteSentSuccess(true)
-    setTimeout(() => {
-      setInvitingCreator(null)
-      setInviteSentSuccess(false)
-    }, 1800)
+    if (!invitingCreator) return
+    setIsSendingInvite(true)
+    setInviteError(null)
+    try {
+      const activeBrief = briefs.find((b) => b.id === (inviteBriefId || selectedBriefId))
+      const budgetCents = activeBrief?.budget_cents || 150000
+      const title = activeBrief
+        ? `${activeBrief.title} × ${invitingCreator.full_name || invitingCreator.fullName || "Creator"}`
+        : `Collaboration with ${invitingCreator.full_name || invitingCreator.fullName || "Creator"}`
+
+      await projectsService.createProject({
+        title,
+        briefId: activeBrief?.id,
+        creatorId: invitingCreator.id,
+        agreedBudgetCents: budgetCents,
+        dueDate: activeBrief?.deadline || new Date(Date.now() + 14 * 86400000).toISOString(),
+        milestones: [
+          {
+            id: `ms_${Date.now()}_1`,
+            title: "Concept, Moodboard & Prompt Blueprint",
+            amount_cents: Math.round(budgetCents * 0.5),
+            status: "PENDING",
+          },
+          {
+            id: `ms_${Date.now()}_2`,
+            title: "Final 4K Master Deliverables Acceptance",
+            amount_cents: Math.round(budgetCents * 0.5),
+            status: "PENDING",
+          },
+        ],
+        deliverables: activeBrief?.deliverables?.map((d) => ({
+          id: d.id,
+          title: `${d.quantity}x ${d.content_type} (${d.aspect_ratio || "9:16"})`,
+          status: "PENDING" as const,
+          notes: d.production_notes,
+        })) || [
+          {
+            id: `deliv_${Date.now()}`,
+            title: "Master Campaign Deliverable",
+            status: "PENDING" as const,
+          },
+        ],
+        messages: inviteMessage.trim()
+          ? [
+              {
+                id: `msg_${Date.now()}`,
+                sender_id: user?.id || "brand",
+                sender_role: "BRAND",
+                content: inviteMessage.trim(),
+                timestamp: new Date().toISOString(),
+              },
+            ]
+          : [],
+      })
+
+      setInviteSentSuccess(true)
+      setTimeout(() => {
+        setInvitingCreator(null)
+        setInviteSentSuccess(false)
+        navigate("/brand/projects")
+      }, 1500)
+    } catch (err: any) {
+      console.error("Failed to create project collaboration:", err)
+      setInviteError(err.message || "Failed to create collaboration workspace.")
+    } finally {
+      setIsSendingInvite(false)
+    }
   }
 
   // Filtered and ranked creator roster
@@ -853,13 +926,28 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
                     />
                   </div>
 
+                  {inviteError && (
+                    <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs">
+                      {inviteError}
+                    </div>
+                  )}
+
                   <div className="flex items-center justify-end gap-2 pt-2 border-t border-[#F4E7FF]">
-                    <Button variant="outline" size="sm" type="button" onClick={() => setInvitingCreator(null)}>
+                    <Button variant="outline" size="sm" type="button" onClick={() => setInvitingCreator(null)} disabled={isSendingInvite}>
                       Cancel
                     </Button>
-                    <Button variant="primary" size="sm" type="submit" className="gap-1.5">
-                      <Send className="h-3.5 w-3.5" />
-                      Send Campaign Invitation
+                    <Button variant="primary" size="sm" type="submit" disabled={isSendingInvite} className="gap-1.5">
+                      {isSendingInvite ? (
+                        <>
+                          <div className="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          Sending Invitation...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="h-3.5 w-3.5" />
+                          Send Campaign Invitation
+                        </>
+                      )}
                     </Button>
                   </div>
                 </form>

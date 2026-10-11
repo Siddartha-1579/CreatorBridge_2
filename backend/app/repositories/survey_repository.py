@@ -99,6 +99,41 @@ class SurveyRepository:
                 "availability": merged_answers.get("cr_current_availability", "immediate"),
                 "updated_at": now,
             }
+            try:
+                from app.services import creator_service
+                from app.repositories import creator_repository
+                existing_creator = await creator_repository.get_by_user_id(user_id)
+                if not existing_creator:
+                    existing_creator = await creator_service.get_profile_by_user_id(user_id)
+                if existing_creator:
+                    update_fields = {}
+                    if merged_answers.get("cr_display_name"):
+                        update_fields["full_name"] = merged_answers["cr_display_name"]
+                    if merged_answers.get("cr_headline"):
+                        update_fields["headline"] = merged_answers["cr_headline"]
+                    if merged_answers.get("cr_bio"):
+                        update_fields["bio"] = merged_answers["cr_bio"]
+                    if merged_answers.get("cr_country"):
+                        update_fields["location"] = merged_answers["cr_country"]
+                    if merged_answers.get("cr_starting_price"):
+                        update_fields["hourly_rate_cents"] = int(float(merged_answers["cr_starting_price"])) * 100
+                    specs = merged_answers.get("cr_specializations", [])
+                    if specs and isinstance(specs, list):
+                        update_fields["primary_specialization"] = specs[0]
+                        if len(specs) > 1:
+                            update_fields["secondary_specializations"] = specs[1:]
+                    skills = merged_answers.get("cr_skills", [])
+                    if skills and isinstance(skills, list):
+                        update_fields["skills"] = skills
+                    tools_catalog = merged_answers.get("cr_tools_catalog", [])
+                    if tools_catalog and isinstance(tools_catalog, list):
+                        tool_names = [t.get("tool_name") if isinstance(t, dict) else str(t) for t in tools_catalog]
+                        update_fields["ai_tools"] = tool_names
+                    if update_fields:
+                        await creator_repository.update(existing_creator.id, update_fields)
+            except Exception as e:
+                logger.warning(f"Failed to sync survey to creator profile: {e}")
+
         elif st in ["BRAND", "AGENCY"]:
             self._brand_profiles[user_id] = {
                 "user_id": user_id,
@@ -114,6 +149,21 @@ class SurveyRepository:
                 "usage_channels": merged_answers.get("br_usage_channels", []),
                 "updated_at": now,
             }
+            try:
+                from app.repositories import brand_repository
+                existing_brand = await brand_repository.get_by_user_id(user_id)
+                if existing_brand:
+                    b_updates = {}
+                    if merged_answers.get("br_organization_name"):
+                        b_updates["company_name"] = merged_answers["br_organization_name"]
+                    if merged_answers.get("br_industry"):
+                        b_updates["primary_industry"] = merged_answers["br_industry"]
+                    if merged_answers.get("br_website"):
+                        b_updates["website"] = merged_answers["br_website"]
+                    if b_updates:
+                        await brand_repository.update(existing_brand.id, b_updates)
+            except Exception as e:
+                logger.warning(f"Failed to sync survey to brand profile: {e}")
 
         logger.info(f"Survey successfully submitted for user {user_id} ({survey_type})")
         return record

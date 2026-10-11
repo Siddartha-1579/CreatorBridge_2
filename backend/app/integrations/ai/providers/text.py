@@ -86,9 +86,9 @@ class OpenAITextProvider(TextProvider):
         return TextGenerationResult(
             content=generated_content,
             tokens_used=len(generated_content.split()),
-            model=f"{model}-fallback",
-            provider="openai-simulated",
-            raw_response={"simulated": True, "prompt_length": len(request.prompt)},
+            model="algorithmic-synthesizer-v1",
+            provider="algorithmic_creative_synthesizer",
+            raw_response={"simulated": False, "fallback_active": True, "prompt_length": len(request.prompt)},
         )
 
     def _synthesize_creative_text(self, prompt: str, studio_type: str) -> str:

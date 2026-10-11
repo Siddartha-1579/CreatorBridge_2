@@ -69,6 +69,8 @@ Respond with valid JSON only:
 }}
 """
                 resp = await ai_gateway.generate_text(TextGenerationRequest(prompt=prompt, temperature=0.6))
+                if resp.provider != "openai":
+                    raise ValueError(f"Provider {resp.provider} is not an external LLM")
                 content = self._clean_json(resp.content)
                 parsed = json.loads(content)
                 return RefineIdeaResponse(
@@ -339,6 +341,8 @@ Return a valid JSON object matching this schema:
         response = await ai_gateway.generate_text(
             TextGenerationRequest(prompt=prompt, temperature=0.7)
         )
+        if response.provider != "openai":
+            return None
         content = self._clean_json(response.content)
         parsed = json.loads(content)
 

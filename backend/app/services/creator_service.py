@@ -60,20 +60,47 @@ class CreatorService(BaseService):
         if existing:
             base_handle = f"{base_handle}_{str(uuid4())[:4]}"
 
+        from app.repositories.survey_repository import survey_repository
+        survey_profile = await survey_repository.get_creator_profile(user_id)
+        headline = None
+        bio = None
+        location = None
+        primary_spec = None
+        skills = []
+        ai_tools = []
+        hourly_rate_cents = None
+
+        if survey_profile:
+            full_name = survey_profile.get("display_name") or full_name
+            headline = survey_profile.get("headline")
+            bio = survey_profile.get("bio")
+            location = survey_profile.get("country")
+            specializations = survey_profile.get("specializations", [])
+            primary_spec = specializations[0] if specializations else None
+            skills = survey_profile.get("technical_skills", [])
+            tools_catalog = survey_profile.get("tools_experience", [])
+            ai_tools = [t.get("tool_name") if isinstance(t, dict) else str(t) for t in tools_catalog] if tools_catalog else []
+            starting_price = survey_profile.get("starting_price")
+            hourly_rate_cents = int(float(starting_price)) * 100 if starting_price else None
+
         new_profile = CreatorProfileResponse(
             id=uuid4(),
             user_id=user_id,
             full_name=full_name,
+            headline=headline,
+            bio=bio,
+            location=location,
             handle=base_handle,
             level=CreatorLevel.EXPLORER,
             level_name="AI Explorer",
             reputation_score=0.00,
+            hourly_rate_cents=hourly_rate_cents,
             is_verified=False,
             assessment_completed=False,
-            profile_completeness_pct=20,
-            primary_specialization=None,
-            skills=[],
-            ai_tools=[],
+            profile_completeness_pct=60 if survey_profile else 20,
+            primary_specialization=primary_spec,
+            skills=skills,
+            ai_tools=ai_tools,
             content_types=[],
             target_niches=[],
             preferred_formats=[],
@@ -228,7 +255,12 @@ class CreatorService(BaseService):
             creator_uuid = UUID(identifier)
             creator = await self.repo.get_by_id(creator_uuid)
         except ValueError:
+            pass
+
+        if not creator:
             creator = await self.repo.get_by_handle(identifier)
+        if not creator:
+            creator = await self.repo.get_by_user_id(identifier)
 
         if not creator:
             raise NotFoundException("Creator", identifier)

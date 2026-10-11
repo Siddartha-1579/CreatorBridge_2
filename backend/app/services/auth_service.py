@@ -1,6 +1,7 @@
 """Authentication domain service with Cloudflare Turnstile, Supabase Auth, and audit logging."""
 
 import time
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 from app.services.base import BaseService
 from app.core.config import settings
@@ -14,6 +15,7 @@ from app.schemas.auth import (
     TokenResponse,
     UserResponse,
 )
+from app.core.db import get_db_connection
 from app.services.turnstile_service import turnstile_service
 from app.services.audit_service import audit_service
 
@@ -26,8 +28,61 @@ class AuthService(BaseService):
 
     def __init__(self):
         super().__init__("auth")
-        # In-memory store for registered users during dev/test sessions
         self._user_store: Dict[str, Dict[str, Any]] = {}
+        self._load_users_from_db()
+
+    def _load_users_from_db(self):
+        try:
+            with get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM users")
+                rows = cursor.fetchall()
+                for r in rows:
+                    role_val = r["role"]
+                    try:
+                        role = UserRole(role_val)
+                    except ValueError:
+                        role = UserRole.BRAND if "brand" in r["email"] else UserRole.CREATOR
+                    self._user_store[r["email"]] = {
+                        "id": r["id"],
+                        "email": r["email"],
+                        "full_name": r["full_name"],
+                        "role": role,
+                        "password": r["password"],
+                        "is_verified": bool(r["is_verified"]),
+                        "email_verified": bool(r["email_verified"]),
+                        "is_onboarded": bool(r["is_onboarded"]),
+                    }
+        except Exception as e:
+            self.logger.warning(f"Could not load users from persistent SQLite: {e}")
+
+    def _persist_user(self, user_dict: Dict[str, Any]):
+        try:
+            now_str = datetime.now(timezone.utc).isoformat()
+            with get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    INSERT OR REPLACE INTO users (
+                        id, email, full_name, role, password, is_verified, email_verified, is_onboarded, created_at, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        user_dict["id"],
+                        user_dict["email"],
+                        user_dict["full_name"],
+                        user_dict["role"].value if hasattr(user_dict["role"], "value") else str(user_dict["role"]),
+                        user_dict["password"],
+                        1 if user_dict.get("is_verified") else 0,
+                        1 if user_dict.get("email_verified") else 0,
+                        1 if user_dict.get("is_onboarded") else 0,
+                        now_str,
+                        now_str,
+                    ),
+                )
+                conn.commit()
+        except Exception as e:
+            self.logger.warning(f"Could not persist user to SQLite: {e}")
 
     def _determine_redirect_path(self, role: UserRole, is_onboarded: bool = False) -> str:
         """Determines initial redirection destination post-authentication."""
@@ -129,6 +184,7 @@ class AuthService(BaseService):
             "email_verified": False,
             "is_onboarded": False,
         }
+        self._persist_user(self._user_store[normalized_email])
 
         token = self._generate_token(user)
         redirect_path = self._determine_redirect_path(user.role, is_onboarded=False)
@@ -184,6 +240,7 @@ class AuthService(BaseService):
                     "is_onboarded": False,
                 }
                 self._user_store[normalized_email] = record
+                self._persist_user(record)
             else:
                 await audit_service.log_event(
                     action="AUTH_LOGIN_FAILED_USER_NOT_FOUND",

@@ -146,6 +146,109 @@ def init_db():
             """
         )
 
+        # 5. users (persistent auth accounts)
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS users (
+                id TEXT PRIMARY KEY,
+                email TEXT UNIQUE NOT NULL,
+                full_name TEXT NOT NULL,
+                role TEXT NOT NULL,
+                password TEXT NOT NULL,
+                is_verified INTEGER DEFAULT 0,
+                email_verified INTEGER DEFAULT 0,
+                is_onboarded INTEGER DEFAULT 0,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+
+        # 6. creator_profiles (persistent creator data)
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS creator_profiles (
+                id TEXT PRIMARY KEY,
+                user_id TEXT UNIQUE NOT NULL,
+                full_name TEXT NOT NULL,
+                handle TEXT UNIQUE NOT NULL,
+                level TEXT NOT NULL DEFAULT 'EXPLORER',
+                level_name TEXT DEFAULT 'AI Explorer',
+                primary_specialization TEXT,
+                skills TEXT DEFAULT '[]',
+                ai_tools TEXT DEFAULT '[]',
+                content_types TEXT DEFAULT '[]',
+                target_niches TEXT DEFAULT '[]',
+                preferred_formats TEXT DEFAULT '[]',
+                social_links TEXT DEFAULT '{}',
+                hourly_rate_cents INTEGER,
+                reputation_score REAL DEFAULT 0.0,
+                is_verified INTEGER DEFAULT 0,
+                assessment_completed INTEGER DEFAULT 0,
+                profile_completeness_pct INTEGER DEFAULT 20,
+                bio TEXT,
+                avatar_url TEXT,
+                metadata TEXT DEFAULT '{}',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+
+        # 7. portfolio_items (persistent portfolios)
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS portfolio_items (
+                id TEXT PRIMARY KEY,
+                creator_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT,
+                category TEXT,
+                content_type TEXT,
+                media_type TEXT,
+                thumbnail_url TEXT,
+                media_url TEXT,
+                tools TEXT DEFAULT '[]',
+                models TEXT DEFAULT '[]',
+                skills TEXT DEFAULT '[]',
+                workflow_summary TEXT,
+                workflow_stages TEXT DEFAULT '[]',
+                aspect_ratio TEXT,
+                resolution TEXT,
+                duration_seconds INTEGER,
+                commercial_use_status TEXT,
+                ai_generation_type TEXT,
+                visibility TEXT DEFAULT 'PUBLIC',
+                is_featured INTEGER DEFAULT 0,
+                verification_status TEXT DEFAULT 'VERIFIED',
+                public_url TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+
+        # 8. project_workspaces (persistent project collaborations)
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS project_workspaces (
+                id TEXT PRIMARY KEY,
+                brief_id TEXT,
+                brand_id TEXT NOT NULL,
+                creator_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'INITIATED',
+                milestones TEXT DEFAULT '[]',
+                deliverables TEXT DEFAULT '[]',
+                messages TEXT DEFAULT '[]',
+                agreed_budget_cents INTEGER NOT NULL,
+                due_date TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+
         conn.commit()
         logger.info(f"Persistent database schema initialized at {DB_PATH}")
 

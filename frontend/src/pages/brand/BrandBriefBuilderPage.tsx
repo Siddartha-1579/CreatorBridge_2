@@ -267,6 +267,11 @@ export const BrandBriefBuilderPage: React.FC = () => {
         setTargetMarket(b.target_market || "Global")
         setPreferredLanguage(b.preferred_language || "English")
         setCampaignCategory(b.campaign_category || "AI Filmmaking & Social")
+        setCoreMessage(b.primary_message || "")
+        if (b.desired_cta) setCallToAction(b.desired_cta)
+        if (b.platforms && b.platforms.length > 0) setPreferredPlatforms(b.platforms)
+        if (b.start_date) setStartDate(b.start_date.substring(0, 10))
+        if (b.deadline) setContentDeliveryDeadline(b.deadline.substring(0, 10))
         if (b.deliverables && b.deliverables.length > 0) {
           setDeliverables(b.deliverables)
         }
@@ -275,11 +280,23 @@ export const BrandBriefBuilderPage: React.FC = () => {
           setCreativeStyle(b.creative_direction.styles?.[0] || "Photorealistic 35mm")
           setKeyProductBenefits(b.creative_direction.key_product_benefits || "")
           setMandatoryTalkingPoints(b.creative_direction.mandatory_talking_points || "")
-          setCallToAction(b.creative_direction.call_to_action || "Discover more at link in bio")
+          if (b.creative_direction.call_to_action) setCallToAction(b.creative_direction.call_to_action)
           setRequiredHashtags(b.creative_direction.required_hashtags_or_mentions || "#AICreators")
           setBrandGuidelines(b.creative_direction.brand_guidelines || "")
           setThingsToAvoid(b.creative_direction.things_to_avoid?.join(", ") || "")
           setCompetitorRestrictions(b.creative_direction.competitor_restrictions || "")
+        }
+        if (b.creator_capabilities) {
+          if (b.creator_capabilities.preferred_niches?.length) setPreferredNiches(b.creator_capabilities.preferred_niches)
+          if (b.creator_capabilities.preferred_platforms?.length) setPreferredPlatforms(b.creator_capabilities.preferred_platforms)
+          if (b.creator_capabilities.audience_location) setAudienceLocation(b.creator_capabilities.audience_location)
+          if (b.creator_capabilities.audience_age_range) setAudienceAgeRange(b.creator_capabilities.audience_age_range)
+          if (b.creator_capabilities.preferred_language) setCreatorLanguage(b.creator_capabilities.preferred_language)
+          if (b.creator_capabilities.audience_size_range) setAudienceSizeRange(b.creator_capabilities.audience_size_range)
+          if (b.creator_capabilities.experience_level) setCreatorLevel(b.creator_capabilities.experience_level)
+        }
+        if (b.budget_cents) {
+          setTotalBudgetUSD(Math.round(b.budget_cents / 100))
         }
         if (b.commercial_terms) {
           if (b.commercial_terms.budget_cents) {
@@ -431,6 +448,7 @@ export const BrandBriefBuilderPage: React.FC = () => {
 
   // Explicit Save Draft action
   const handleSaveDraft = useCallback(async () => {
+    if (draftStatus === "SAVING") return
     setDraftStatus("SAVING")
     setErrorMessage(null)
     try {
@@ -441,6 +459,7 @@ export const BrandBriefBuilderPage: React.FC = () => {
       } else {
         const created = await briefsService.createBrief(payload)
         setSavedBriefId(created.id)
+        navigate(`/brand/briefs/${created.id}/edit`, { replace: true })
       }
       setDraftStatus("SAVED")
       setStatusMessage("Draft saved successfully.")
@@ -450,7 +469,7 @@ export const BrandBriefBuilderPage: React.FC = () => {
       setDraftStatus("ERROR")
       setErrorMessage(err.message || "Unable to save draft.")
     }
-  }, [buildPayload, savedBriefId])
+  }, [buildPayload, savedBriefId, draftStatus, navigate])
 
   // Debounced Autosave (triggers 2.5s after field edits, skipping initial mount)
   useEffect(() => {
@@ -473,6 +492,7 @@ export const BrandBriefBuilderPage: React.FC = () => {
         } else {
           const created = await briefsService.createBrief(payload)
           setSavedBriefId(created.id)
+          navigate(`/brand/briefs/${created.id}/edit`, { replace: true })
         }
         setDraftStatus("SAVED")
       } catch (err) {
@@ -484,7 +504,7 @@ export const BrandBriefBuilderPage: React.FC = () => {
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current)
     }
-  }, [buildPayload, savedBriefId, title, brandOrProductName, campaignIdea, deliverables, briefSections])
+  }, [buildPayload, savedBriefId, title, brandOrProductName, campaignIdea, deliverables, briefSections, navigate])
 
   // AI Refine Idea Action (Step 1)
   const handleRefineIdea = async () => {
@@ -797,6 +817,7 @@ export const BrandBriefBuilderPage: React.FC = () => {
 
   // Publish Action
   const handlePublish = async () => {
+    if (isPublishing) return
     if (!validationResult.can_publish) {
       alert(`Cannot publish brief due to missing requirements:\n\n• ${validationResult.blocking_errors.join("\n• ")}`)
       return

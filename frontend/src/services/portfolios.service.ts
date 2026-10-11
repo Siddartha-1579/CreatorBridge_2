@@ -39,11 +39,7 @@ export const portfoliosService = {
   async uploadAsset(file: File): Promise<PortfolioUploadResponse> {
     const formData = new FormData()
     formData.append("file", file)
-    return apiClient.post<PortfolioUploadResponse>("portfolios/upload", formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    })
+    return apiClient.post<PortfolioUploadResponse>("portfolios/upload", formData)
   },
 
   // Backward compatibility aliases

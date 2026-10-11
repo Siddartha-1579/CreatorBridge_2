@@ -163,14 +163,14 @@ class GenerationService(BaseService):
         """Saves a completed AI generation asset directly into creator's portfolio."""
         from datetime import datetime, timezone
         from app.schemas.portfolio import PortfolioProjectResponse
-        from app.repositories import creator_repository
+        from app.services import creator_service
 
         job = await self.get_job_by_id(job_id)
         if job.status != GenerationJobStatus.COMPLETED or not job.result_asset_path:
             raise ValidationException("Cannot save incomplete or failed generation job to portfolio")
 
-        creator = await creator_repository.get_by_user_id(user_id)
-        creator_id = creator.id if creator else uuid4()
+        creator = await creator_service.get_profile_by_user_id(user_id)
+        creator_id = creator.id
         now = datetime.now(timezone.utc)
         item_id = uuid4()
 
