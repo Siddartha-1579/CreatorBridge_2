@@ -1,6 +1,6 @@
 """Portfolio domain service."""
 
-from typing import List, Optional
+from typing import Any, List, Optional
 from uuid import UUID, uuid4
 from datetime import datetime, timezone
 from app.services.base import BaseService
