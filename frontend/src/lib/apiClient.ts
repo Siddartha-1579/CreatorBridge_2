@@ -22,7 +22,13 @@ class ApiClient {
   private baseUrl: string
 
   constructor(baseUrl: string = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "/api/v1") {
-    this.baseUrl = baseUrl.replace(/\/$/, "")
+    let clean = baseUrl.replace(/\/$/, "")
+    // If the base URL is an absolute URL (e.g. https://api.onrender.com) and doesn't contain /api/,
+    // automatically append /api/v1 so backend router paths line up.
+    if (/^https?:\/\//i.test(clean) && !clean.includes("/api")) {
+      clean = `${clean}/api/v1`
+    }
+    this.baseUrl = clean
   }
 
   private getAuthToken(): string | null {
@@ -77,14 +83,21 @@ class ApiClient {
       )
     }
 
-    // Try parsing JSON body
+    // Try parsing JSON body or text body
     let responseData: unknown = null
-    const contentType = response.headers.get("content-type")
-    if (contentType && contentType.includes("application/json")) {
+    let responseText: string = ""
+    const contentType = response.headers.get("content-type") || ""
+    if (contentType.includes("application/json")) {
       try {
         responseData = await response.json()
       } catch {
         responseData = null
+      }
+    } else {
+      try {
+        responseText = await response.text()
+      } catch {
+        responseText = ""
       }
     }
 
@@ -98,9 +111,20 @@ class ApiClient {
       } else if (response.status === 403) {
         defaultMessage = "Access denied: your account role does not have permission for this portal."
       } else if (response.status === 404) {
-        defaultMessage = "API endpoint not found (HTTP 404). Please ensure the backend server is reachable."
+        const isStaticHostNotFound =
+          responseText.includes("The page could not be found") ||
+          responseText.includes("NOT_FOUND") ||
+          url.includes("vercel.app") ||
+          url.startsWith("/api")
+        if (isStaticHostNotFound) {
+          defaultMessage =
+            "Backend API is unreachable (HTTP 404: The page could not be found). The frontend is hosted on Vercel, but API requests cannot be handled by the static frontend host. Please configure VITE_API_URL in your Vercel project environment variables with your deployed FastAPI backend URL."
+        } else {
+          defaultMessage = "API endpoint not found (HTTP 404). Please ensure the backend server route exists."
+        }
       } else if (response.status === 405) {
-        defaultMessage = "Backend API is not reachable on this host (HTTP 405 Method Not Allowed). Please ensure the FastAPI backend is running and VITE_API_URL is configured."
+        defaultMessage =
+          "Backend API is not reachable on this host (HTTP 405 Method Not Allowed). Please ensure the FastAPI backend is running and VITE_API_URL is configured in Vercel."
       } else if (response.status === 422) {
         defaultMessage = "Validation error: please check your input and try again."
       } else if (response.status >= 500) {
@@ -109,7 +133,7 @@ class ApiClient {
 
       const errorMessage =
         errorData?.error?.message ||
-        (response.statusText && response.statusText.trim() ? response.statusText : defaultMessage)
+        defaultMessage
       const errorDetails = errorData?.error?.details
 
       throw new ApiError(errorMessage, errorCode, response.status, errorDetails)
