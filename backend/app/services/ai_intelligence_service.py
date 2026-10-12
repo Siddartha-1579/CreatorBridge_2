@@ -10,7 +10,7 @@ Integrates configured LLM provider for:
 import json
 import re
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 import httpx
 from app.core.config import settings
 from app.core.logging import get_logger
