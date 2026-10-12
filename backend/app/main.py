@@ -48,12 +48,33 @@ app = FastAPI(
 )
 
 # Configure CORS
+# Collect and sanitize allowed origins, guaranteeing production and dev origins
+raw_origins = list(settings.cors_origins)
+if settings.frontend_url:
+    raw_origins.append(settings.frontend_url)
+raw_origins.extend([
+    "https://creatorbridge2.vercel.app",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+])
+
+allowed_origins: list[str] = []
+for origin in raw_origins:
+    if origin and isinstance(origin, str):
+        cleaned = origin.strip().rstrip("/")
+        if cleaned and cleaned not in allowed_origins:
+            allowed_origins.append(cleaned)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins,
+    allow_origins=allowed_origins,
+    allow_origin_regex=r"^https://creatorbridge2.*\.vercel\.app$",
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
     allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=600,
 )
 
 # Register structured error handlers
