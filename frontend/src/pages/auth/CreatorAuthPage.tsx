@@ -1,5 +1,5 @@
-import React, { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import React, { useState, useEffect } from "react"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { Sparkles, ArrowLeft, Eye, EyeOff, AlertCircle, ShieldCheck } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 import { TurnstileWidget } from "@/components/common/TurnstileWidget"
@@ -8,8 +8,18 @@ import { CreatorBridgeLogo } from "@/components/common/CreatorBridgeLogo"
 export const CreatorAuthPage: React.FC = () => {
   const navigate = useNavigate()
   const { login, register } = useAuth()
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const [mode, setMode] = useState<"login" | "register">("login")
+  const initialMode = searchParams.get("mode") === "register" ? "register" : "login"
+  const [mode, setMode] = useState<"login" | "register">(initialMode)
+
+  useEffect(() => {
+    const queryMode = searchParams.get("mode")
+    if (queryMode === "register" || queryMode === "login") {
+      setMode(queryMode)
+    }
+  }, [searchParams])
+
   const [fullName, setFullName] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -71,13 +81,22 @@ export const CreatorAuthPage: React.FC = () => {
         {/* Top Header with CreatorBridge Logo */}
         <div className="flex items-center justify-between mb-8">
           <CreatorBridgeLogo size="sm" badgeText="Creator Hub" />
-          <Link
-            to="/auth"
-            className="inline-flex items-center space-x-1 text-xs font-semibold text-[#4B4652] hover:text-[#9A6ADF] transition-colors"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            <span>Switch Portal</span>
-          </Link>
+          <div className="flex items-center space-x-2 text-xs">
+            <Link
+              to={`/auth/brand${mode === "register" ? "?mode=register" : ""}`}
+              className="font-medium text-[#9A6ADF] hover:underline"
+            >
+              Brand Portal →
+            </Link>
+            <span className="text-slate-300">|</span>
+            <Link
+              to="/auth"
+              className="inline-flex items-center space-x-1 font-semibold text-[#4B4652] hover:text-[#9A6ADF] transition-colors"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              <span>All Portals</span>
+            </Link>
+          </div>
         </div>
 
         {/* Card Header */}
@@ -98,6 +117,7 @@ export const CreatorAuthPage: React.FC = () => {
             type="button"
             onClick={() => {
               setMode("login")
+              setSearchParams({ mode: "login" })
               setError(null)
             }}
             className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${
@@ -112,6 +132,7 @@ export const CreatorAuthPage: React.FC = () => {
             type="button"
             onClick={() => {
               setMode("register")
+              setSearchParams({ mode: "register" })
               setError(null)
             }}
             className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all ${

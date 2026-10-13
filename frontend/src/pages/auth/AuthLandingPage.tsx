@@ -1,10 +1,14 @@
 import React from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { Building2, Wand2, ShieldCheck, ArrowRight, CheckCircle2 } from "lucide-react"
 import { CreatorBridgeLogo } from "@/components/common/CreatorBridgeLogo"
 
 export const AuthLandingPage: React.FC = () => {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const mode = searchParams.get("mode")
+  const creatorTarget = mode ? `/auth/creator?mode=${mode}` : "/auth/creator"
+  const brandTarget = mode ? `/auth/brand?mode=${mode}` : "/auth/brand"
 
   return (
     <div className="min-h-screen bg-[#FFFDFD] py-16 px-4 sm:px-6 lg:px-8 flex flex-col justify-center">
@@ -26,7 +30,7 @@ export const AuthLandingPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
           {/* Creator Portal Card */}
           <div
-            onClick={() => navigate("/auth/creator")}
+            onClick={() => navigate(creatorTarget)}
             className="group relative rounded-3xl border-2 border-[#F4E7FF] bg-white p-8 shadow-sm hover:border-[#9A6ADF] hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col justify-between"
           >
             <div className="absolute top-5 right-5 h-8 w-8 rounded-full bg-[#F4E7FF] flex items-center justify-center text-[#9A6ADF] group-hover:bg-[#9A6ADF] group-hover:text-white transition-colors">
@@ -71,7 +75,7 @@ export const AuthLandingPage: React.FC = () => {
 
           {/* Brand & Agency Portal Card */}
           <div
-            onClick={() => navigate("/auth/brand")}
+            onClick={() => navigate(brandTarget)}
             className="group relative rounded-3xl border-2 border-[#F4E7FF] bg-white p-8 shadow-sm hover:border-[#9A6ADF] hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col justify-between"
           >
             <div className="absolute top-5 right-5 h-8 w-8 rounded-full bg-[#F4E7FF] flex items-center justify-center text-[#9A6ADF] group-hover:bg-[#9A6ADF] group-hover:text-white transition-colors">

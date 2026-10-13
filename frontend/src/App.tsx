@@ -1,5 +1,5 @@
 import React from "react"
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom"
+import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from "react-router-dom"
 import { AuthProvider, useAuth } from "@/hooks/useAuth"
 
 // Layouts
@@ -53,6 +53,30 @@ const DashboardRedirect: React.FC = () => {
   return <Navigate to={user.role === "CREATOR" ? "/creator/dashboard" : "/brand/dashboard"} replace />
 }
 
+const RegisterRedirect: React.FC = () => {
+  const [searchParams] = useSearchParams()
+  const role = searchParams.get("role")?.toUpperCase()
+  if (role === "BRAND" || role === "AGENCY") {
+    return <Navigate to="/auth/brand?mode=register" replace />
+  }
+  if (role === "CREATOR") {
+    return <Navigate to="/auth/creator?mode=register" replace />
+  }
+  return <Navigate to="/auth" replace />
+}
+
+const LoginRedirect: React.FC = () => {
+  const [searchParams] = useSearchParams()
+  const role = searchParams.get("role")?.toUpperCase()
+  if (role === "BRAND" || role === "AGENCY") {
+    return <Navigate to="/auth/brand?mode=login" replace />
+  }
+  if (role === "CREATOR") {
+    return <Navigate to="/auth/creator?mode=login" replace />
+  }
+  return <Navigate to="/auth" replace />
+}
+
 export const App: React.FC = () => {
   return (
     <AuthProvider>
@@ -73,10 +97,10 @@ export const App: React.FC = () => {
           <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
 
-          {/* Legacy & Shared Redirects */}
+          {/* Legacy & Shared Redirects with Role/Mode Forwarding */}
           <Route path="/dashboard" element={<DashboardRedirect />} />
-          <Route path="/login" element={<Navigate to="/auth" replace />} />
-          <Route path="/register" element={<Navigate to="/auth" replace />} />
+          <Route path="/login" element={<LoginRedirect />} />
+          <Route path="/register" element={<RegisterRedirect />} />
 
           {/* Onboarding Routes */}
           <Route path="/creator/onboarding" element={<CreatorOnboardingPage />} />

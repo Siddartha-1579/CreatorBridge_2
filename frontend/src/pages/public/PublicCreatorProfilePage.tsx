@@ -148,8 +148,10 @@ export const PublicCreatorProfilePage: React.FC = () => {
                   </span>
                 )}
                 <span className="flex items-center gap-1 text-slate-700 font-medium">
-                  <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
-                  {profile.reputation_score ? `${profile.reputation_score} Rating` : "4.90 Rating"}
+                  <Star className={`w-3.5 h-3.5 ${profile.reputation_score && profile.reputation_score > 0 ? "text-amber-500 fill-amber-500" : "text-slate-300"}`} />
+                  {profile.reputation_score && profile.reputation_score > 0
+                    ? `${Number(profile.reputation_score).toFixed(2)} Rating`
+                    : "New Creator — No Reviews Yet"}
                 </span>
               </div>
             </div>

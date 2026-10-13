@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <linearGradient id="bgCyber" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E0836"/>
+      <stop offset="50%" stop-color="#3B0764"/>
+      <stop offset="100%" stop-color="#0F051D"/>
+    </linearGradient>
+    <linearGradient id="neonPink" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F43F5E"/>
+      <stop offset="100%" stop-color="#A855F7"/>
+    </linearGradient>
+    <linearGradient id="chromeGlow2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="50%" stop-color="#F472B6"/>
+      <stop offset="100%" stop-color="#FDE047"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bgCyber)"/>
+  <!-- Cyber Fashion Silhouette & Poly Geometric Mesh -->
+  <g transform="translate(400, 300)">
+    <polygon points="0,-180 -120,40 -60,180 60,180 120,40" fill="url(#neonPink)" opacity="0.8"/>
+    <polygon points="0,-180 -40,-20 0,140 40,-20" fill="url(#chromeGlow2)" opacity="0.9"/>
+    <!-- Wireframe Lines -->
+    <line x1="0" y1="-180" x2="-120" y2="40" stroke="#FFFFFF" stroke-width="1.5" stroke-opacity="0.6"/>
+    <line x1="0" y1="-180" x2="120" y2="40" stroke="#FFFFFF" stroke-width="1.5" stroke-opacity="0.6"/>
+    <line x1="-120" y1="40" x2="0" y2="140" stroke="#FFFFFF" stroke-width="1.5" stroke-opacity="0.6"/>
+    <line x1="120" y1="40" x2="0" y2="140" stroke="#FFFFFF" stroke-width="1.5" stroke-opacity="0.6"/>
+  </g>
+  <!-- Metadata Banner -->
+  <rect x="40" y="500" width="720" height="60" rx="16" fill="#0F051D" fill-opacity="0.85" stroke="#9A6ADF" stroke-width="1"/>
+  <text x="60" y="535" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="800" fill="#FFFFFF">CYBER COUTURE 2026</text>
+  <text x="60" y="552" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" fill="#C084FC">Midjourney v6.1 • Magnific 4x AI • Commercial License</text>
+  <text x="730" y="538" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#38BDF8" text-anchor="end">8K MASTER</text>
+</svg>

@@ -1,7 +1,7 @@
 {
-  "name": "hacxlerate-2026-marketplace",
+  "name": "creatorbridge-marketplace",
   "version": "1.0.0",
-  "description": "HacXLerate 2026 - AI Content Creator Marketplace Architecture Foundation",
+  "description": "CreatorBridge - Where Brands Meet Creativity - Intelligent AI Creator Marketplace",
   "private": true,
   "scripts": {
     "dev": "npm --prefix frontend run dev",
@@ -17,6 +17,6 @@
     "fastapi",
     "react",
     "supabase",
-    "hacxlerate"
+    "creatorbridge"
   ]
 }

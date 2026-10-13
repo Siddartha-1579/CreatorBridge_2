@@ -41,4 +41,4 @@ def setup_logging(log_level: str = "INFO") -> None:
 
 def get_logger(name: str) -> logging.Logger:
     """Returns a named logger."""
-    return logging.getLogger(f"hacxlerate.{name}")
+    return logging.getLogger(f"creatorbridge.{name}")

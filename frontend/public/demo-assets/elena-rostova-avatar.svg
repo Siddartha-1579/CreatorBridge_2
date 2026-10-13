@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <linearGradient id="elenaGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9A6ADF"/>
+      <stop offset="50%" stop-color="#EC4899"/>
+      <stop offset="100%" stop-color="#F43F5E"/>
+    </linearGradient>
+    <linearGradient id="skinElena" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FCE7F3"/>
+      <stop offset="100%" stop-color="#FBCFE8"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" rx="200" fill="url(#elenaGrad)"/>
+  <!-- Stylized Portrait Silhouette -->
+  <circle cx="200" cy="160" r="70" fill="url(#skinElena)"/>
+  <!-- Chic Modern Hair Geometric -->
+  <path d="M125 150 C125 70 275 70 275 150 C275 190 260 210 240 210 C220 210 210 180 200 180 C190 180 180 210 160 210 C140 210 125 190 125 150 Z" fill="#18181B"/>
+  <!-- Sunglasses / Cyber Visor -->
+  <rect x="145" y="145" width="110" height="24" rx="12" fill="#09090B"/>
+  <rect x="150" y="148" width="100" height="18" rx="9" fill="#F43F5E" fill-opacity="0.8"/>
+  <!-- Shoulders & Coat -->
+  <path d="M100 370 C100 270 300 270 300 370 Z" fill="#27272A"/>
+  <!-- Creator Verified Badge -->
+  <circle cx="290" cy="290" r="26" fill="#9A6ADF" stroke="#FFFFFF" stroke-width="4"/>
+  <path d="M280 290 L287 297 L302 282" stroke="#FFFFFF" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

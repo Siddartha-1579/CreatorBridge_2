@@ -264,8 +264,9 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
         const matchesRate = rateDollars <= maxHourlyRate
 
         // Rating filter
-        const rating = creator.reputation_score ?? creator.reputationScore ?? 4.9
-        const matchesRating = rating >= minRating
+        const rawRating = creator.reputation_score ?? creator.reputationScore
+        const rating = rawRating ? Number(rawRating) : 0
+        const matchesRating = minRating === 0 ? true : rating >= minRating
 
         // Availability filter
         const status = ((creator.metadata as Record<string, any> | undefined)?.availability_status || creator.visibility || "AVAILABLE").toUpperCase()
@@ -692,9 +693,18 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
                 {/* Footer with Rate, Reputation, and Actions */}
                 <CardFooter className="pt-3 border-t border-[#F4E7FF] flex items-center justify-between">
                   <div className="flex items-center gap-3 text-xs">
-                    <div className="flex items-center gap-1 text-amber-500 font-bold">
-                      <Star className="h-3.5 w-3.5 fill-amber-400" />
-                      <span>{creator.reputation_score ?? creator.reputationScore ?? 4.9}</span>
+                    <div className="flex items-center gap-1 font-bold">
+                      {creator.reputation_score && Number(creator.reputation_score) > 0 ? (
+                        <>
+                          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-500" />
+                          <span className="text-amber-600 font-semibold">{Number(creator.reputation_score).toFixed(2)}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Star className="h-3.5 w-3.5 text-slate-300" />
+                          <span className="text-slate-400 font-normal">New</span>
+                        </>
+                      )}
                     </div>
                     {creator.hourly_rate_cents && (
                       <span className="text-[#111111] font-mono font-semibold">

@@ -77,7 +77,7 @@ def test_generation_service_multi_modal_execution():
             user_id="test-user",
             data=GenerationJobCreate(
                 modality=AssetType.AUDIO,
-                prompt="Welcome to HacXLerate AI Creator Marketplace.",
+                prompt="Welcome to CreatorBridge AI Creator Marketplace.",
                 parameters={"voice_id": "rachel"},
             ),
         )

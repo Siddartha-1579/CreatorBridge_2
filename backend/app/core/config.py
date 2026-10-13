@@ -1,8 +1,7 @@
-"""Centralized application settings using Pydantic Settings."""
-
+import json
 from pathlib import Path
-from typing import List, Optional
-from pydantic import Field, AliasChoices
+from typing import List, Optional, Any
+from pydantic import Field, AliasChoices, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _CONFIG_DIR = Path(__file__).resolve().parent
@@ -17,7 +16,7 @@ _ENV_FILES = (
 
 
 class Settings(BaseSettings):
-    """Central configuration for HacXLerate application."""
+    """Central configuration for CreatorBridge application."""
 
     model_config = SettingsConfigDict(
         env_file=_ENV_FILES,
@@ -37,13 +36,44 @@ class Settings(BaseSettings):
     frontend_url: str = Field(default="http://localhost:5173", alias="FRONTEND_URL")
     cors_origins: List[str] = Field(
         default=[
+            "https://creatorbridge2.vercel.app",
             "http://localhost:5173",
             "http://127.0.0.1:5173",
             "http://localhost:3000",
-            "https://creatorbridge2.vercel.app",
         ],
         alias="CORS_ORIGINS",
     )
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def assemble_cors_origins(cls, v: Any) -> List[str]:
+        """Parses and sanitizes CORS origins, ensuring production and local frontend origins are always included."""
+        if isinstance(v, str):
+            v_str = v.strip()
+            if v_str.startswith("[") and v_str.endswith("]"):
+                try:
+                    parsed = json.loads(v_str)
+                    if isinstance(parsed, list):
+                        v = parsed
+                except Exception:
+                    pass
+            if isinstance(v, str):
+                v = [item.strip() for item in v_str.split(",") if item.strip()]
+
+        origins = list(v) if isinstance(v, (list, tuple, set)) else []
+        required = [
+            "https://creatorbridge2.vercel.app",
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://localhost:3000",
+        ]
+        combined: List[str] = []
+        for o in list(origins) + required:
+            if o and isinstance(o, str):
+                cleaned = o.strip().rstrip("/")
+                if cleaned and cleaned not in combined:
+                    combined.append(cleaned)
+        return combined
 
     # 2. Database & Supabase Settings (A)
     supabase_url: str = Field(default="https://mock.supabase.co", alias="SUPABASE_URL")

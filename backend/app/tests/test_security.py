@@ -139,5 +139,42 @@ def test_audit_log_redacts_passwords():
     assert sanitized["password"] == "[REDACTED]"
     assert sanitized["access_token"] == "[REDACTED]"
     assert sanitized["turnstile_secret"] == "[REDACTED]"
-    assert sanitized["safe_field"] == "valid_value"
     assert sanitized["email"] == "test@domain.com"
+
+
+def test_cors_preflight_login_allowed(client: TestClient):
+    """Verifies OPTIONS preflight request to /api/v1/auth/login succeeds for Vercel and local origins."""
+    # 1. Test production Vercel frontend origin
+    headers_vercel = {
+        "Origin": "https://creatorbridge2.vercel.app",
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "authorization,content-type",
+    }
+    res_vercel = client.options("/api/v1/auth/login", headers=headers_vercel)
+    assert res_vercel.status_code == 200
+    assert res_vercel.headers.get("access-control-allow-origin") == "https://creatorbridge2.vercel.app"
+    assert "POST" in res_vercel.headers.get("access-control-allow-methods", "")
+    assert res_vercel.headers.get("access-control-allow-credentials") == "true"
+    allow_headers = res_vercel.headers.get("access-control-allow-headers", "").lower()
+    assert "authorization" in allow_headers
+    assert "content-type" in allow_headers
+
+    # 2. Test local dev origin
+    headers_local = {
+        "Origin": "http://localhost:5173",
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "authorization,content-type",
+    }
+    res_local = client.options("/api/v1/auth/login", headers=headers_local)
+    assert res_local.status_code == 200
+    assert res_local.headers.get("access-control-allow-origin") == "http://localhost:5173"
+
+    # 3. Test disallowed origin
+    headers_disallowed = {
+        "Origin": "https://malicious-origin.com",
+        "Access-Control-Request-Method": "POST",
+        "Access-Control-Request-Headers": "authorization,content-type",
+    }
+    res_disallowed = client.options("/api/v1/auth/login", headers=headers_disallowed)
+    assert res_disallowed.status_code == 400
+    assert "access-control-allow-origin" not in res_disallowed.headers

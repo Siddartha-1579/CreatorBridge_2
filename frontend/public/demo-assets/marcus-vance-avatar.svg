@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <linearGradient id="marcusGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284C7"/>
+      <stop offset="50%" stop-color="#2563EB"/>
+      <stop offset="100%" stop-color="#4F46E5"/>
+    </linearGradient>
+    <linearGradient id="skinMarcus" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FCD34D"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" rx="200" fill="url(#marcusGrad)"/>
+  <!-- Stylized Portrait Silhouette -->
+  <circle cx="200" cy="165" r="70" fill="#E0A96D"/>
+  <!-- Hair & Beard -->
+  <path d="M130 150 C130 80 270 80 270 150 C270 180 250 180 240 160 C230 140 210 140 200 140 C190 140 170 140 160 160 C150 180 130 180 130 150 Z" fill="#1C1917"/>
+  <!-- Beard Outline -->
+  <path d="M145 180 C145 235 255 235 255 180 L235 180 C235 215 165 215 165 180 Z" fill="#1C1917"/>
+  <!-- Shoulders & Studio Hoodie -->
+  <path d="M100 370 C100 270 300 270 300 370 Z" fill="#0F172A"/>
+  <!-- Camera / Motion Play Glyph -->
+  <polygon points="190,300 215,315 190,330" fill="#38BDF8"/>
+  <!-- Creator Verified Badge -->
+  <circle cx="290" cy="290" r="26" fill="#0284C7" stroke="#FFFFFF" stroke-width="4"/>
+  <path d="M280 290 L287 297 L302 282" stroke="#FFFFFF" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

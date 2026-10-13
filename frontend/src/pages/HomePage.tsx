@@ -138,7 +138,7 @@ export const HomePage: React.FC = () => {
           {/* Prominent Dual CTAs */}
           <ScrollReveal direction="up" delayMs={300}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
-              <Link to="/register?role=BRAND" className="w-full sm:w-auto">
+              <Link to="/auth/brand?mode=register" className="w-full sm:w-auto">
                 <Button
                   variant="primary"
                   size="lg"
@@ -148,7 +148,7 @@ export const HomePage: React.FC = () => {
                 </Button>
               </Link>
 
-              <Link to="/register?role=CREATOR" className="w-full sm:w-auto">
+              <Link to="/auth/creator?mode=register" className="w-full sm:w-auto">
                 <Button
                   variant="secondary"
                   size="lg"
@@ -594,7 +594,7 @@ export const HomePage: React.FC = () => {
 
               <ScrollReveal direction="up" delayMs={350}>
                 <div className="pt-2">
-                  <Link to="/register?role=CREATOR">
+                  <Link to="/auth/creator?mode=register">
                     <Button variant="primary" size="lg" className="text-xs font-semibold shadow-md shadow-[#9A6ADF]/20 gap-2 px-6">
                       Apply as an AI Creator <ArrowRight className="h-4 w-4" />
                     </Button>
@@ -726,7 +726,7 @@ export const HomePage: React.FC = () => {
 
               <ScrollReveal direction="up" delayMs={350}>
                 <div className="pt-2">
-                  <Link to="/register?role=BRAND">
+                  <Link to="/auth/brand?mode=register">
                     <Button variant="primary" size="lg" className="text-xs font-semibold shadow-md shadow-[#9A6ADF]/20 gap-2 px-6">
                       Post a Campaign Brief <ArrowRight className="h-4 w-4" />
                     </Button>
@@ -1090,7 +1090,7 @@ export const HomePage: React.FC = () => {
 
             {/* Dual Action Buttons */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto relative z-10 pt-2">
-              <Link to="/register?role=BRAND">
+              <Link to="/auth/brand?mode=register">
                 <Button
                   size="lg"
                   className="w-full bg-white hover:bg-[#F4E7FF] text-[#9A6ADF] font-bold text-xs shadow-lg shadow-black/10 py-6 rounded-xl cursor-pointer"
@@ -1099,7 +1099,7 @@ export const HomePage: React.FC = () => {
                 </Button>
               </Link>
 
-              <Link to="/register?role=CREATOR">
+              <Link to="/auth/creator?mode=register">
                 <Button
                   size="lg"
                   className="w-full bg-[#5b3096] hover:bg-[#4d2780] text-white border border-[#D8B8FF]/40 font-bold text-xs py-6 rounded-xl cursor-pointer"

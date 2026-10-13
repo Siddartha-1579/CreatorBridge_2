@@ -178,7 +178,7 @@ class GenerationService(BaseService):
             id=item_id,
             creator_id=creator_id,
             title=title or f"AI Studio {job.modality.value.title()} Asset",
-            description=f"Generated via HacXLerate AI Studio ({job.provider_name}). Parameters: {job.parameters}",
+            description=f"Generated via CreatorBridge AI Studio ({job.provider_name}). Parameters: {job.parameters}",
             category=f"AI {job.modality.value.title()}",
             content_type="Studio Creation",
             media_type=job.modality,

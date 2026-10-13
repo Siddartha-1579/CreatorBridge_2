@@ -251,7 +251,7 @@ class AuthService(BaseService):
                 )
                 raise UnauthorizedException("Invalid email or password")
 
-        if record.get("password") != request.password and not settings.app_debug:
+        if record.get("password") != request.password:
             await audit_service.log_event(
                 action="AUTH_LOGIN_FAILED_BAD_PASSWORD",
                 status="FAILURE",

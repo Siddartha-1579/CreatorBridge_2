@@ -88,6 +88,7 @@ async def create_brief(
 
 
 @router.patch("/{brief_id}", response_model=ApiResponse[CampaignBriefResponse], summary="Update campaign brief draft")
+@router.put("/{brief_id}", response_model=ApiResponse[CampaignBriefResponse], summary="Update campaign brief draft (PUT alias)")
 async def update_brief(
     brief_id: UUID = Path(...),
     data: CampaignBriefUpdate = Body(...),

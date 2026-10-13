@@ -281,6 +281,13 @@ def init_db():
         conn.commit()
         logger.info(f"Persistent database schema initialized at {DB_PATH}")
 
+        # Idempotently seed high-fidelity demo dataset
+        try:
+            from app.core.seed_data import seed_demo_data
+            seed_demo_data()
+        except Exception as seed_err:
+            logger.warning(f"Demo data seeding encountered notice: {seed_err}")
+
 
 # Initialize schema on module import
 init_db()

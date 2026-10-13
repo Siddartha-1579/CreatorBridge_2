@@ -244,10 +244,14 @@ export const CreatorDashboardPage: React.FC = () => {
             <Star className="w-4 h-4 text-amber-500" />
           </div>
           <div className="text-xl font-extrabold text-slate-900">
-            {profile?.reputation_score ? `${profile.reputation_score} / 5.0` : "4.80 / 5.0"}
+            {profile?.reputation_score && profile.reputation_score > 0
+              ? `${Number(profile.reputation_score).toFixed(2)} / 5.0`
+              : "New — Unrated"}
           </div>
           <p className="text-[11px] font-medium text-slate-500">
-            Factual score derived from evaluations
+            {profile?.reputation_score && profile.reputation_score > 0
+              ? "Factual score derived from completed client contracts"
+              : "New creator — insufficient review history"}
           </p>
         </div>
 
