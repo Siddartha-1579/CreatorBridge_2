@@ -554,7 +554,7 @@ def seed_demo_data():
                 json.dumps({"is_demo": True, "curated_niche": "Skincare"}),
                 1,
                 BriefStatus.PUBLISHED.value,
-                "/demo-assets/skincare-luxury-serum.svg",
+                "/demo-assets/skincare-luxury-serum.jpg",
             ),
             # Campaign 2: Outdoor Gear
             (
@@ -629,7 +629,7 @@ def seed_demo_data():
                 json.dumps({"is_demo": True, "curated_niche": "Outdoor"}),
                 1,
                 BriefStatus.PUBLISHED.value,
-                "/demo-assets/outdoor-sustainable-gear.svg",
+                "/demo-assets/outdoor-sustainable-gear.jpg",
             ),
             # Campaign 3: Cyber Fashion Editorial
             (
@@ -693,7 +693,7 @@ def seed_demo_data():
                 json.dumps({"is_demo": True, "curated_niche": "Fashion"}),
                 1,
                 BriefStatus.PUBLISHED.value,
-                "/demo-assets/fashion-editorial-cyber.svg",
+                "/demo-assets/fashion-editorial-cyber.jpg",
             ),
             # Campaign 4: Matcha Beverage
             (
@@ -768,7 +768,7 @@ def seed_demo_data():
                 json.dumps({"is_demo": True, "curated_niche": "Matcha"}),
                 1,
                 BriefStatus.PUBLISHED.value,
-                "/demo-assets/beverage-premium-matcha.svg",
+                "/demo-assets/beverage-premium-matcha.jpg",
             ),
         ]
 
@@ -968,7 +968,7 @@ def seed_demo_data():
                 "GUIDELINES",
                 1,
                 48,
-                "/demo-assets/skincare-luxury-serum.svg",
+                "/demo-assets/skincare-luxury-serum.jpg",
                 now_str,
                 now_str,
             ),
@@ -992,7 +992,7 @@ def seed_demo_data():
                 "ASSET_PACK",
                 1,
                 35,
-                "/demo-assets/outdoor-sustainable-gear.svg",
+                "/demo-assets/outdoor-sustainable-gear.jpg",
                 now_str,
                 now_str,
             ),

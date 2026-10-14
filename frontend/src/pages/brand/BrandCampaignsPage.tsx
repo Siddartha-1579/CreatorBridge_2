@@ -5,6 +5,7 @@ import type { CampaignBrief, CampaignApplication } from "@/types"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ImageWithFallback } from "@/components/common/ImageWithFallback"
 import {
   Megaphone,
   Plus,
@@ -312,43 +313,56 @@ export const BrandCampaignsPage: React.FC = () => {
                 key={camp.id}
                 className="p-5 sm:p-6 rounded-2xl bg-white border border-[#F4E7FF] hover:border-[#D8B8FF] transition-all duration-200 shadow-sm hover:shadow-md"
               >
-                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                  {/* Info Column */}
-                  <div className="space-y-2 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-extrabold text-[#111111] text-base sm:text-lg tracking-tight">
-                        {camp.title}
-                      </h3>
-                      {isPublished ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          <CheckCircle2 className="h-3 w-3" />
-                          Published & Active
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                          <Clock className="h-3 w-3" />
-                          Draft In Progress
-                        </span>
-                      )}
-                      {camp.campaign_category && (
-                        <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-[#F4E7FF]/60 text-[#7B42BC]">
-                          {camp.campaign_category}
-                        </span>
-                      )}
-                    </div>
-
-                    {camp.brand_or_product_name && (
-                      <p className="text-xs text-[#9A6ADF] font-bold">
-                        Product: {camp.brand_or_product_name}
-                      </p>
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+                  {/* Info Column with Cover Thumbnail */}
+                  <div className="flex flex-col sm:flex-row items-start gap-4 flex-1">
+                    {camp.cover_image_url && (
+                      <div className="w-full sm:w-36 h-28 sm:h-24 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-[#F4E7FF] shadow-2xs">
+                        <ImageWithFallback
+                          src={camp.cover_image_url}
+                          fallbackSrc="/demo-assets/skincare-luxury-serum.jpg"
+                          alt={camp.title}
+                          category={camp.campaign_category}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
                     )}
 
-                    <p className="text-xs text-[#4B4652] line-clamp-2 max-w-2xl leading-relaxed">
-                      {camp.executive_summary || camp.campaign_idea || camp.description || "Structured AI campaign brief."}
-                    </p>
+                    <div className="space-y-2 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-extrabold text-[#111111] text-base sm:text-lg tracking-tight">
+                          {camp.title}
+                        </h3>
+                        {isPublished ? (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <CheckCircle2 className="h-3 w-3" />
+                            Published & Active
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                            <Clock className="h-3 w-3" />
+                            Draft In Progress
+                          </span>
+                        )}
+                        {camp.campaign_category && (
+                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-[#F4E7FF]/60 text-[#7B42BC]">
+                            {camp.campaign_category}
+                          </span>
+                        )}
+                      </div>
 
-                    {/* Metadata chips */}
-                    <div className="flex flex-wrap items-center gap-4 pt-1 text-xs text-[#4B4652]">
+                      {camp.brand_or_product_name && (
+                        <p className="text-xs text-[#9A6ADF] font-bold">
+                          Product: {camp.brand_or_product_name}
+                        </p>
+                      )}
+
+                      <p className="text-xs text-[#4B4652] line-clamp-2 max-w-2xl leading-relaxed">
+                        {camp.executive_summary || camp.campaign_idea || camp.description || "Structured AI campaign brief."}
+                      </p>
+
+                      {/* Metadata chips */}
+                      <div className="flex flex-wrap items-center gap-4 pt-1 text-xs text-[#4B4652]">
                       <div className="flex items-center gap-1 font-bold text-emerald-700">
                         <DollarSign className="h-3.5 w-3.5 text-emerald-600" />
                         <span>{budgetFormatted}</span>
@@ -387,6 +401,7 @@ export const BrandCampaignsPage: React.FC = () => {
                       )}
                     </div>
                   </div>
+                </div>
 
                   {/* Actions Column */}
                   <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 self-start lg:self-center border-t lg:border-t-0 pt-3 lg:pt-0 border-slate-100 w-full lg:w-auto">

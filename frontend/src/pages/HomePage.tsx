@@ -646,7 +646,7 @@ export const HomePage: React.FC = () => {
                   badge="Funded Escrow"
                   title="Aura Spatial Sound Launch"
                   description="Seeking an AI motion director to produce 3 high-impact 9:16 vertical video hooks showing liquid metallic soundwaves for next-gen wireless headphones."
-                  image="/demo-assets/beverage-premium-matcha.svg"
+                  image="/demo-assets/beverage-premium-matcha.jpg"
                   tags={["Runway Gen-3", "Midjourney v6", "Commercial Use"]}
                   metadata={{
                     "Budget Allocated": "$3,200 USD",

@@ -293,6 +293,7 @@ export const CreatorCampaignDetailPage: React.FC = () => {
             <div className="aspect-video lg:aspect-4/3 rounded-2xl overflow-hidden border border-white/10 shadow-2xl relative">
               <ImageWithFallback
                 src={campaign.cover_image_url}
+                fallbackSrc="/demo-assets/skincare-luxury-serum.jpg"
                 alt={campaign.title}
                 category={campaign.campaign_category || "Campaign"}
                 className="w-full h-full object-cover"

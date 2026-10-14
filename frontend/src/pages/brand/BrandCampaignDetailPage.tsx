@@ -369,8 +369,8 @@ export const BrandCampaignDetailPage: React.FC = () => {
           <Card className="p-4 bg-white border-purple-100 rounded-2xl shadow-2xs">
             <div className="h-44 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 mb-3">
               <ImageWithFallback
-                src={campaign.cover_image_url || "/demo-assets/fashion-editorial-cyber.svg"}
-                fallbackSrc="/demo-assets/fashion-editorial-cyber.svg"
+                src={campaign.cover_image_url || "/demo-assets/fashion-editorial-cyber.jpg"}
+                fallbackSrc="/demo-assets/fashion-editorial-cyber.jpg"
                 alt={campaign.title}
                 category={campaign.campaign_category}
                 iconType="briefcase"

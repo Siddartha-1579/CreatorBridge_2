@@ -82,7 +82,7 @@ def test_brand_community_posts_flow(client: TestClient):
         "content": "Download 15 new 4K ambient lighting and glass texture loops from the creator asset library.",
         "category": "ASSET_PACK",
         "pinned": True,
-        "media_url": "/demo-assets/skincare-luxury-serum.svg",
+        "media_url": "/demo-assets/skincare-luxury-serum.jpg",
     }
     create_res = client.post("/api/v1/campaigns/community/posts", json=post_payload, headers=brand_headers)
     assert create_res.status_code == 200

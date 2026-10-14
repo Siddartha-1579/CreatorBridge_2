@@ -359,8 +359,8 @@ export const CreatorCampaignsPage: React.FC = () => {
             {/* Right Artwork Preview */}
             <div className="lg:col-span-4 h-48 sm:h-56 lg:h-64 rounded-2xl overflow-hidden border border-white/20 relative shadow-2xl">
               <ImageWithFallback
-                src={featuredBrief.cover_image_url || "/demo-assets/fashion-editorial-cyber.svg"}
-                fallbackSrc="/demo-assets/fashion-editorial-cyber.svg"
+                src={featuredBrief.cover_image_url || "/demo-assets/fashion-editorial-cyber.jpg"}
+                fallbackSrc="/demo-assets/fashion-editorial-cyber.jpg"
                 alt={featuredBrief.title}
                 category={featuredBrief.campaign_category}
                 iconType="briefcase"
@@ -412,7 +412,7 @@ export const CreatorCampaignsPage: React.FC = () => {
                 {/* Thumb */}
                 <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
                   <img
-                    src={trend.cover_image_url || "/demo-assets/fashion-editorial-cyber.svg"}
+                    src={trend.cover_image_url || "/demo-assets/fashion-editorial-cyber.jpg"}
                     alt={trend.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                   />
@@ -550,7 +550,7 @@ export const CreatorCampaignsPage: React.FC = () => {
             const application = appliedBriefMap.get(brief.id)
             const coverImage =
               brief.cover_image_url ||
-              "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80"
+              "/demo-assets/skincare-luxury-serum.jpg"
             const cpmRateUSD = brief.cpm_rate_cents ? Math.round(brief.cpm_rate_cents / 100) : null
             const poolUSD = brief.total_pool_cents ? Math.round(brief.total_pool_cents / 100) : null
 
@@ -563,7 +563,7 @@ export const CreatorCampaignsPage: React.FC = () => {
                 <div className="relative h-44 w-full overflow-hidden bg-slate-100">
                   <ImageWithFallback
                     src={coverImage}
-                    fallbackSrc="/demo-assets/fashion-editorial-cyber.svg"
+                    fallbackSrc="/demo-assets/fashion-editorial-cyber.jpg"
                     alt={brief.title}
                     category={brief.campaign_category}
                     iconType="briefcase"
