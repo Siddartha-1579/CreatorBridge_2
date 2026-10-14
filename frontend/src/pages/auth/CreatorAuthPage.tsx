@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { Sparkles, ArrowLeft, Eye, EyeOff, AlertCircle, ShieldCheck } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
+import { authService } from "@/services/auth.service"
 import { TurnstileWidget } from "@/components/common/TurnstileWidget"
 import { CreatorBridgeLogo } from "@/components/common/CreatorBridgeLogo"
 
@@ -65,7 +66,13 @@ export const CreatorAuthPage: React.FC = () => {
           email,
           password,
           turnstileToken: turnstileToken || undefined,
+          portal: "creator",
         })
+        if (session.user.role === "BRAND" || session.user.role === "AGENCY") {
+          await authService.logout()
+          setError("This portal is reserved for Creator accounts. Brands and Agencies should log in via the Brand Portal.")
+          return
+        }
         navigate(session.redirectPath || "/creator/dashboard")
       }
     } catch (err: any) {
@@ -135,6 +142,81 @@ export const CreatorAuthPage: React.FC = () => {
             New Creator Registration
           </button>
         </div>
+
+        {/* Demo Creator Quick Login Helper for Live Hackathon Evaluation */}
+        {mode === "login" && (
+          <div className="mb-6 p-3.5 rounded-2xl bg-purple-50/70 border border-purple-200/80">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-purple-700 flex items-center gap-1.5">
+                <Sparkles className="w-3 h-3 text-purple-600" />
+                Live Demo Evaluation Accounts
+              </span>
+              <span className="text-[10px] text-purple-500 font-medium">1-Click Sign In</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  setEmail("elena@demo.creatorbridge.com")
+                  setPassword("demo123456")
+                  setError(null)
+                  setIsLoading(true)
+                  try {
+                    const session = await login({
+                      email: "elena@demo.creatorbridge.com",
+                      password: "demo123456",
+                      portal: "creator",
+                    })
+                    if (session.user.role === "BRAND" || session.user.role === "AGENCY") {
+                      await authService.logout()
+                      setError("This portal is reserved for Creator accounts. Brands and Agencies should log in via the Brand Portal.")
+                      return
+                    }
+                    navigate(session.redirectPath || "/creator/dashboard")
+                  } catch (err: any) {
+                    setError(err?.message || "Demo login failed.")
+                  } finally {
+                    setIsLoading(false)
+                  }
+                }}
+                className="py-2 px-3 rounded-xl bg-white border border-purple-200 text-xs font-semibold text-slate-800 hover:bg-purple-600 hover:text-white hover:border-purple-600 transition-all text-left shadow-xs"
+              >
+                <div className="font-bold truncate">Elena Rostova</div>
+                <div className="text-[10px] opacity-75 font-normal">Cinematic & ComfyUI</div>
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setEmail("marcus@demo.creatorbridge.com")
+                  setPassword("demo123456")
+                  setError(null)
+                  setIsLoading(true)
+                  try {
+                    const session = await login({
+                      email: "marcus@demo.creatorbridge.com",
+                      password: "demo123456",
+                      portal: "creator",
+                    })
+                    if (session.user.role === "BRAND" || session.user.role === "AGENCY") {
+                      await authService.logout()
+                      setError("This portal is reserved for Creator accounts. Brands and Agencies should log in via the Brand Portal.")
+                      return
+                    }
+                    navigate(session.redirectPath || "/creator/dashboard")
+                  } catch (err: any) {
+                    setError(err?.message || "Demo login failed.")
+                  } finally {
+                    setIsLoading(false)
+                  }
+                }}
+                className="py-2 px-3 rounded-xl bg-white border border-purple-200 text-xs font-semibold text-slate-800 hover:bg-purple-600 hover:text-white hover:border-purple-600 transition-all text-left shadow-xs"
+              >
+                <div className="font-bold truncate">Marcus Vance</div>
+                <div className="text-[10px] opacity-75 font-normal">3D Motion & Runway</div>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Auth Box */}
         <div className="rounded-3xl border border-purple-200/80 bg-white/95 p-6 sm:p-8 shadow-xl shadow-purple-500/5">

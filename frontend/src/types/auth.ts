@@ -15,6 +15,7 @@ export interface LoginCredentials {
   email: string
   password?: string
   turnstileToken?: string
+  portal?: string
 }
 
 export interface RegisterData {

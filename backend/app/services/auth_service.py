@@ -40,9 +40,10 @@ class AuthService(BaseService):
                 for r in rows:
                     role_val = r["role"]
                     try:
-                        role = UserRole(role_val)
+                        role = UserRole(str(role_val).strip().upper())
                     except ValueError:
-                        role = UserRole.BRAND if "brand" in r["email"] else UserRole.CREATOR
+                        self.logger.error(f"Authoritative user {r['email']} has invalid role '{role_val}'. Defaulting to CREATOR.")
+                        role = UserRole.CREATOR
                     self._user_store[r["email"]] = {
                         "id": r["id"],
                         "email": r["email"],
@@ -226,9 +227,35 @@ class AuthService(BaseService):
         # 2. Check credentials
         record = self._user_store.get(normalized_email)
         if not record:
+            try:
+                with get_db_connection() as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM users WHERE LOWER(email) = ?", (normalized_email,))
+                    row = cursor.fetchone()
+                    if row:
+                        try:
+                            role = UserRole(str(row["role"]).strip().upper())
+                        except ValueError:
+                            role = UserRole.CREATOR
+                        record = {
+                            "id": row["id"],
+                            "email": row["email"],
+                            "full_name": row["full_name"],
+                            "role": role,
+                            "password": row["password"],
+                            "is_verified": bool(row["is_verified"]),
+                            "email_verified": bool(row["email_verified"]),
+                            "is_onboarded": bool(row["is_onboarded"]),
+                        }
+                        self._user_store[normalized_email] = record
+            except Exception as e:
+                self.logger.warning(f"Failed to query DB for user {normalized_email}: {e}")
+
+        if not record:
             # In development mode, auto-provision user if not registered
             if settings.app_debug:
-                role = UserRole.BRAND if ("brand" in normalized_email or "agency" in normalized_email) else UserRole.CREATOR
+                portal_hint = (request.portal or "").strip().lower()
+                role = UserRole.BRAND if portal_hint in ("brand", "agency") else UserRole.CREATOR
                 record = {
                     "id": "usr_" + normalized_email.split("@")[0].replace(".", "_"),
                     "email": normalized_email,
@@ -261,6 +288,30 @@ class AuthService(BaseService):
                 metadata={"email": normalized_email},
             )
             raise UnauthorizedException("Invalid email or password")
+
+        # 3. Portal role validation (if portal context hint provided)
+        if request.portal:
+            portal_hint = request.portal.strip().lower()
+            if portal_hint == "brand" and record["role"] == UserRole.CREATOR:
+                await audit_service.log_event(
+                    action="AUTH_LOGIN_FAILED_PORTAL_MISMATCH",
+                    status="FAILURE",
+                    user_id=record.get("id"),
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                    metadata={"email": normalized_email, "attempted_portal": "brand", "actual_role": "CREATOR"},
+                )
+                raise ValidationException("This account is registered as a Creator. Please sign in through the Creator Portal.")
+            elif portal_hint == "creator" and record["role"] in (UserRole.BRAND, UserRole.AGENCY):
+                await audit_service.log_event(
+                    action="AUTH_LOGIN_FAILED_PORTAL_MISMATCH",
+                    status="FAILURE",
+                    user_id=record.get("id"),
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                    metadata={"email": normalized_email, "attempted_portal": "creator", "actual_role": record["role"].value},
+                )
+                raise ValidationException("This account is registered as a Brand/Agency. Please sign in through the Brand Portal.")
 
         user = UserResponse(
             id=record["id"],

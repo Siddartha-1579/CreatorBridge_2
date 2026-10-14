@@ -1,7 +1,7 @@
 """Authentication request and response schemas with strict input validation."""
 
 from typing import Optional
-from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict, computed_field
 from app.core.security import UserRole
 
 
@@ -25,12 +25,13 @@ class RegisterRequest(BaseModel):
 
 
 class LoginRequest(BaseModel):
-    """Login request schema with Turnstile support."""
+    """Login request schema with Turnstile and optional portal hint."""
     model_config = ConfigDict(populate_by_name=True)
 
     email: EmailStr
     password: str = Field(min_length=1, max_length=128)
     turnstile_token: Optional[str] = Field(default=None, alias="turnstileToken", description="Cloudflare Turnstile token")
+    portal: Optional[str] = Field(default=None, description="Optional portal context hint ('brand' or 'creator')")
 
 
 class PasswordResetRequest(BaseModel):
@@ -52,6 +53,8 @@ class TurnstileVerifyRequest(BaseModel):
 
 class UserResponse(BaseModel):
     """Safe user profile response without sensitive tokens or passwords."""
+    model_config = ConfigDict(populate_by_name=True)
+
     id: str
     email: str
     full_name: str
@@ -61,10 +64,47 @@ class UserResponse(BaseModel):
     email_verified: bool = False
     avatar_url: Optional[str] = None
 
+    @computed_field
+    @property
+    def fullName(self) -> str:
+        return self.full_name
+
+    @computed_field
+    @property
+    def isVerified(self) -> bool:
+        return self.is_verified
+
+    @computed_field
+    @property
+    def emailVerified(self) -> bool:
+        return self.email_verified
+
+    @computed_field
+    @property
+    def avatarUrl(self) -> Optional[str]:
+        return self.avatar_url
+
 
 class TokenResponse(BaseModel):
     """Authenticated session response containing JWT and safe user profile."""
+    model_config = ConfigDict(populate_by_name=True)
+
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
     redirect_path: Optional[str] = None
+
+    @computed_field
+    @property
+    def accessToken(self) -> str:
+        return self.access_token
+
+    @computed_field
+    @property
+    def tokenType(self) -> str:
+        return self.token_type
+
+    @computed_field
+    @property
+    def redirectPath(self) -> Optional[str]:
+        return self.redirect_path

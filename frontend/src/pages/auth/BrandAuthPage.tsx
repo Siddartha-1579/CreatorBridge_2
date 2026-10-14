@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react"
 import { Link, useNavigate, useSearchParams } from "react-router-dom"
 import { Sparkles, ArrowLeft, Eye, EyeOff, AlertCircle, ShieldCheck } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
+import { authService } from "@/services/auth.service"
 import { TurnstileWidget } from "@/components/common/TurnstileWidget"
 import { CreatorBridgeLogo } from "@/components/common/CreatorBridgeLogo"
 import type { UserRole } from "@/types"
@@ -67,7 +68,13 @@ export const BrandAuthPage: React.FC = () => {
           email,
           password,
           turnstileToken: turnstileToken || undefined,
+          portal: "brand",
         })
+        if (session.user.role === "CREATOR") {
+          await authService.logout()
+          setError("This portal is reserved for Brand and Agency accounts. Creators should log in via the Creator Portal.")
+          return
+        }
         navigate(session.redirectPath || "/brand/dashboard")
       }
     } catch (err: any) {
@@ -169,7 +176,13 @@ export const BrandAuthPage: React.FC = () => {
                     const session = await login({
                       email: "lumina@demo.creatorbridge.com",
                       password: "demo123456",
+                      portal: "brand",
                     })
+                    if (session.user.role === "CREATOR") {
+                      await authService.logout()
+                      setError("This portal is reserved for Brand and Agency accounts. Creators should log in via the Creator Portal.")
+                      return
+                    }
                     navigate(session.redirectPath || "/brand/dashboard")
                   } catch (err: any) {
                     setError(err?.message || "Demo login failed.")
@@ -193,7 +206,13 @@ export const BrandAuthPage: React.FC = () => {
                     const session = await login({
                       email: "terra@demo.creatorbridge.com",
                       password: "demo123456",
+                      portal: "brand",
                     })
+                    if (session.user.role === "CREATOR") {
+                      await authService.logout()
+                      setError("This portal is reserved for Brand and Agency accounts. Creators should log in via the Creator Portal.")
+                      return
+                    }
                     navigate(session.redirectPath || "/brand/dashboard")
                   } catch (err: any) {
                     setError(err?.message || "Demo login failed.")

@@ -2,7 +2,7 @@
 
 from typing import List, Optional
 from enum import Enum
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, computed_field
 from fastapi import Depends, Header
 from app.core.config import settings
 from app.core.errors import UnauthorizedException, ForbiddenException
@@ -20,10 +20,23 @@ class UserRole(str, Enum):
 
 class AuthenticatedUser(BaseModel):
     """Normalized authenticated user entity passed to routes/services."""
+    model_config = ConfigDict(populate_by_name=True)
+
     id: str
     email: str
     role: UserRole
     is_verified: bool = False
+    full_name: Optional[str] = None
+
+    @computed_field
+    @property
+    def isVerified(self) -> bool:
+        return self.is_verified
+
+    @computed_field
+    @property
+    def fullName(self) -> Optional[str]:
+        return self.full_name
 
 
 async def get_current_user(
@@ -60,6 +73,7 @@ async def get_current_user(
             email=f"{user_id}@marketplace.local",
             role=role,
             is_verified=True,
+            full_name=user_id.replace("usr_", "").replace("_", " ").title(),
         )
 
     # In production, Supabase JWT verification is performed
@@ -82,6 +96,7 @@ async def get_current_user(
             email=email,
             role=role,
             is_verified=payload.get("user_metadata", {}).get("is_verified", False),
+            full_name=payload.get("user_metadata", {}).get("full_name"),
         )
     except Exception as e:
         logger.warning(f"Failed to authenticate token: {str(e)}")

@@ -178,3 +178,70 @@ def test_cors_preflight_login_allowed(client: TestClient):
     res_disallowed = client.options("/api/v1/auth/login", headers=headers_disallowed)
     assert res_disallowed.status_code == 400
     assert "access-control-allow-origin" not in res_disallowed.headers
+
+
+def test_brand_judge_login_authoritative_role_and_redirect(client: TestClient):
+    """Verifies Lumina Skincare returns authoritative BRAND role and /brand/dashboard redirect."""
+    res = client.post(
+        "/api/v1/auth/login",
+        json={"email": "lumina@demo.creatorbridge.com", "password": "demo123456"},
+    )
+    assert res.status_code == 200
+    data = res.json()["data"]
+    assert data["user"]["role"] == "BRAND"
+    assert data["redirect_path"] == "/brand/dashboard"
+    assert data["redirectPath"] == "/brand/dashboard"
+    assert data["access_token"]
+    assert data["accessToken"]
+    assert data["user"]["fullName"] == "Lumina Skincare"
+
+
+def test_creator_judge_login_authoritative_role_and_redirect(client: TestClient):
+    """Verifies Elena Rostova returns authoritative CREATOR role and /creator/dashboard redirect."""
+    res = client.post(
+        "/api/v1/auth/login",
+        json={"email": "elena@demo.creatorbridge.com", "password": "demo123456"},
+    )
+    assert res.status_code == 200
+    data = res.json()["data"]
+    assert data["user"]["role"] == "CREATOR"
+    assert data["redirect_path"] == "/creator/dashboard"
+    assert data["redirectPath"] == "/creator/dashboard"
+    assert data["access_token"]
+    assert data["accessToken"]
+    assert data["user"]["fullName"] == "Elena Rostova"
+
+
+def test_portal_mismatch_rejection(client: TestClient):
+    """Verifies portal parameter rejects mismatched role logins with clear guidance."""
+    # Creator attempting login on brand portal
+    res_creator_on_brand = client.post(
+        "/api/v1/auth/login",
+        json={"email": "elena@demo.creatorbridge.com", "password": "demo123456", "portal": "brand"},
+    )
+    assert res_creator_on_brand.status_code == 422
+    assert "Creator Portal" in res_creator_on_brand.json()["error"]["message"]
+
+    # Brand attempting login on creator portal
+    res_brand_on_creator = client.post(
+        "/api/v1/auth/login",
+        json={"email": "lumina@demo.creatorbridge.com", "password": "demo123456", "portal": "creator"},
+    )
+    assert res_brand_on_creator.status_code == 422
+    assert "Brand Portal" in res_brand_on_creator.json()["error"]["message"]
+
+
+def test_authenticated_me_endpoint_returns_normalized_profile(client: TestClient):
+    """Verifies /auth/me returns authoritative profile with role and computed fullName."""
+    login_res = client.post(
+        "/api/v1/auth/login",
+        json={"email": "lumina@demo.creatorbridge.com", "password": "demo123456"},
+    )
+    token = login_res.json()["data"]["access_token"]
+
+    me_res = client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert me_res.status_code == 200
+    me_data = me_res.json()["data"]
+    assert me_data["role"] == "BRAND"
+    assert me_data["email"] == "lumina@demo.creatorbridge.com"
+

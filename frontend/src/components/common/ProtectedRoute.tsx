@@ -23,7 +23,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   if (!isAuthenticated || !user) {
-    return <Navigate to={redirectTo} replace />
+    const isBrandPath = typeof window !== "undefined" && window.location.pathname.startsWith("/brand")
+    const targetAuth = isBrandPath ? "/auth/brand?mode=login" : "/auth/creator?mode=login"
+    return <Navigate to={redirectTo !== "/login" ? redirectTo : targetAuth} replace />
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role) && user.role !== "ADMIN") {
