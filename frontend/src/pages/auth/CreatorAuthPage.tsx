@@ -81,22 +81,13 @@ export const CreatorAuthPage: React.FC = () => {
         {/* Top Header with CreatorBridge Logo */}
         <div className="flex items-center justify-between mb-8">
           <CreatorBridgeLogo size="sm" badgeText="Creator Hub" />
-          <div className="flex items-center space-x-2 text-xs">
-            <Link
-              to={`/auth/brand${mode === "register" ? "?mode=register" : ""}`}
-              className="font-medium text-[#9A6ADF] hover:underline"
-            >
-              Brand Portal →
-            </Link>
-            <span className="text-slate-300">|</span>
-            <Link
-              to="/auth"
-              className="inline-flex items-center space-x-1 font-semibold text-[#4B4652] hover:text-[#9A6ADF] transition-colors"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              <span>All Portals</span>
-            </Link>
-          </div>
+          <Link
+            to="/"
+            className="inline-flex items-center space-x-1 text-xs font-semibold text-[#4B4652] hover:text-[#9A6ADF] transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Homepage</span>
+          </Link>
         </div>
 
         {/* Card Header */}
@@ -258,16 +249,7 @@ export const CreatorAuthPage: React.FC = () => {
             </button>
           </form>
 
-          {/* Switch to Brand portal link */}
-          <div className="mt-6 pt-5 border-t border-slate-100 text-center">
-            <span className="text-xs text-slate-500">Representing a brand or creative agency? </span>
-            <Link
-              to="/auth/brand"
-              className="text-xs font-semibold text-purple-600 hover:text-purple-700 transition-colors"
-            >
-              Switch to Brand Portal
-            </Link>
-          </div>
+
         </div>
 
         {/* Security badge */}

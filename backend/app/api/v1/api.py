@@ -31,6 +31,7 @@ api_v1_router.include_router(creators.router, prefix="/creators", tags=["Creator
 api_v1_router.include_router(brands.router, prefix="/brands", tags=["Brands"])
 api_v1_router.include_router(portfolios.router, prefix="/portfolios", tags=["Portfolios"])
 api_v1_router.include_router(briefs.router, prefix="/briefs", tags=["Briefs"])
+api_v1_router.include_router(briefs.router, prefix="/campaigns", tags=["Campaigns"])
 api_v1_router.include_router(matches.router, prefix="/matches", tags=["Matching"])
 api_v1_router.include_router(projects.router, prefix="/projects", tags=["Projects"])
 api_v1_router.include_router(generation.router, prefix="/generation", tags=["AI Generation"])

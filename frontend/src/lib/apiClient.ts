@@ -33,7 +33,10 @@ class ApiClient {
 
   private getAuthToken(): string | null {
     try {
-      return localStorage.getItem("hacxlerate_auth_token")
+      return (
+        localStorage.getItem("creatorbridge_auth_token") ||
+        localStorage.getItem("hacxlerate_auth_token")
+      )
     } catch {
       return null
     }

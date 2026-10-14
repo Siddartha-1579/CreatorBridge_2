@@ -16,6 +16,7 @@ import {
   Sparkles,
   CheckCircle2,
 } from "lucide-react"
+import { ImageWithFallback } from "@/components/common/ImageWithFallback"
 
 interface PortfolioProject3DCardProps {
   project: PortfolioProject
@@ -59,15 +60,20 @@ export const PortfolioProject3DCard: React.FC<PortfolioProject3DCardProps> = ({
 
         {/* Media Thumbnail Container */}
         <CardItem translateZ={25} className="relative w-full aspect-video overflow-hidden bg-slate-950">
-          <img
-            src={
-              project.thumbnail_url ||
-              project.media_url ||
-              "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80"
-            }
+          <ImageWithFallback
+            src={project.thumbnail_url || project.media_url}
             alt={project.title}
+            category={project.category}
+            iconType={
+              project.media_type === "VIDEO"
+                ? "film"
+                : project.media_type === "ANIMATION"
+                ? "layers"
+                : "camera"
+            }
+            fallbackText={project.title}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
+            containerClassName="w-full h-full"
           />
 
           {/* Media overlay gradient */}

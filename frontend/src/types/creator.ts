@@ -73,6 +73,9 @@ export interface CreatorProfile {
   profile_completeness_pct: number
   headline?: string
   bio?: string
+  avatar_url?: string
+  avatarUrl?: string
+  avatar?: string
   location?: string
   social_links?: Record<string, string>
   primary_specialization?: string

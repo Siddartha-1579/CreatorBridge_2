@@ -19,6 +19,14 @@ from app.schemas.brief import (
     CampaignApplicationUpdate,
     CampaignApplicationResponse,
     ApplicationStatus,
+    ClipSubmissionCreate,
+    ClipSubmissionReview,
+    ClipSubmissionResponse,
+    SubmissionStatus,
+    CampaignParticipantResponse,
+    CampaignAnalyticsResponse,
+    BrandCommunityPostCreate,
+    BrandCommunityPostResponse,
 )
 
 
@@ -28,6 +36,21 @@ class BriefService(BaseService):
     def __init__(self, repo: Optional[BriefRepository] = None):
         super().__init__("brief")
         self.repo = repo or brief_repository
+
+    def _is_brand_owner(self, brief_brand_id: str, current_user_id: str) -> bool:
+        """Determines if current_user_id owns brief_brand_id (handling both user_id and brand_profile.id)."""
+        if not brief_brand_id or not current_user_id:
+            return False
+        if str(brief_brand_id) == str(current_user_id):
+            return True
+        from app.core.db import get_db_connection
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT id FROM brand_profiles WHERE (id = ? OR user_id = ?) AND (user_id = ? OR id = ?)",
+                (str(brief_brand_id), str(brief_brand_id), str(current_user_id), str(current_user_id))
+            )
+            return cursor.fetchone() is not None
 
     async def get_brief_by_id(
         self, brief_id: UUID, current_user_id: Optional[str] = None
@@ -39,7 +62,7 @@ class BriefService(BaseService):
 
         # If brief is draft or private, verify user is owning brand
         if brief.status != BriefStatus.PUBLISHED:
-            if not current_user_id or str(brief.brand_id) != str(current_user_id):
+            if not current_user_id or not self._is_brand_owner(brief.brand_id, current_user_id):
                 raise ForbiddenException("You do not have permission to view this unpublished brief")
 
         return brief
@@ -121,7 +144,7 @@ class BriefService(BaseService):
         if not existing:
             raise NotFoundException("Campaign Brief", brief_id)
 
-        if str(existing.brand_id) != str(brand_id):
+        if not self._is_brand_owner(existing.brand_id, brand_id):
             raise ForbiddenException("You do not have permission to modify this brief")
 
         update_dict = data.model_dump(exclude_unset=True)
@@ -139,7 +162,7 @@ class BriefService(BaseService):
         if not existing:
             raise NotFoundException("Campaign Brief", brief_id)
 
-        if str(existing.brand_id) != str(brand_id):
+        if not self._is_brand_owner(existing.brand_id, brand_id):
             raise ForbiddenException("You do not have permission to publish this brief")
 
         # Validate publication readiness
@@ -216,7 +239,7 @@ class BriefService(BaseService):
         existing = await self.repo.get_by_id(brief_id)
         if not existing:
             raise NotFoundException("Campaign Brief", brief_id)
-        if str(existing.brand_id) != str(brand_id):
+        if not self._is_brand_owner(existing.brand_id, brand_id):
             raise ForbiddenException("You do not have permission to modify this brief")
 
         # Synthesize prompt from brief context
@@ -314,7 +337,7 @@ class BriefService(BaseService):
         existing = await self.repo.get_by_id(brief_id)
         if not existing:
             raise NotFoundException("Campaign Brief", brief_id)
-        if str(existing.brand_id) != str(brand_id):
+        if not self._is_brand_owner(existing.brand_id, brand_id):
             raise ForbiddenException("You do not have permission to view applications for this brief.")
         return await self.repo.list_applications_for_brief(str(brief_id))
 
@@ -332,7 +355,7 @@ class BriefService(BaseService):
         app = await self.repo.get_application_by_id(application_id)
         if not app:
             raise NotFoundException("Campaign Application", application_id)
-        if str(app.brand_id) != str(brand_id):
+        if not self._is_brand_owner(app.brand_id, brand_id):
             raise ForbiddenException("You do not have permission to modify this application.")
 
         updated = await self.repo.update_application_status(application_id, data.status)
@@ -376,6 +399,173 @@ class BriefService(BaseService):
             )
 
         return updated
+
+    async def join_campaign(self, brief_id: UUID, creator_id: str) -> bool:
+        brief = await self.repo.get_by_id(brief_id)
+        if not brief:
+            raise NotFoundException("Campaign", brief_id)
+        if brief.status != BriefStatus.PUBLISHED:
+            raise ValidationException("Campaign is not accepting new participants")
+        return await self.repo.join_campaign(str(brief_id), creator_id)
+
+    async def get_participation(self, brief_id: UUID, creator_id: str) -> Optional[CampaignParticipantResponse]:
+        return await self.repo.get_campaign_participant(str(brief_id), creator_id)
+
+    async def list_campaign_participants(
+        self, brief_id: UUID, current_user_id: str, is_brand: bool = False
+    ) -> List[CampaignParticipantResponse]:
+        brief = await self.repo.get_by_id(brief_id)
+        if not brief:
+            raise NotFoundException("Campaign", brief_id)
+        if brief.status != BriefStatus.PUBLISHED:
+            if not self._is_brand_owner(brief.brand_id, current_user_id):
+                raise ForbiddenException("Access to unpublished campaign participants requires ownership")
+
+        all_parts = await self.repo.list_campaign_participants(str(brief_id))
+        if is_brand:
+            if not self._is_brand_owner(brief.brand_id, current_user_id):
+                raise ForbiddenException("Only the campaign brand owner can view participant identities for this campaign")
+            return all_parts
+
+        # Creators can ONLY see their own participation record
+        return [
+            p for p in all_parts
+            if p.creator_id == current_user_id or str(p.creator_id) == str(current_user_id)
+        ]
+
+    async def submit_clip(
+        self, brief_id: UUID, creator_id: str, data: ClipSubmissionCreate
+    ) -> ClipSubmissionResponse:
+        brief = await self.repo.get_by_id(brief_id)
+        if not brief:
+            raise NotFoundException("Campaign", brief_id)
+        if brief.status != BriefStatus.PUBLISHED:
+            raise ValidationException("Campaign is not currently accepting submissions")
+
+        await self.repo.join_campaign(str(brief_id), creator_id)
+
+        sub = await self.repo.create_clip_submission(
+            campaign_id=str(brief_id),
+            creator_id=creator_id,
+            brand_id=str(brief.brand_id),
+            clip_url=data.clip_url,
+            platform=data.platform,
+            title=data.title,
+            description=data.description,
+            ai_tools=data.ai_tools,
+            initial_views=data.initial_views or 0,
+        )
+        if not sub:
+            raise ValidationException("Failed to register clip submission")
+        return sub
+
+    async def list_submissions(
+        self, brief_id: UUID, current_user_id: str, is_brand: bool
+    ) -> List[ClipSubmissionResponse]:
+        brief = await self.repo.get_by_id(brief_id)
+        if not brief:
+            raise NotFoundException("Campaign", brief_id)
+        all_subs = await self.repo.list_submissions_for_campaign(str(brief_id))
+        if is_brand:
+            if not self._is_brand_owner(brief.brand_id, current_user_id):
+                raise ForbiddenException("Only the campaign brand owner can view all submissions for this campaign")
+            return all_subs
+        return [s for s in all_subs if str(s.creator_id) == str(current_user_id)]
+
+    async def list_creator_submissions(self, creator_id: str) -> List[ClipSubmissionResponse]:
+        return await self.repo.list_creator_submissions(creator_id)
+
+    async def review_submission(
+        self, submission_id: UUID, brand_id: str, data: ClipSubmissionReview
+    ) -> ClipSubmissionResponse:
+        sub = await self.repo.get_submission_by_id(submission_id)
+        if not sub:
+            raise NotFoundException("Clip Submission", submission_id)
+
+        if not self._is_brand_owner(sub.brand_id, brand_id):
+            raise ForbiddenException("Only the campaign brand owner can review submissions")
+
+        if data.verified_views is not None and data.verified_views < 0:
+            raise ValidationException("Verified views cannot be negative")
+
+        if data.payout_cents is not None and data.payout_cents < 0:
+            raise ValidationException("Payout amount cannot be negative")
+
+        updated = await self.repo.review_clip_submission(
+            submission_id=submission_id,
+            brand_id=brand_id,
+            status=data.status,
+            feedback=data.feedback,
+            verified_views=data.verified_views,
+            payout_cents=data.payout_cents,
+        )
+        if not updated:
+            raise ValidationException("Failed to update submission review")
+        return updated
+
+    async def get_analytics(
+        self, brief_id: UUID, brand_id: Optional[str] = None
+    ) -> CampaignAnalyticsResponse:
+        brief = await self.repo.get_by_id(brief_id)
+        if not brief:
+            raise NotFoundException("Campaign", brief_id)
+        if not brand_id or not self._is_brand_owner(brief.brand_id, brand_id):
+            raise ForbiddenException("Access to internal campaign analytics requires campaign ownership")
+        analytics = await self.repo.get_campaign_analytics(str(brief_id), brand_id)
+        if not analytics:
+            raise NotFoundException("Analytics for Campaign", brief_id)
+        return analytics
+
+    async def pause_brief(self, brief_id: UUID, brand_id: str) -> CampaignBriefResponse:
+        brief = await self.repo.get_by_id(brief_id)
+        if not brief:
+            raise NotFoundException("Campaign", brief_id)
+        if not self._is_brand_owner(brief.brand_id, brand_id):
+            raise ForbiddenException("Only the campaign owner can pause campaigns")
+        return await self.repo.update(brief_id, {"status": BriefStatus.PAUSED.value})
+
+    async def resume_brief(self, brief_id: UUID, brand_id: str) -> CampaignBriefResponse:
+        brief = await self.repo.get_by_id(brief_id)
+        if not brief:
+            raise NotFoundException("Campaign", brief_id)
+        if not self._is_brand_owner(brief.brand_id, brand_id):
+            raise ForbiddenException("Only the campaign owner can resume campaigns")
+        return await self.repo.update(brief_id, {"status": BriefStatus.PUBLISHED.value})
+
+    async def create_community_post(
+        self, brand_id: str, data: BrandCommunityPostCreate
+    ) -> BrandCommunityPostResponse:
+        post = await self.repo.create_community_post(
+            brand_id=brand_id,
+            title=data.title,
+            content=data.content,
+            category=data.category,
+            pinned=data.pinned,
+            media_url=data.media_url,
+        )
+        if not post:
+            raise ValidationException("Failed to publish community post")
+        return post
+
+    async def list_community_posts(
+        self, brand_id: Optional[str] = None, category: Optional[str] = None
+    ) -> List[BrandCommunityPostResponse]:
+        return await self.repo.list_community_posts(brand_id=brand_id, category=category)
+
+    async def delete_community_post(self, post_id: UUID, brand_id: str) -> bool:
+        post = await self.repo.get_community_post_by_id(post_id)
+        if not post:
+            raise NotFoundException("Community Post", post_id)
+        if not self._is_brand_owner(post.brand_id, brand_id):
+            raise ForbiddenException("You do not have permission to delete another brand's community post")
+        success = await self.repo.delete_community_post(post_id=post_id, brand_id=brand_id)
+        if not success:
+            raise NotFoundException("Community Post", post_id)
+        return True
+
+    async def like_community_post(self, post_id: UUID) -> int:
+        return await self.repo.like_community_post(post_id=post_id)
+
 
 
 brief_service = BriefService()

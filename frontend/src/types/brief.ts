@@ -2,6 +2,8 @@ export type BriefStatus =
   | "DRAFT"
   | "READY_TO_PUBLISH"
   | "PUBLISHED"
+  | "ACTIVE"
+  | "PAUSED"
   | "MATCHING"
   | "IN_PROGRESS"
   | "COMPLETED"
@@ -114,6 +116,12 @@ export interface CampaignBrief {
   commercial_terms: CommercialTerms
   sections?: Record<string, string>
   budget_cents?: number
+  reward_type?: string
+  cpm_rate_cents?: number
+  total_pool_cents?: number
+  paid_pool_cents?: number
+  views_count?: number
+  participants_count?: number
   start_date?: string
   deadline?: string
   required_tools: string[]
@@ -300,3 +308,113 @@ export interface BriefValidationResult {
   blocking_errors: string[]
   warnings: string[]
 }
+
+export type SubmissionStatus =
+  | "PENDING_REVIEW"
+  | "APPROVED"
+  | "REJECTED"
+  | "REVISION_REQUESTED"
+
+export interface ClipSubmission {
+  id: string
+  campaign_id: string
+  creator_id: string
+  brand_id: string
+  clip_url: string
+  platform: "TIKTOK" | "INSTAGRAM" | "YOUTUBE_SHORTS" | string
+  title: string
+  description?: string
+  ai_tools: string[]
+  views_count: number
+  earned_cents: number
+  status: SubmissionStatus
+  feedback?: string
+  submitted_at: string
+  reviewed_at?: string
+  creator_name?: string
+  creator_handle?: string
+  creator_avatar_url?: string
+  campaign_title?: string
+  brand_name?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface ClipSubmissionCreate {
+  clip_url: string
+  platform: string
+  title: string
+  description?: string
+  ai_tools?: string[]
+  initial_views?: number
+}
+
+export interface ClipSubmissionReview {
+  status: SubmissionStatus
+  feedback?: string
+  verified_views?: number
+  payout_cents?: number
+}
+
+export interface CampaignParticipant {
+  id: string
+  campaign_id: string
+  creator_id: string
+  status: string
+  joined_at: string
+  creator_name?: string
+  creator_handle?: string
+  creator_avatar_url?: string
+}
+
+export interface CreatorLeaderboardItem {
+  creator_id: string
+  creator_name: string
+  creator_handle: string
+  creator_avatar_url?: string
+  total_views: number
+  approved_clips: number
+  total_earned_cents: number
+}
+
+export interface CampaignAnalytics {
+  campaign_id: string
+  title: string
+  status: string
+  total_views: number
+  total_submissions: number
+  approved_submissions: number
+  pending_submissions: number
+  rejected_submissions: number
+  total_pool_cents: number
+  paid_pool_cents: number
+  remaining_pool_cents: number
+  cpm_rate_cents: number
+  participants_count: number
+  views_over_time: Array<{ date: string; views: number }>
+  leaderboard: CreatorLeaderboardItem[]
+}
+
+export interface BrandCommunityPost {
+  id: string
+  brand_id: string
+  brand_name?: string
+  brand_logo_url?: string
+  title: string
+  content: string
+  category: "ANNOUNCEMENT" | "CONTEST" | "WINNERS" | "GUIDELINES" | "ASSET_PACK" | string
+  pinned: boolean
+  likes_count: number
+  media_url?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface BrandCommunityPostCreate {
+  title: string
+  content: string
+  category?: string
+  pinned?: boolean
+  media_url?: string
+}
+

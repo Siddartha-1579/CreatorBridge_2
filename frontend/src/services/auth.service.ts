@@ -16,6 +16,9 @@ export const authService = {
       turnstile_token: credentials.turnstileToken,
     })
     if (session?.accessToken) {
+      localStorage.setItem("creatorbridge_auth_token", session.accessToken)
+      localStorage.setItem("creatorbridge_user", JSON.stringify(session.user))
+      // Backwards-compatible fallback
       localStorage.setItem("hacxlerate_auth_token", session.accessToken)
       localStorage.setItem("hacxlerate_user", JSON.stringify(session.user))
     }
@@ -32,6 +35,9 @@ export const authService = {
       turnstile_token: data.turnstileToken,
     })
     if (session?.accessToken) {
+      localStorage.setItem("creatorbridge_auth_token", session.accessToken)
+      localStorage.setItem("creatorbridge_user", JSON.stringify(session.user))
+      // Backwards-compatible fallback
       localStorage.setItem("hacxlerate_auth_token", session.accessToken)
       localStorage.setItem("hacxlerate_user", JSON.stringify(session.user))
     }
@@ -66,6 +72,8 @@ export const authService = {
     } catch {
       // ignore network errors on logout
     } finally {
+      localStorage.removeItem("creatorbridge_auth_token")
+      localStorage.removeItem("creatorbridge_user")
       localStorage.removeItem("hacxlerate_auth_token")
       localStorage.removeItem("hacxlerate_user")
     }
@@ -73,7 +81,9 @@ export const authService = {
 
   getSavedUser(): User | null {
     try {
-      const stored = localStorage.getItem("hacxlerate_user")
+      const stored =
+        localStorage.getItem("creatorbridge_user") ||
+        localStorage.getItem("hacxlerate_user")
       return stored ? JSON.parse(stored) : null
     } catch {
       return null

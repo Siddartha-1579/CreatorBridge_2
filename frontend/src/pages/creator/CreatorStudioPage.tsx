@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Alert } from "@/components/ui/alert"
+import { ImageWithFallback } from "@/components/common/ImageWithFallback"
 import {
   Sparkles,
   Wand2,
@@ -460,10 +461,14 @@ export const CreatorStudioPage: React.FC = () => {
                   {/* Image Preview */}
                   {currentStudio.modality === "IMAGE" && activeJob.resultAssetPath && (
                     <div className="rounded-xl overflow-hidden border border-[#F4E7FF] bg-slate-50 group relative">
-                      <img
+                      <ImageWithFallback
                         src={activeJob.resultAssetPath}
                         alt="Generated preview"
+                        category="Studio Image Output"
+                        iconType="camera"
+                        fallbackText="Generated Concept Preview"
                         className="w-full h-auto object-cover max-h-[420px]"
+                        containerClassName="w-full h-auto"
                       />
                       <div className="absolute top-2 right-2 flex gap-1">
                         <Badge variant="purple" className="backdrop-blur-md bg-white/90">

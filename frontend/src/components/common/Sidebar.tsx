@@ -14,6 +14,8 @@ import {
   Settings,
   KeyRound,
   ExternalLink,
+  Video,
+  MessageSquare,
 } from "lucide-react"
 
 interface SidebarProps {
@@ -23,19 +25,23 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ type }) => {
   const creatorLinks = [
     { to: "/creator/dashboard", label: "Creator Dashboard", icon: LayoutDashboard },
-    { to: "/creator/campaigns", label: "Campaigns", icon: Megaphone },
+    { to: "/creator/campaigns", label: "Campaigns & Rewards", icon: Megaphone },
+    { to: "/creator/submissions", label: "My Submissions", icon: Video },
+    { to: "/creator/community", label: "Brand Updates Feed", icon: MessageSquare },
     { to: "/creator/profile", label: "Profile & Skills", icon: User },
     { to: "/creator/portfolio", label: "Portfolio", icon: FolderKanban },
     { to: "/creator/studio", label: "AI Creation Studio", icon: Wand2 },
     { to: "/creator/projects", label: "Projects & Bids", icon: Briefcase },
+    { to: "/discover", label: "Explore Creators", icon: Search },
   ]
 
   const brandLinks = [
     { to: "/brand/dashboard", label: "Brand Dashboard", icon: LayoutDashboard },
+    { to: "/brand/campaigns", label: "Campaigns & Rewards", icon: Megaphone },
+    { to: "/brand/community", label: "Community Board", icon: MessageSquare },
     { to: "/brand/briefs", label: "Campaign Briefs", icon: FileText },
     { to: "/brand/briefs/new", label: "AI Brief Builder", icon: Sparkles },
     { to: "/brand/discover", label: "Discover Creators", icon: Search },
-    { to: "/brand/campaigns", label: "Campaigns", icon: Megaphone },
     { to: "/brand/projects", label: "Active Projects", icon: Briefcase },
   ]
 
@@ -99,18 +105,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ type }) => {
           <span>{type === "creator" ? "Creator Settings" : "Brand Settings"}</span>
         </NavLink>
 
-        {type === "brand" ? (
-          <NavLink
-            to="/discover"
-            className="flex items-center justify-between rounded-xl px-3 py-2 text-xs font-medium text-[#4B4652] hover:bg-[#F4E7FF]/40 hover:text-[#9A6ADF] transition-colors"
-          >
-            <div className="flex items-center gap-3">
-              <Search className="h-4 w-4 shrink-0 text-[#9A6ADF]" />
-              <span>Public Discovery</span>
-            </div>
-            <ExternalLink className="h-3 w-3 opacity-60" />
-          </NavLink>
-        ) : null}
+        <NavLink
+          to="/discover"
+          className="flex items-center justify-between rounded-xl px-3 py-2 text-xs font-medium text-[#4B4652] hover:bg-[#F4E7FF]/40 hover:text-[#9A6ADF] transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <Search className="h-4 w-4 shrink-0 text-[#9A6ADF]" />
+            <span>Explore Creators</span>
+          </div>
+          <ExternalLink className="h-3 w-3 opacity-60" />
+        </NavLink>
       </div>
     </aside>
   )

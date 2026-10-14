@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { ChevronLeft, ChevronRight, X, ImageOff } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useOutsideClick } from "@/hooks/use-outside-click"
+import { ImageWithFallback } from "@/components/common/ImageWithFallback"
 
 export interface CardData {
   src: string
@@ -312,37 +313,13 @@ interface BlurImageProps {
 }
 
 export const BlurImage: React.FC<BlurImageProps> = ({ src, alt, className }) => {
-  const [loaded, setLoaded] = useState(false)
-  const [hasError, setHasError] = useState(false)
-
-  if (hasError || !src) {
-    return (
-      <div
-        className={cn(
-          "w-full h-full bg-gradient-to-br from-purple-100 via-indigo-50 to-purple-200 dark:from-purple-950 dark:via-zinc-900 dark:to-indigo-950 flex flex-col items-center justify-center text-purple-400 p-4 text-center",
-          className
-        )}
-      >
-        <ImageOff className="w-8 h-8 opacity-60 mb-2" />
-        <span className="text-[11px] font-medium text-purple-600/80 dark:text-purple-300/80 line-clamp-1">
-          {alt || "Preview Unavailable"}
-        </span>
-      </div>
-    )
-  }
-
   return (
-    <img
+    <ImageWithFallback
       src={src}
       alt={alt}
-      loading="lazy"
-      onLoad={() => setLoaded(true)}
-      onError={() => setHasError(true)}
-      className={cn(
-        "transition-opacity duration-300",
-        loaded ? "opacity-100" : "opacity-0",
-        className
-      )}
+      className={className}
+      containerClassName="w-full h-full"
+      iconType="sparkles"
     />
   )
 }

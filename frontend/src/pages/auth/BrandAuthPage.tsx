@@ -114,7 +114,7 @@ export const BrandAuthPage: React.FC = () => {
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex rounded-xl bg-slate-100/80 p-1 mb-6 border border-slate-200">
+        <div className="flex rounded-xl bg-slate-100/80 p-1 mb-4 border border-slate-200">
           <button
             type="button"
             onClick={() => {
@@ -146,6 +146,69 @@ export const BrandAuthPage: React.FC = () => {
             Brand Registration
           </button>
         </div>
+
+        {/* Demo Brand Quick Login Helper for Live Hackathon Evaluation */}
+        {mode === "login" && (
+          <div className="mb-6 p-3.5 rounded-2xl bg-purple-50/70 border border-purple-200/80">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-purple-700 flex items-center gap-1.5">
+                <Sparkles className="w-3 h-3 text-purple-600" />
+                Live Demo Evaluation Accounts
+              </span>
+              <span className="text-[10px] text-purple-500 font-medium">1-Click Sign In</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  setEmail("lumina@demo.creatorbridge.com")
+                  setPassword("demo123456")
+                  setError(null)
+                  setIsLoading(true)
+                  try {
+                    const session = await login({
+                      email: "lumina@demo.creatorbridge.com",
+                      password: "demo123456",
+                    })
+                    navigate(session.redirectPath || "/brand/dashboard")
+                  } catch (err: any) {
+                    setError(err?.message || "Demo login failed.")
+                  } finally {
+                    setIsLoading(false)
+                  }
+                }}
+                className="py-2 px-3 rounded-xl bg-white border border-purple-200 text-xs font-semibold text-slate-800 hover:bg-purple-600 hover:text-white hover:border-purple-600 transition-all text-left shadow-xs"
+              >
+                <div className="font-bold truncate">Lumina Skincare</div>
+                <div className="text-[10px] opacity-75 font-normal">Luxury Cosmetics</div>
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  setEmail("terra@demo.creatorbridge.com")
+                  setPassword("demo123456")
+                  setError(null)
+                  setIsLoading(true)
+                  try {
+                    const session = await login({
+                      email: "terra@demo.creatorbridge.com",
+                      password: "demo123456",
+                    })
+                    navigate(session.redirectPath || "/brand/dashboard")
+                  } catch (err: any) {
+                    setError(err?.message || "Demo login failed.")
+                  } finally {
+                    setIsLoading(false)
+                  }
+                }}
+                className="py-2 px-3 rounded-xl bg-white border border-purple-200 text-xs font-semibold text-slate-800 hover:bg-purple-600 hover:text-white hover:border-purple-600 transition-all text-left shadow-xs"
+              >
+                <div className="font-bold truncate">Terra Outdoor</div>
+                <div className="text-[10px] opacity-75 font-normal">Technical Alpine Gear</div>
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Auth Box */}
         <div className="rounded-3xl border border-slate-200/90 bg-white/95 p-6 sm:p-8 shadow-xl shadow-slate-500/5">

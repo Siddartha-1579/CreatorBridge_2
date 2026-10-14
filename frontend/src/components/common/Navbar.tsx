@@ -17,6 +17,8 @@ import {
   Settings,
   LogOut,
   ExternalLink,
+  Video,
+  MessageSquare,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -35,20 +37,24 @@ export const Navbar: React.FC = () => {
   // Hub-specific primary navigation links (strictly separated concerns)
   const creatorNavItems = [
     { to: "/creator/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { to: "/creator/profile", label: "Profile & Skills", icon: User },
+    { to: "/creator/campaigns", label: "Campaigns & Rewards", icon: Megaphone },
+    { to: "/creator/submissions", label: "My Submissions", icon: Video },
+    { to: "/creator/community", label: "Brand Updates", icon: MessageSquare },
+    { to: "/creator/profile", label: "Profile", icon: User },
     { to: "/creator/portfolio", label: "Portfolio", icon: FolderKanban },
-    { to: "/creator/studio", label: "AI Creation Studio", icon: Wand2 },
-    { to: "/creator/projects", label: "Projects & Briefs", icon: Briefcase },
+    { to: "/creator/studio", label: "Studio", icon: Wand2 },
+    { to: "/discover", label: "Explore Creators", icon: Search },
     { to: "/creator/settings/integrations", label: "Settings", icon: Settings },
   ]
 
   const brandNavItems = [
     { to: "/brand/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { to: "/brand/briefs", label: "Campaign Briefs", icon: FileText },
+    { to: "/brand/campaigns", label: "Campaigns & Rewards", icon: Megaphone },
+    { to: "/brand/community", label: "Community", icon: MessageSquare },
+    { to: "/brand/briefs", label: "Briefs", icon: FileText },
     { to: "/brand/briefs/new", label: "AI Brief Builder", icon: Sparkles },
-    { to: "/brand/discover", label: "Discover Creators", icon: Search },
-    { to: "/brand/campaigns", label: "Campaigns", icon: Megaphone },
-    { to: "/brand/projects", label: "Active Projects", icon: Briefcase },
+    { to: "/brand/discover", label: "Discover", icon: Search },
+    { to: "/brand/projects", label: "Projects", icon: Briefcase },
     { to: "/brand/settings/integrations", label: "Settings", icon: Settings },
   ]
 
@@ -108,7 +114,7 @@ export const Navbar: React.FC = () => {
             className="hidden lg:inline-flex items-center gap-1 text-xs font-semibold text-[#9A6ADF] bg-[#F4E7FF]/60 hover:bg-[#F4E7FF] px-2.5 py-1 rounded-lg border border-[#D8B8FF] transition-colors"
           >
             <Search className="h-3 w-3" />
-            <span>Find Talent</span>
+            <span>Explore Creators</span>
           </Link>
 
           {isAuthenticated && user ? (

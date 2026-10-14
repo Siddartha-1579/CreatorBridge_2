@@ -271,12 +271,87 @@ def init_db():
             """
         )
 
-        # Migration: ensure cover_image_url column exists in campaign_briefs
+        # 10. campaign_participants (creators who joined content rewards campaigns)
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS campaign_participants (
+                id TEXT PRIMARY KEY,
+                campaign_id TEXT NOT NULL,
+                creator_id TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'JOINED',
+                joined_at TEXT NOT NULL,
+                UNIQUE(campaign_id, creator_id)
+            )
+            """
+        )
+
+        # 11. clip_submissions (video/clip submissions by creators)
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS clip_submissions (
+                id TEXT PRIMARY KEY,
+                campaign_id TEXT NOT NULL,
+                creator_id TEXT NOT NULL,
+                brand_id TEXT NOT NULL,
+                clip_url TEXT NOT NULL,
+                platform TEXT NOT NULL,
+                title TEXT NOT NULL,
+                description TEXT,
+                ai_tools TEXT DEFAULT '[]',
+                views_count INTEGER DEFAULT 0,
+                earned_cents INTEGER DEFAULT 0,
+                status TEXT NOT NULL DEFAULT 'PENDING_REVIEW',
+                feedback TEXT,
+                submitted_at TEXT NOT NULL,
+                reviewed_at TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+
+        # 12. brand_community_posts (community updates, guidelines, and winner showcases)
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS brand_community_posts (
+                id TEXT PRIMARY KEY,
+                brand_id TEXT NOT NULL,
+                title TEXT NOT NULL,
+                content TEXT NOT NULL,
+                category TEXT DEFAULT 'ANNOUNCEMENT',
+                pinned INTEGER DEFAULT 0,
+                likes_count INTEGER DEFAULT 0,
+                media_url TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+
+        # Migrations: ensure columns exist in campaign_briefs
         cursor.execute("PRAGMA table_info(campaign_briefs)")
         columns = [row[1] for row in cursor.fetchall()]
         if "cover_image_url" not in columns:
             cursor.execute("ALTER TABLE campaign_briefs ADD COLUMN cover_image_url TEXT")
             logger.info("Migrated campaign_briefs table: added cover_image_url column")
+        if "reward_type" not in columns:
+            cursor.execute("ALTER TABLE campaign_briefs ADD COLUMN reward_type TEXT DEFAULT 'CPM'")
+            logger.info("Migrated campaign_briefs table: added reward_type column")
+        if "cpm_rate_cents" not in columns:
+            cursor.execute("ALTER TABLE campaign_briefs ADD COLUMN cpm_rate_cents INTEGER DEFAULT 150")
+            logger.info("Migrated campaign_briefs table: added cpm_rate_cents column")
+        if "total_pool_cents" not in columns:
+            cursor.execute("ALTER TABLE campaign_briefs ADD COLUMN total_pool_cents INTEGER DEFAULT 1500000")
+            logger.info("Migrated campaign_briefs table: added total_pool_cents column")
+        if "paid_pool_cents" not in columns:
+            cursor.execute("ALTER TABLE campaign_briefs ADD COLUMN paid_pool_cents INTEGER DEFAULT 0")
+            logger.info("Migrated campaign_briefs table: added paid_pool_cents column")
+        if "views_count" not in columns:
+            cursor.execute("ALTER TABLE campaign_briefs ADD COLUMN views_count INTEGER DEFAULT 0")
+            logger.info("Migrated campaign_briefs table: added views_count column")
+        if "participants_count" not in columns:
+            cursor.execute("ALTER TABLE campaign_briefs ADD COLUMN participants_count INTEGER DEFAULT 0")
+            logger.info("Migrated campaign_briefs table: added participants_count column")
 
         conn.commit()
         logger.info(f"Persistent database schema initialized at {DB_PATH}")

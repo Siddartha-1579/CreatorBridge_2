@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react"
+import { Link, useNavigate } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { briefsService } from "@/services/briefs.service"
 import { portfoliosService } from "@/services/portfolios.service"
@@ -12,6 +13,7 @@ import type {
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ImageWithFallback } from "@/components/common/ImageWithFallback"
 import {
   Megaphone,
   Search,
@@ -34,9 +36,17 @@ import {
   FolderKanban,
   Tag,
   Briefcase,
+  Flame,
+  TrendingUp,
+  Eye,
+  Users,
+  Video,
+  ArrowRight,
+  Trophy,
 } from "lucide-react"
 
 export const CreatorCampaignsPage: React.FC = () => {
+  const navigate = useNavigate()
   const [briefs, setBriefs] = useState<CampaignBrief[]>([])
   const [myApplications, setMyApplications] = useState<CampaignApplication[]>([])
   const [profile, setProfile] = useState<CreatorProfile | null>(null)
@@ -46,7 +56,7 @@ export const CreatorCampaignsPage: React.FC = () => {
   // Filters state
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("ALL")
-  const [selectedContentType, setSelectedContentType] = useState("ALL")
+  const [selectedPlatform, setSelectedPlatform] = useState("ALL")
   const [selectedTool, setSelectedTool] = useState("ALL")
   const [activeTab, setActiveTab] = useState<"DISCOVER" | "APPLIED">("DISCOVER")
 
@@ -101,21 +111,27 @@ export const CreatorCampaignsPage: React.FC = () => {
     return map
   }, [myApplications])
 
-  // Unique categories, content types, and tools from published briefs
+  // Featured top campaign for Whop-style hero banner
+  const featuredBrief = useMemo(() => {
+    if (briefs.length === 0) return null
+    return (
+      briefs.find((b) => (b.total_pool_cents || 0) > 0 || (b.cpm_rate_cents || 0) > 0) ||
+      briefs[0]
+    )
+  }, [briefs])
+
+  // Trending top 3 campaigns
+  const trendingBriefs = useMemo(() => {
+    return [...briefs]
+      .sort((a, b) => (b.views_count || 0) - (a.views_count || 0))
+      .slice(0, 3)
+  }, [briefs])
+
+  // Unique categories
   const categories = useMemo(() => {
     const set = new Set<string>()
     briefs.forEach((b) => {
       if (b.campaign_category) set.add(b.campaign_category)
-    })
-    return ["ALL", ...Array.from(set)]
-  }, [briefs])
-
-  const contentTypes = useMemo(() => {
-    const set = new Set<string>()
-    briefs.forEach((b) => {
-      b.deliverables?.forEach((d) => {
-        if (d.content_type) set.add(d.content_type)
-      })
     })
     return ["ALL", ...Array.from(set)]
   }, [briefs])
@@ -142,10 +158,12 @@ export const CreatorCampaignsPage: React.FC = () => {
         return false
       }
 
-      // Content type filter
-      if (selectedContentType !== "ALL") {
-        const hasContentType = b.deliverables?.some((d) => d.content_type === selectedContentType)
-        if (!hasContentType) return false
+      // Platform filter
+      if (selectedPlatform !== "ALL") {
+        const hasPlatform = b.platforms?.some(
+          (p) => p.toUpperCase().includes(selectedPlatform.toUpperCase())
+        )
+        if (!hasPlatform) return false
       }
 
       // Tool filter
@@ -156,7 +174,7 @@ export const CreatorCampaignsPage: React.FC = () => {
 
       return true
     })
-  }, [briefs, activeTab, appliedBriefMap, searchQuery, selectedCategory, selectedContentType, selectedTool])
+  }, [briefs, activeTab, appliedBriefMap, searchQuery, selectedCategory, selectedPlatform, selectedTool])
 
   const openApplicationModal = (brief: CampaignBrief) => {
     setApplyingBrief(brief)
@@ -206,54 +224,256 @@ export const CreatorCampaignsPage: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Page Header */}
+    <div className="space-y-8 max-w-7xl mx-auto pb-16">
+      {/* Top Header */}
       <div className="flex flex-col justify-between gap-4 border-b border-[#F4E7FF] pb-6 sm:flex-row sm:items-center">
         <div>
           <div className="flex items-center space-x-2">
-            <h1 className="text-2xl font-bold tracking-tight text-[#111111]">
-              Campaign Opportunities
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-[#111111]">
+              Content Rewards Marketplace
             </h1>
-            <span className="rounded-full bg-[#F4E7FF] px-2.5 py-0.5 text-xs font-semibold text-[#9A6ADF]">
-              Live Marketplace
-            </span>
+            <Badge variant="purple" className="text-xs">
+              Live Bounties & CPM Pools
+            </Badge>
           </div>
-          <p className="mt-1 text-xs text-[#4B4652]">
-            Browse commercial campaign briefs published by verified brands. Apply with your AI production stack.
+          <p className="mt-1 text-xs sm:text-sm text-[#4B4652]">
+            Discover commercial brand campaigns, get paid per 1,000 verified views, and submit video clips built with your AI toolchains.
           </p>
         </div>
 
         {/* Tab switch: All Campaigns vs My Proposals */}
-        <div className="flex rounded-xl bg-slate-100 p-1 border border-slate-200/80">
-          <button
-            type="button"
-            onClick={() => setActiveTab("DISCOVER")}
-            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-              activeTab === "DISCOVER"
-                ? "bg-white text-[#9A6ADF] shadow-2xs font-bold"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            Open Campaigns ({briefs.length})
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("APPLIED")}
-            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
-              activeTab === "APPLIED"
-                ? "bg-white text-[#9A6ADF] shadow-2xs font-bold"
-                : "text-slate-600 hover:text-slate-900"
-            }`}
-          >
-            My Proposals ({myApplications.length})
-          </button>
+        <div className="flex items-center gap-3">
+          <Link to="/creator/submissions">
+            <Button variant="outline" size="sm" className="text-xs gap-1.5 border-[#D8B8FF] text-[#9A6ADF]">
+              <Video className="w-3.5 h-3.5" />
+              <span>My Submissions</span>
+            </Button>
+          </Link>
+          <div className="flex rounded-xl bg-slate-100 p-1 border border-slate-200/80">
+            <button
+              type="button"
+              onClick={() => setActiveTab("DISCOVER")}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                activeTab === "DISCOVER"
+                  ? "bg-white text-[#9A6ADF] shadow-2xs font-bold"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              Open Campaigns ({briefs.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("APPLIED")}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                activeTab === "APPLIED"
+                  ? "bg-white text-[#9A6ADF] shadow-2xs font-bold"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+            >
+              My Proposals ({myApplications.length})
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="rounded-2xl border border-[#F4E7FF] bg-white p-4 shadow-2xs">
+      {/* WHOP-INSPIRED HERO FEATURED BANNER */}
+      {activeTab === "DISCOVER" && featuredBrief && (
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-950 via-purple-950 to-slate-900 text-white shadow-xl border border-purple-800/40 p-6 sm:p-8">
+          <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+            {/* Left Content */}
+            <div className="lg:col-span-8 space-y-4">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="px-3 py-1 rounded-full bg-[#9A6ADF] text-white text-[11px] font-extrabold uppercase tracking-wider shadow-sm flex items-center gap-1">
+                  <Flame className="w-3.5 h-3.5 fill-white" />
+                  Featured Rewards Pool
+                </span>
+                <span className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-white text-[11px] font-semibold border border-white/20">
+                  {featuredBrief.campaign_category || "Commercial Brand"}
+                </span>
+              </div>
+
+              <div>
+                <p className="text-xs sm:text-sm text-purple-200 font-medium">
+                  {featuredBrief.brand_or_product_name || "Verified Brand"}
+                </p>
+                <h2 className="text-2xl sm:text-3xl font-black text-white mt-1 leading-tight">
+                  {featuredBrief.title}
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-300 mt-2 max-w-2xl line-clamp-2">
+                  {featuredBrief.executive_summary || featuredBrief.campaign_idea || featuredBrief.description}
+                </p>
+              </div>
+
+              {/* Reward Highlights */}
+              <div className="flex flex-wrap items-center gap-4 sm:gap-6 pt-2">
+                {featuredBrief.cpm_rate_cents && (
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Rate</span>
+                    <p className="text-xl sm:text-2xl font-black text-emerald-400">
+                      ${((featuredBrief.cpm_rate_cents || 0) / 100).toFixed(0)}
+                      <span className="text-xs font-normal text-slate-300"> / 1K Views</span>
+                    </p>
+                  </div>
+                )}
+
+                {featuredBrief.total_pool_cents && (
+                  <div>
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Total Pool</span>
+                    <p className="text-xl sm:text-2xl font-black text-white">
+                      ${((featuredBrief.total_pool_cents || 0) / 100).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+
+                <div>
+                  <span className="text-[10px] uppercase font-bold text-slate-400">Creators Active</span>
+                  <p className="text-xl sm:text-2xl font-black text-purple-300 flex items-center gap-1.5">
+                    <Users className="w-4 h-4 text-purple-400" />
+                    <span>{featuredBrief.participants_count || 18}</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* CTAs */}
+              <div className="flex flex-wrap items-center gap-3 pt-3">
+                <Link to={`/creator/campaigns/${featuredBrief.id}`}>
+                  <Button
+                    size="lg"
+                    className="bg-[#9A6ADF] hover:bg-[#8552D4] text-white text-xs sm:text-sm font-extrabold px-6 py-2.5 rounded-xl shadow-lg shadow-purple-900/50 flex items-center gap-2"
+                  >
+                    <span>View Campaign & Join</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Button>
+                </Link>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  onClick={() => openApplicationModal(featuredBrief)}
+                  className="bg-white/10 hover:bg-white/20 text-white border-white/20 text-xs sm:text-sm font-semibold rounded-xl"
+                >
+                  Direct Proposal Pitch
+                </Button>
+              </div>
+            </div>
+
+            {/* Right Artwork Preview */}
+            <div className="lg:col-span-4 h-48 sm:h-56 lg:h-64 rounded-2xl overflow-hidden border border-white/20 relative shadow-2xl">
+              <ImageWithFallback
+                src={featuredBrief.cover_image_url || "/demo-assets/fashion-editorial-cyber.svg"}
+                fallbackSrc="/demo-assets/fashion-editorial-cyber.svg"
+                alt={featuredBrief.title}
+                category={featuredBrief.campaign_category}
+                iconType="briefcase"
+                fallbackText={featuredBrief.title}
+                className="w-full h-full object-cover"
+                containerClassName="w-full h-full"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent flex items-end p-4">
+                <div className="text-xs text-white">
+                  <span className="font-bold text-purple-300">Accepted AI Tools:</span>{" "}
+                  {featuredBrief.required_tools?.slice(0, 3).join(", ") || "Midjourney, Runway Gen-3, Kling"}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TRENDING THIS WEEK RANKED SECTION */}
+      {activeTab === "DISCOVER" && trendingBriefs.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-bold text-[#111111]">Trending This Week</h2>
+              <span className="text-xs text-slate-400 font-normal">Ranked by creator participation</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {trendingBriefs.map((trend, idx) => (
+              <Link
+                key={trend.id}
+                to={`/creator/campaigns/${trend.id}`}
+                className="group relative flex items-center gap-3.5 p-3.5 rounded-2xl bg-white border border-[#F4E7FF] hover:border-[#9A6ADF] hover:shadow-xs transition-all"
+              >
+                {/* Rank Badge */}
+                <div
+                  className={`w-8 h-8 rounded-xl flex items-center justify-center font-black text-xs shrink-0 ${
+                    idx === 0
+                      ? "bg-amber-100 text-amber-700 border border-amber-300"
+                      : idx === 1
+                      ? "bg-slate-200 text-slate-700 border border-slate-300"
+                      : "bg-orange-100 text-orange-700 border border-orange-200"
+                  }`}
+                >
+                  #{idx + 1}
+                </div>
+
+                {/* Thumb */}
+                <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 shrink-0 border border-slate-200">
+                  <img
+                    src={trend.cover_image_url || "/demo-assets/fashion-editorial-cyber.svg"}
+                    alt={trend.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                  />
+                </div>
+
+                {/* Details */}
+                <div className="min-w-0 flex-1">
+                  <h4 className="text-xs font-bold text-slate-900 truncate group-hover:text-[#9A6ADF]">
+                    {trend.title}
+                  </h4>
+                  <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5">
+                    {trend.cpm_rate_cents ? (
+                      <span className="text-emerald-600 font-bold">
+                        ${((trend.cpm_rate_cents || 0) / 100).toFixed(0)} CPM
+                      </span>
+                    ) : (
+                      <span className="text-slate-600 font-semibold">Open Budget</span>
+                    )}
+                    <span>•</span>
+                    <span>{trend.participants_count || 12} joined</span>
+                  </div>
+                </div>
+
+                <ArrowRight className="w-4 h-4 text-slate-300 group-hover:text-[#9A6ADF] group-hover:translate-x-0.5 transition-all shrink-0" />
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* FILTER & PLATFORM PILLS BAR */}
+      <div className="rounded-2xl border border-[#F4E7FF] bg-white p-4 shadow-2xs space-y-3">
+        {/* Top: Platforms Pills */}
+        <div className="flex flex-wrap items-center gap-1.5 pb-2 border-b border-slate-100">
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">Platform:</span>
+          {["ALL", "TIKTOK", "INSTAGRAM", "YOUTUBE"].map((plat) => {
+            const isSelected = selectedPlatform === plat
+            return (
+              <button
+                key={plat}
+                onClick={() => setSelectedPlatform(plat)}
+                className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all ${
+                  isSelected
+                    ? "bg-[#9A6ADF] text-white shadow-xs"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {plat === "ALL"
+                  ? "All Platforms"
+                  : plat === "TIKTOK"
+                  ? "TikTok"
+                  : plat === "INSTAGRAM"
+                  ? "Instagram Reels"
+                  : "YouTube Shorts"}
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Bottom: Search & Category */}
         <div className="grid grid-cols-1 gap-3 md:grid-cols-4">
-          {/* Keyword Search */}
           <div className="relative md:col-span-2">
             <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
             <input
@@ -265,7 +485,6 @@ export const CreatorCampaignsPage: React.FC = () => {
             />
           </div>
 
-          {/* Category Dropdown */}
           <div>
             <select
               value={selectedCategory}
@@ -281,29 +500,28 @@ export const CreatorCampaignsPage: React.FC = () => {
             </select>
           </div>
 
-          {/* Content Type Dropdown */}
           <div>
             <select
-              value={selectedContentType}
-              onChange={(e) => setSelectedContentType(e.target.value)}
+              value={selectedTool}
+              onChange={(e) => setSelectedTool(e.target.value)}
               className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-800 focus:border-[#9A6ADF] focus:bg-white focus:outline-none"
             >
-              <option value="ALL">All Content Types</option>
-              {contentTypes.filter((ct) => ct !== "ALL").map((ct) => (
-                <option key={ct} value={ct}>
-                  {ct}
-                </option>
-              ))}
+              <option value="ALL">All AI Tools</option>
+              <option value="Midjourney">Midjourney</option>
+              <option value="Runway Gen-3">Runway Gen-3</option>
+              <option value="Kling">Kling AI</option>
+              <option value="ElevenLabs">ElevenLabs</option>
+              <option value="ComfyUI">ComfyUI</option>
             </select>
           </div>
         </div>
       </div>
 
-      {/* Campaigns Listing Grid */}
+      {/* CAMPAIGNS GRID */}
       {loading ? (
         <div className="flex h-64 flex-col items-center justify-center space-y-3">
           <Loader2 className="h-7 w-7 animate-spin text-[#9A6ADF]" />
-          <p className="text-xs text-slate-500">Loading marketplace campaign briefs...</p>
+          <p className="text-xs text-slate-500">Loading marketplace campaigns...</p>
         </div>
       ) : filteredBriefs.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-[#F4E7FF] bg-white p-12 text-center">
@@ -333,7 +551,8 @@ export const CreatorCampaignsPage: React.FC = () => {
             const coverImage =
               brief.cover_image_url ||
               "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80"
-            const budgetUSD = brief.budget_cents ? Math.round(brief.budget_cents / 100) : null
+            const cpmRateUSD = brief.cpm_rate_cents ? Math.round(brief.cpm_rate_cents / 100) : null
+            const poolUSD = brief.total_pool_cents ? Math.round(brief.total_pool_cents / 100) : null
 
             return (
               <Card
@@ -342,18 +561,28 @@ export const CreatorCampaignsPage: React.FC = () => {
               >
                 {/* Campaign Cover Artwork */}
                 <div className="relative h-44 w-full overflow-hidden bg-slate-100">
-                  <img
+                  <ImageWithFallback
                     src={coverImage}
+                    fallbackSrc="/demo-assets/fashion-editorial-cyber.svg"
                     alt={brief.title}
+                    category={brief.campaign_category}
+                    iconType="briefcase"
+                    fallbackText={brief.title}
                     className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    containerClassName="h-full w-full"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent pointer-events-none" />
 
                   {/* Top Badges */}
                   <div className="absolute top-3 left-3 flex items-center space-x-1.5">
                     {brief.campaign_category && (
                       <span className="rounded-full bg-black/60 backdrop-blur-md px-2.5 py-1 text-[10px] font-bold text-white">
                         {brief.campaign_category}
+                      </span>
+                    )}
+                    {cpmRateUSD && (
+                      <span className="rounded-full bg-emerald-600/90 backdrop-blur-md px-2.5 py-1 text-[10px] font-extrabold text-white">
+                        ${cpmRateUSD} / 1K Views
                       </span>
                     )}
                   </div>
@@ -394,31 +623,27 @@ export const CreatorCampaignsPage: React.FC = () => {
                     {brief.executive_summary || brief.campaign_idea || brief.description}
                   </p>
 
-                  {/* Deliverables and Required Tools tags */}
+                  {/* Platforms & Tools Pills */}
                   <div className="space-y-2">
-                    <div className="flex flex-wrap gap-1.5">
-                      {brief.deliverables?.slice(0, 2).map((d, i) => (
-                        <span
-                          key={i}
-                          className="inline-flex items-center rounded-md bg-[#F4E7FF]/60 px-2 py-0.5 text-[10px] font-semibold text-[#9A6ADF]"
-                        >
-                          <Layers className="mr-1 h-2.5 w-2.5" />
-                          {d.quantity}x {d.content_type}
-                        </span>
-                      ))}
-                      {(brief.deliverables?.length || 0) > 2 && (
-                        <span className="rounded-md bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600">
-                          +{brief.deliverables.length - 2} more
-                        </span>
-                      )}
-                    </div>
+                    {brief.platforms && brief.platforms.length > 0 && (
+                      <div className="flex flex-wrap gap-1">
+                        {brief.platforms.map((p, i) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center rounded-md bg-[#F4E7FF]/60 px-2 py-0.5 text-[10px] font-semibold text-[#9A6ADF]"
+                          >
+                            {p}
+                          </span>
+                        ))}
+                      </div>
+                    )}
 
                     {brief.required_tools && brief.required_tools.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {brief.required_tools.slice(0, 3).map((t, idx) => (
                           <span
                             key={idx}
-                            className="inline-flex items-center rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600"
+                            className="inline-flex items-center rounded bg-slate-100 px-1.5 py-0.5 text-[10px] text-slate-600 font-medium"
                           >
                             <Wand2 className="mr-1 h-2.5 w-2.5 text-purple-500" />
                             {t}
@@ -432,50 +657,41 @@ export const CreatorCampaignsPage: React.FC = () => {
                   <div className="border-t border-slate-100 pt-3">
                     <div className="flex items-center justify-between text-xs">
                       <div>
-                        <span className="text-[10px] uppercase font-bold text-slate-400">Budget</span>
+                        <span className="text-[10px] uppercase font-bold text-slate-400">Total Pool</span>
                         <p className="font-extrabold text-slate-900">
-                          {budgetUSD ? `$${budgetUSD.toLocaleString()} USD` : "Open to Bids"}
+                          {poolUSD ? `$${poolUSD.toLocaleString()} USD` : "Open Pool"}
                         </p>
                       </div>
 
                       <div className="text-right">
-                        <span className="text-[10px] uppercase font-bold text-slate-400">Deadline</span>
-                        <p className="font-medium text-slate-700">
-                          {brief.deadline
-                            ? new Date(brief.deadline).toLocaleDateString(undefined, {
-                                month: "short",
-                                day: "numeric",
-                              })
-                            : "Flexible"}
+                        <span className="text-[10px] uppercase font-bold text-slate-400">Participants</span>
+                        <p className="font-semibold text-slate-700 flex items-center gap-1 justify-end">
+                          <Users className="w-3 h-3 text-[#9A6ADF]" />
+                          <span>{brief.participants_count || 12} Creators</span>
                         </p>
                       </div>
                     </div>
 
                     {/* Actions */}
                     <div className="mt-4 flex items-center gap-2">
+                      <Link to={`/creator/campaigns/${brief.id}`} className="flex-1">
+                        <Button
+                          variant="primary"
+                          className="w-full rounded-xl bg-[#9A6ADF] hover:bg-[#8552D4] text-white text-xs font-bold shadow-xs gap-1"
+                        >
+                          <span>Join & Submit</span>
+                          <ArrowRight className="w-3 h-3" />
+                        </Button>
+                      </Link>
+
                       <Button
                         variant="outline"
-                        onClick={() => setSelectedBrief(brief)}
-                        className="flex-1 rounded-xl border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                        onClick={() => openApplicationModal(brief)}
+                        className="rounded-xl border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50 px-2.5"
+                        title="Submit Custom Proposal"
                       >
-                        Inspect Brief
+                        Pitch
                       </Button>
-
-                      {hasApplied ? (
-                        <Button
-                          disabled
-                          className="flex-1 rounded-xl bg-slate-100 text-slate-400 text-xs font-semibold"
-                        >
-                          Applied
-                        </Button>
-                      ) : (
-                        <Button
-                          onClick={() => openApplicationModal(brief)}
-                          className="flex-1 rounded-xl bg-[#9A6ADF] text-white hover:bg-[#8654CF] text-xs font-bold shadow-xs"
-                        >
-                          Submit Pitch
-                        </Button>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -485,162 +701,7 @@ export const CreatorCampaignsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Brief Detail Modal */}
-      <AnimatePresence>
-        {selectedBrief && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-3xl bg-white p-6 shadow-2xl sm:p-8"
-            >
-              <button
-                type="button"
-                onClick={() => setSelectedBrief(null)}
-                className="absolute top-5 right-5 rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-              >
-                <X className="h-5 w-5" />
-              </button>
-
-              {/* Cover Artwork Hero */}
-              {selectedBrief.cover_image_url && (
-                <div className="mb-6 h-48 w-full overflow-hidden rounded-2xl border border-slate-100 shadow-inner">
-                  <img
-                    src={selectedBrief.cover_image_url}
-                    alt={selectedBrief.title}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
-              )}
-
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <span className="rounded-full bg-[#F4E7FF] px-2.5 py-0.5 text-xs font-bold text-[#9A6ADF]">
-                    {selectedBrief.campaign_category || "Campaign Brief"}
-                  </span>
-                  <span className="text-xs text-slate-400">•</span>
-                  <span className="text-xs font-semibold text-slate-600">
-                    {selectedBrief.brand_or_product_name || "Brand Partner"}
-                  </span>
-                </div>
-
-                <h2 className="text-xl font-extrabold text-slate-900">{selectedBrief.title}</h2>
-
-                {/* Overview */}
-                <div className="rounded-2xl border border-slate-100 bg-slate-50/60 p-4">
-                  <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">Campaign Overview</h4>
-                  <p className="mt-1.5 text-xs leading-relaxed text-slate-600 whitespace-pre-wrap">
-                    {selectedBrief.description || selectedBrief.campaign_idea}
-                  </p>
-                </div>
-
-                {/* Core Details Grid */}
-                <div className="grid grid-cols-2 gap-4 rounded-2xl border border-[#F4E7FF] bg-purple-50/20 p-4 text-xs">
-                  <div>
-                    <span className="font-semibold text-slate-500">Agreed Budget</span>
-                    <p className="font-extrabold text-slate-900">
-                      {selectedBrief.budget_cents
-                        ? `$${Math.round(selectedBrief.budget_cents / 100).toLocaleString()} USD`
-                        : "Open to Proposals"}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-slate-500">Timeline / Deadline</span>
-                    <p className="font-bold text-slate-900">
-                      {selectedBrief.deadline
-                        ? new Date(selectedBrief.deadline).toLocaleDateString()
-                        : "To be agreed upon"}
-                    </p>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-slate-500">Target Audience</span>
-                    <p className="font-medium text-slate-700">{selectedBrief.target_audience || "Global Creators"}</p>
-                  </div>
-                  <div>
-                    <span className="font-semibold text-slate-500">Primary Objective</span>
-                    <p className="font-medium text-slate-700">{selectedBrief.primary_objective || "Brand Launch"}</p>
-                  </div>
-                </div>
-
-                {/* Deliverables List */}
-                {selectedBrief.deliverables && selectedBrief.deliverables.length > 0 && (
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-                      Required Deliverables ({selectedBrief.deliverables.length})
-                    </h4>
-                    <div className="space-y-2">
-                      {selectedBrief.deliverables.map((d, i) => (
-                        <div
-                          key={i}
-                          className="flex items-center justify-between rounded-xl border border-slate-200/80 bg-white p-3 text-xs"
-                        >
-                          <div>
-                            <p className="font-bold text-slate-800">
-                              {d.quantity}x {d.content_type}
-                            </p>
-                            <p className="text-[11px] text-slate-500">
-                              Ratio: {d.aspect_ratio || "9:16"} • Format: {d.file_format || "MP4 / ProRes"}
-                            </p>
-                          </div>
-                          {d.production_notes && (
-                            <span className="text-[11px] text-purple-700 font-medium">
-                              Note: {d.production_notes}
-                            </span>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Commercial Terms */}
-                {selectedBrief.commercial_terms && (
-                  <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-xs space-y-1 text-slate-600">
-                    <p>
-                      <strong className="text-slate-800">Usage Rights:</strong>{" "}
-                      {selectedBrief.commercial_terms.intended_usage?.join(", ") || "Commercial Social Rights"}
-                    </p>
-                    <p>
-                      <strong className="text-slate-800">Territory:</strong>{" "}
-                      {selectedBrief.commercial_terms.territory || "Global"}
-                    </p>
-                    <p>
-                      <strong className="text-slate-800">Revisions Allowed:</strong>{" "}
-                      {selectedBrief.commercial_terms.revisions_count ?? 2} standard review cycles
-                    </p>
-                  </div>
-                )}
-
-                {/* Modal Footer */}
-                <div className="pt-4 flex items-center justify-end space-x-3">
-                  <Button
-                    variant="outline"
-                    onClick={() => setSelectedBrief(null)}
-                    className="text-xs rounded-xl"
-                  >
-                    Close
-                  </Button>
-                  {!appliedBriefMap.has(selectedBrief.id) && (
-                    <Button
-                      onClick={() => {
-                        const b = selectedBrief
-                        setSelectedBrief(null)
-                        openApplicationModal(b)
-                      }}
-                      className="bg-[#9A6ADF] text-white hover:bg-[#8654CF] text-xs font-bold rounded-xl"
-                    >
-                      Apply for this Campaign
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* Application / Proposal Modal */}
+      {/* Traditional Pitch Application Modal */}
       <AnimatePresence>
         {applyingBrief && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs">
@@ -659,139 +720,101 @@ export const CreatorCampaignsPage: React.FC = () => {
               </button>
 
               <div className="mb-6">
-                <span className="rounded-full bg-[#F4E7FF] px-2.5 py-0.5 text-xs font-bold text-[#9A6ADF]">
-                  Proposal Submission
+                <span className="rounded-full bg-[#F4E7FF] px-2.5 py-1 text-[10px] font-bold text-[#9A6ADF]">
+                  Proposal Pitch
                 </span>
                 <h2 className="mt-2 text-xl font-bold text-slate-900">
-                  Pitch for: {applyingBrief.title}
+                  Apply to {applyingBrief.title}
                 </h2>
                 <p className="mt-1 text-xs text-slate-500">
-                  Tell the brand why your generative AI workflow, aesthetic vision, and delivery velocity are the perfect match.
+                  {applyingBrief.brand_or_product_name || "Commercial Brand"} • Target Budget:{" "}
+                  {applyingBrief.budget_cents
+                    ? `$${Math.round(applyingBrief.budget_cents / 100).toLocaleString()} USD`
+                    : "Negotiable"}
                 </p>
               </div>
 
-              {appSuccessMessage ? (
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-6 text-center text-emerald-800">
-                  <CheckCircle2 className="mx-auto h-8 w-8 text-emerald-600 mb-2" />
-                  <h4 className="text-sm font-bold">{appSuccessMessage}</h4>
-                  <p className="mt-1 text-xs text-emerald-700">
-                    The brand has been notified. You can track this in "My Proposals".
-                  </p>
+              {appError && (
+                <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
+                  {appError}
                 </div>
-              ) : (
-                <form onSubmit={handleSubmitApplication} className="space-y-5">
-                  {appError && (
-                    <div className="flex items-center space-x-2 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700">
-                      <AlertCircle className="h-4 w-4 shrink-0" />
-                      <span>{appError}</span>
-                    </div>
-                  )}
+              )}
 
-                  {/* Pitch / Creative Angle */}
+              {appSuccessMessage && (
+                <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs text-emerald-700">
+                  {appSuccessMessage}
+                </div>
+              )}
+
+              <form onSubmit={handleSubmitApplication} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">
+                    Your Creative Angle & Pitch <span className="text-rose-500">*</span>
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={pitch}
+                    onChange={(e) => setPitch(e.target.value)}
+                    placeholder="Describe how you will execute this brief using generative AI, your aesthetic direction, and past experience..."
+                    className="w-full rounded-xl border border-slate-200 bg-slate-50/50 p-3 text-xs text-slate-800 placeholder-slate-400 focus:border-[#9A6ADF] focus:bg-white focus:outline-none"
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="mb-1 block text-xs font-semibold text-slate-700">
-                      Your Tailored Creative Pitch & Approach <span className="text-rose-500">*</span>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Proposed Rate (USD)
                     </label>
-                    <textarea
-                      rows={4}
-                      value={pitch}
-                      onChange={(e) => setPitch(e.target.value)}
-                      placeholder="Describe your visual concept, the AI tools you will use (e.g. Runway Gen-3, Midjourney v6), and how you'll achieve brand consistency..."
-                      className="w-full rounded-xl border border-slate-200 p-3 text-xs text-slate-800 placeholder-slate-400 focus:border-[#9A6ADF] focus:outline-none"
+                    <input
+                      type="number"
+                      min={100}
+                      value={proposedRateUSD}
+                      onChange={(e) => setProposedRateUSD(Number(e.target.value))}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-800 focus:border-[#9A6ADF] focus:bg-white focus:outline-none"
                     />
                   </div>
 
-                  {/* Rate & Timeline */}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold text-slate-700">
-                        Proposed Total Fee ($ USD)
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={proposedRateUSD}
-                        onChange={(e) => setProposedRateUSD(Number(e.target.value))}
-                        className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800 focus:border-[#9A6ADF] focus:outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="mb-1 block text-xs font-semibold text-slate-700">
-                        Estimated Turnaround (Days)
-                      </label>
-                      <input
-                        type="number"
-                        min="1"
-                        max="90"
-                        value={estimatedDays}
-                        onChange={(e) => setEstimatedDays(Number(e.target.value))}
-                        className="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs text-slate-800 focus:border-[#9A6ADF] focus:outline-none"
-                      />
-                    </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">
+                      Est. Turnaround (Days)
+                    </label>
+                    <input
+                      type="number"
+                      min={1}
+                      max={60}
+                      value={estimatedDays}
+                      onChange={(e) => setEstimatedDays(Number(e.target.value))}
+                      className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-800 focus:border-[#9A6ADF] focus:bg-white focus:outline-none"
+                    />
                   </div>
+                </div>
 
-                  {/* Portfolio Projects to showcase */}
-                  {portfolioProjects.length > 0 && (
-                    <div>
-                      <label className="mb-1.5 block text-xs font-semibold text-slate-700">
-                        Attach Relevant Portfolio Work ({selectedPortfolioIds.length} selected)
-                      </label>
-                      <div className="grid grid-cols-2 gap-2 max-h-36 overflow-y-auto pr-1">
-                        {portfolioProjects.map((proj) => {
-                          const isSelected = selectedPortfolioIds.includes(proj.id)
-                          return (
-                            <div
-                              key={proj.id}
-                              onClick={() => {
-                                setSelectedPortfolioIds((prev) =>
-                                  isSelected ? prev.filter((id) => id !== proj.id) : [...prev, proj.id]
-                                )
-                              }}
-                              className={`cursor-pointer rounded-xl border p-2.5 text-xs transition flex items-center justify-between ${
-                                isSelected
-                                  ? "border-[#9A6ADF] bg-[#F4E7FF]/40 text-[#9A6ADF] font-bold"
-                                  : "border-slate-200 hover:border-slate-300 text-slate-700"
-                              }`}
-                            >
-                              <span className="truncate text-[11px]">{proj.title}</span>
-                              {isSelected && <Check className="h-3.5 w-3.5 shrink-0" />}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Actions */}
-                  <div className="pt-2 flex items-center justify-end space-x-3">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setApplyingBrief(null)}
-                      className="text-xs rounded-xl"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      disabled={isSubmittingApp}
-                      className="bg-[#9A6ADF] text-white hover:bg-[#8654CF] text-xs font-bold rounded-xl"
-                    >
-                      {isSubmittingApp ? (
-                        <>
-                          <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
-                          <span>Submitting...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Send className="mr-1.5 h-3.5 w-3.5" />
-                          <span>Send Proposal</span>
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </form>
-              )}
+                <div className="pt-2 flex justify-end gap-2">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setApplyingBrief(null)}
+                    className="text-xs"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={isSubmittingApp}
+                    className="bg-[#9A6ADF] hover:bg-[#8552D4] text-white text-xs font-bold"
+                  >
+                    {isSubmittingApp ? (
+                      <>
+                        <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                        Submitting...
+                      </>
+                    ) : (
+                      "Submit Proposal"
+                    )}
+                  </Button>
+                </div>
+              </form>
             </motion.div>
           </div>
         )}
@@ -799,3 +822,4 @@ export const CreatorCampaignsPage: React.FC = () => {
     </div>
   )
 }
+export default CreatorCampaignsPage

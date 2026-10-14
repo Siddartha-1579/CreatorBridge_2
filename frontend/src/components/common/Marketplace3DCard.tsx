@@ -1,9 +1,11 @@
 import React from "react"
+import { Link } from "react-router-dom"
 import { CardContainer, CardBody, CardItem } from "@/components/ui/3d-card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { Sparkles, ArrowRight, Video, CheckCircle2, ShieldCheck, Film, Layers } from "lucide-react"
+import { ImageWithFallback } from "@/components/common/ImageWithFallback"
 
 export interface Marketplace3DCardProps {
   title: string
@@ -45,7 +47,7 @@ export const Marketplace3DCard: React.FC<Marketplace3DCardProps> = ({
     <CardContainer containerClassName={cn("py-4", containerClassName)}>
       <CardBody
         className={cn(
-          "relative group/card w-full sm:w-[26rem] md:w-[28rem] lg:w-[30rem] h-auto rounded-2xl p-6 sm:p-7 border transition-all duration-300",
+          "relative group/card w-full max-w-full sm:max-w-md md:max-w-lg h-auto rounded-2xl p-6 sm:p-7 border transition-all duration-300",
           // Premium Light Purple + White / Subtle Neutral Palette with Depth
           "bg-white/95 dark:bg-zinc-950/90 backdrop-blur-xl",
           "border-purple-100 dark:border-purple-900/30",
@@ -106,17 +108,20 @@ export const Marketplace3DCard: React.FC<Marketplace3DCardProps> = ({
             rotateZ={-2}
             className="w-full mt-5 relative rounded-xl overflow-hidden border border-purple-100 dark:border-zinc-800 group-hover/card:shadow-xl group-hover/card:shadow-purple-500/10 transition-shadow duration-300"
           >
-            <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-900">
-              <img
+            <div className="relative h-48 sm:h-52 w-full overflow-hidden bg-zinc-100 dark:bg-zinc-900 rounded-xl">
+              <ImageWithFallback
                 src={image}
                 alt={title}
-                loading="lazy"
+                category={category}
+                iconType={isCreatorVariant ? "film" : "layers"}
+                fallbackText={title}
                 className="h-full w-full object-cover transition-transform duration-700 group-hover/card:scale-105"
+                containerClassName="h-full w-full"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-transparent opacity-80" />
+              <div className="absolute inset-0 bg-gradient-to-t from-zinc-950/80 via-transparent to-transparent opacity-80 pointer-events-none" />
 
               {/* Floating Media Indicator */}
-              <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs text-white">
+              <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs text-white pointer-events-none">
                 <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-black/60 backdrop-blur-md font-medium text-[11px]">
                   {isCreatorVariant ? (
                     <>
@@ -190,13 +195,23 @@ export const Marketplace3DCard: React.FC<Marketplace3DCardProps> = ({
           {action && (
             <CardItem translateZ="60" translateX={10}>
               {action.href ? (
-                <a
-                  href={action.href}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-600/20 transition-colors"
-                >
-                  {action.label}
-                  <ArrowRight className="h-3 w-3" />
-                </a>
+                action.href.startsWith("/") ? (
+                  <Link
+                    to={action.href}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-600/20 transition-colors"
+                  >
+                    {action.label}
+                    <ArrowRight className="h-3 w-3" />
+                  </Link>
+                ) : (
+                  <a
+                    href={action.href}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white shadow-md shadow-purple-600/20 transition-colors"
+                  >
+                    {action.label}
+                    <ArrowRight className="h-3 w-3" />
+                  </a>
+                )
               ) : (
                 <Button
                   onClick={action.onClick}

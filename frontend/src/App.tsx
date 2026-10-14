@@ -21,7 +21,7 @@ import { BrandAuthPage } from "@/pages/auth/BrandAuthPage"
 import { ForgotPasswordPage } from "@/pages/auth/ForgotPasswordPage"
 import { ResetPasswordPage } from "@/pages/auth/ResetPasswordPage"
 
-// Onboarding Pages (Master Prompt 04 & 05 previews)
+// Onboarding Pages
 import { CreatorOnboardingPage } from "@/pages/creator/CreatorOnboardingPage"
 import { BrandOnboardingPage } from "@/pages/brand/BrandOnboardingPage"
 
@@ -32,7 +32,9 @@ import { CreatorPortfolioPage } from "@/pages/creator/CreatorPortfolioPage"
 import { CreatorStudioPage } from "@/pages/creator/CreatorStudioPage"
 import { CreatorProjectsPage } from "@/pages/creator/CreatorProjectsPage"
 import { CreatorCampaignsPage } from "@/pages/creator/CreatorCampaignsPage"
-
+import { CreatorCampaignDetailPage } from "@/pages/creator/CreatorCampaignDetailPage"
+import { CreatorSubmissionsPage } from "@/pages/creator/CreatorSubmissionsPage"
+import { CreatorCommunityPage } from "@/pages/creator/CreatorCommunityPage"
 
 // Brand Pages
 import { BrandDashboardPage } from "@/pages/brand/BrandDashboardPage"
@@ -40,6 +42,10 @@ import { BrandBriefsPage } from "@/pages/brand/BrandBriefsPage"
 import { BrandBriefBuilderPage } from "@/pages/brand/BrandBriefBuilderPage"
 import { BrandDiscoverPage } from "@/pages/brand/BrandDiscoverPage"
 import { BrandCampaignsPage } from "@/pages/brand/BrandCampaignsPage"
+import { BrandCampaignDetailPage } from "@/pages/brand/BrandCampaignDetailPage"
+import { BrandCampaignSubmissionsPage } from "@/pages/brand/BrandCampaignSubmissionsPage"
+import { BrandCampaignAnalyticsPage } from "@/pages/brand/BrandCampaignAnalyticsPage"
+import { BrandCommunityPage } from "@/pages/brand/BrandCommunityPage"
 import { BrandProjectsPage } from "@/pages/brand/BrandProjectsPage"
 
 // Settings & Infrastructure
@@ -62,7 +68,7 @@ const RegisterRedirect: React.FC = () => {
   if (role === "CREATOR") {
     return <Navigate to="/auth/creator?mode=register" replace />
   }
-  return <Navigate to="/auth" replace />
+  return <Navigate to="/auth?mode=register" replace />
 }
 
 const LoginRedirect: React.FC = () => {
@@ -74,7 +80,7 @@ const LoginRedirect: React.FC = () => {
   if (role === "CREATOR") {
     return <Navigate to="/auth/creator?mode=login" replace />
   }
-  return <Navigate to="/auth" replace />
+  return <Navigate to="/auth?mode=login" replace />
 }
 
 export const App: React.FC = () => {
@@ -90,7 +96,7 @@ export const App: React.FC = () => {
             <Route path="/404" element={<NotFoundPage />} />
           </Route>
 
-          {/* Role-Separated Authentication Routes */}
+          {/* Authentication Routes */}
           <Route path="/auth" element={<AuthLandingPage />} />
           <Route path="/auth/creator" element={<CreatorAuthPage />} />
           <Route path="/auth/brand" element={<BrandAuthPage />} />
@@ -112,6 +118,9 @@ export const App: React.FC = () => {
               <Route path="/creator" element={<Navigate to="/creator/dashboard" replace />} />
               <Route path="/creator/dashboard" element={<CreatorDashboardPage />} />
               <Route path="/creator/campaigns" element={<CreatorCampaignsPage />} />
+              <Route path="/creator/campaigns/:campaignId" element={<CreatorCampaignDetailPage />} />
+              <Route path="/creator/submissions" element={<CreatorSubmissionsPage />} />
+              <Route path="/creator/community" element={<CreatorCommunityPage />} />
               <Route path="/creator/profile" element={<CreatorProfilePage />} />
               <Route path="/creator/portfolio" element={<CreatorPortfolioPage />} />
               <Route path="/creator/studio" element={<CreatorStudioPage />} />
@@ -126,11 +135,15 @@ export const App: React.FC = () => {
             <Route element={<DashboardLayout />}>
               <Route path="/brand" element={<Navigate to="/brand/dashboard" replace />} />
               <Route path="/brand/dashboard" element={<BrandDashboardPage />} />
+              <Route path="/brand/campaigns" element={<BrandCampaignsPage />} />
+              <Route path="/brand/campaigns/:campaignId" element={<BrandCampaignDetailPage />} />
+              <Route path="/brand/campaigns/:campaignId/submissions" element={<BrandCampaignSubmissionsPage />} />
+              <Route path="/brand/campaigns/:campaignId/analytics" element={<BrandCampaignAnalyticsPage />} />
+              <Route path="/brand/community" element={<BrandCommunityPage />} />
               <Route path="/brand/briefs" element={<BrandBriefsPage />} />
               <Route path="/brand/briefs/new" element={<BrandBriefBuilderPage />} />
               <Route path="/brand/briefs/:briefId/edit" element={<BrandBriefBuilderPage />} />
               <Route path="/brand/discover" element={<BrandDiscoverPage />} />
-              <Route path="/brand/campaigns" element={<BrandCampaignsPage />} />
               <Route path="/brand/projects" element={<BrandProjectsPage />} />
               <Route path="/brand/settings" element={<Navigate to="/brand/settings/integrations" replace />} />
               <Route path="/brand/settings/integrations" element={<IntegrationsSettingsPage />} />

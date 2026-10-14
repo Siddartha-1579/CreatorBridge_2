@@ -12,6 +12,7 @@ import {
   Lock,
   ArrowRight,
 } from "lucide-react"
+import { ImageWithFallback } from "@/components/common/ImageWithFallback"
 
 interface ProjectDetailModalProps {
   project: PortfolioProject | null
@@ -80,10 +81,14 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
                 <audio src={project.media_url} controls className="w-full max-w-md" />
               </div>
             ) : (
-              <img
-                src={project.media_url}
+              <ImageWithFallback
+                src={project.media_url || project.thumbnail_url}
                 alt={project.title}
+                category={project.category}
+                iconType="camera"
+                fallbackText={project.title}
                 className="w-full h-full object-contain"
+                containerClassName="w-full h-full flex items-center justify-center"
               />
             )}
           </div>

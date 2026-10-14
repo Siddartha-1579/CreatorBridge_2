@@ -128,6 +128,12 @@ class CampaignBriefBase(BaseModel):
     commercial_terms: CommercialTerms = Field(default_factory=CommercialTerms)
     sections: Dict[str, str] = Field(default_factory=dict)
     budget_cents: Optional[int] = None
+    reward_type: str = "CPM"
+    cpm_rate_cents: Optional[int] = 150
+    total_pool_cents: Optional[int] = 1500000
+    paid_pool_cents: Optional[int] = 0
+    views_count: Optional[int] = 0
+    participants_count: Optional[int] = 0
     start_date: Optional[datetime] = None
     deadline: Optional[datetime] = None
     required_tools: List[str] = Field(default_factory=list)
@@ -165,6 +171,12 @@ class CampaignBriefUpdate(BaseModel):
     commercial_terms: Optional[CommercialTerms] = None
     sections: Optional[Dict[str, str]] = None
     budget_cents: Optional[int] = None
+    reward_type: Optional[str] = None
+    cpm_rate_cents: Optional[int] = None
+    total_pool_cents: Optional[int] = None
+    paid_pool_cents: Optional[int] = None
+    views_count: Optional[int] = None
+    participants_count: Optional[int] = None
     start_date: Optional[datetime] = None
     deadline: Optional[datetime] = None
     required_tools: Optional[List[str]] = None
@@ -342,3 +354,108 @@ class CampaignApplicationResponse(BaseDomainModel):
     creator_avatar_url: Optional[str] = None
     creator_specialization: Optional[str] = None
     brief_title: Optional[str] = None
+
+
+class SubmissionStatus(str, Enum):
+    PENDING_REVIEW = "PENDING_REVIEW"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    REVISION_REQUESTED = "REVISION_REQUESTED"
+
+
+class ClipSubmissionCreate(BaseModel):
+    clip_url: str
+    platform: str = "TIKTOK"  # TIKTOK, INSTAGRAM, YOUTUBE_SHORTS
+    title: str
+    description: Optional[str] = None
+    ai_tools: List[str] = Field(default_factory=list)
+    initial_views: Optional[int] = 0
+
+
+class ClipSubmissionReview(BaseModel):
+    status: SubmissionStatus
+    feedback: Optional[str] = None
+    verified_views: Optional[int] = None
+    payout_cents: Optional[int] = None
+
+
+class ClipSubmissionResponse(BaseDomainModel):
+    campaign_id: str
+    creator_id: str
+    brand_id: str
+    clip_url: str
+    platform: str
+    title: str
+    description: Optional[str] = None
+    ai_tools: List[str] = Field(default_factory=list)
+    views_count: int = 0
+    earned_cents: int = 0
+    status: SubmissionStatus = SubmissionStatus.PENDING_REVIEW
+    feedback: Optional[str] = None
+    submitted_at: datetime
+    reviewed_at: Optional[datetime] = None
+    creator_name: Optional[str] = None
+    creator_handle: Optional[str] = None
+    creator_avatar_url: Optional[str] = None
+    campaign_title: Optional[str] = None
+    brand_name: Optional[str] = None
+
+
+class CampaignParticipantResponse(BaseModel):
+    id: str
+    campaign_id: str
+    creator_id: str
+    status: str = "JOINED"
+    joined_at: datetime
+    creator_name: Optional[str] = None
+    creator_handle: Optional[str] = None
+    creator_avatar_url: Optional[str] = None
+
+
+class CreatorLeaderboardItem(BaseModel):
+    creator_id: str
+    creator_name: str
+    creator_handle: str
+    creator_avatar_url: Optional[str] = None
+    total_views: int
+    approved_clips: int
+    total_earned_cents: int
+
+
+class CampaignAnalyticsResponse(BaseModel):
+    campaign_id: str
+    title: str
+    status: str
+    total_views: int
+    total_submissions: int
+    approved_submissions: int
+    pending_submissions: int
+    rejected_submissions: int
+    total_pool_cents: int
+    paid_pool_cents: int
+    remaining_pool_cents: int
+    cpm_rate_cents: int
+    participants_count: int
+    views_over_time: List[Dict[str, Any]] = Field(default_factory=list)
+    leaderboard: List[CreatorLeaderboardItem] = Field(default_factory=list)
+
+
+class BrandCommunityPostCreate(BaseModel):
+    title: str
+    content: str
+    category: str = "ANNOUNCEMENT"  # ANNOUNCEMENT, CONTEST, WINNERS, GUIDELINES, ASSET_PACK
+    pinned: bool = False
+    media_url: Optional[str] = None
+
+
+class BrandCommunityPostResponse(BaseDomainModel):
+    brand_id: str
+    brand_name: Optional[str] = None
+    brand_logo_url: Optional[str] = None
+    title: str
+    content: str
+    category: str = "ANNOUNCEMENT"
+    pinned: bool = False
+    likes_count: int = 0
+    media_url: Optional[str] = None
+

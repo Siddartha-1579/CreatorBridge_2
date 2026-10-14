@@ -50,7 +50,7 @@ export const LoginPage: React.FC = () => {
             <label className="text-xs font-medium text-zinc-300">Email Address</label>
             <Input
               type="email"
-              placeholder="creator@hacxlerate.com"
+              placeholder="creator@creatorbridge.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

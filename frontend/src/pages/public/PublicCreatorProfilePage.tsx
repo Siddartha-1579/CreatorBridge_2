@@ -24,7 +24,9 @@ import {
   Star,
   Film,
   Info,
+  ArrowRight,
 } from "lucide-react"
+import { ImageWithFallback } from "@/components/common/ImageWithFallback"
 
 export const PublicCreatorProfilePage: React.FC = () => {
   const { creatorId } = useParams<{ creatorId: string }>()
@@ -105,8 +107,27 @@ export const PublicCreatorProfilePage: React.FC = () => {
           {/* Creator Avatar & Basic Info */}
           <div className="flex flex-col sm:flex-row items-start gap-5">
             {/* Avatar Pill */}
-            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-700 text-white font-extrabold text-3xl sm:text-4xl flex items-center justify-center shadow-lg shadow-purple-600/20 shrink-0 border-2 border-white">
-              {profile.full_name?.charAt(0) || "C"}
+            <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gradient-to-br from-purple-600 to-indigo-700 text-white font-extrabold text-3xl sm:text-4xl flex items-center justify-center shadow-lg shadow-purple-600/20 shrink-0 border-2 border-white overflow-hidden">
+              {profile.avatar_url ? (
+                <ImageWithFallback
+                  src={profile.avatar_url}
+                  fallbackSrc={
+                    profile.handle?.includes("elena")
+                      ? "/demo-assets/elena-rostova-avatar.svg"
+                      : profile.handle?.includes("marcus")
+                      ? "/demo-assets/marcus-vance-avatar.svg"
+                      : profile.handle?.includes("aaliyah")
+                      ? "/demo-assets/aaliyah-chen-avatar.svg"
+                      : undefined
+                  }
+                  alt={profile.full_name}
+                  iconType="user"
+                  className="w-full h-full object-cover"
+                  containerClassName="w-full h-full"
+                />
+              ) : (
+                profile.full_name?.charAt(0) || "C"
+              )}
             </div>
 
             <div className="space-y-2">
@@ -157,21 +178,21 @@ export const PublicCreatorProfilePage: React.FC = () => {
             </div>
           </div>
 
-          {/* Direct Brand Actions */}
+          {/* Direct Actions */}
           <div className="flex flex-col sm:flex-row md:flex-col gap-2.5 shrink-0 self-stretch sm:self-auto">
             <Link
-              to={`/brand/briefs/new?invite_creator=${profile.id}`}
+              to="/creator/campaigns"
               className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 shadow-md shadow-purple-600/20 transition-all text-center"
             >
               <Send className="w-4 h-4" />
-              Invite to Campaign Brief
+              View Open Campaigns
             </Link>
             <Link
-              to={`/messages?recipient=${profile.user_id}`}
+              to="/discover"
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-semibold bg-white border border-purple-200 text-purple-700 hover:bg-purple-50 transition-colors text-center"
             >
-              <MessageSquare className="w-4 h-4" />
-              Direct Inquiry
+              <ArrowRight className="w-4 h-4" />
+              Browse More Creators
             </Link>
           </div>
         </div>

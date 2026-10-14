@@ -12,12 +12,10 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: "For Brands", targetId: "for-brands" },
   { label: "For Creators", targetId: "for-creators" },
-  { label: "AI Matching", targetId: "economy" },
-  { label: "Briefs", targetId: "brief-preview" },
+  { label: "AI Creative Roles", targetId: "economy" },
   { label: "How It Works", targetId: "how-it-works" },
-  { label: "Trust", targetId: "trust" },
+  { label: "Trust & Standards", targetId: "trust" },
 ]
 
 export const PublicHeader: React.FC = () => {
@@ -140,7 +138,7 @@ export const PublicHeader: React.FC = () => {
             to="/discover"
             className="px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#9A6ADF] text-white hover:bg-[#8552D4] transition-colors shadow-2xs ml-1"
           >
-            Find Talent
+            Explore Creators
           </Link>
         </nav>
 

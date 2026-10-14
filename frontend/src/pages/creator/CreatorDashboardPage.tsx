@@ -497,6 +497,116 @@ export const CreatorDashboardPage: React.FC = () => {
             ))}
           </div>
         )}
+
+        {/* Reviewer & Demo Exploration Strip */}
+        <div className="mt-8 p-6 rounded-3xl bg-gradient-to-br from-[#F4E7FF]/40 via-white to-[#FFF4E5]/40 border border-[#D8B8FF] shadow-2xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#9A6ADF] text-white uppercase tracking-wider">
+                Demo Exploration
+              </span>
+              <h3 className="text-sm font-bold text-[#111111]">
+                Completed Demo Creator Profiles & Production Portfolios
+              </h3>
+            </div>
+            <Link
+              to="/discover"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-[#9A6ADF] hover:underline"
+            >
+              Explore Full Roster <ChevronRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <p className="text-xs text-[#4B4652] leading-relaxed">
+            Inspect the 3 benchmark demo creators and 6 rich sample AI portfolios seeded with prompt provenance, model toolchains, and multi-angle workflow stages:
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+            <Link
+              to="/creators/00000000-0000-0000-0000-000000000021"
+              className="group p-4 rounded-2xl bg-white border border-[#F4E7FF] hover:border-[#9A6ADF] hover:shadow-md transition-all space-y-2.5"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl overflow-hidden bg-purple-100 border border-purple-200 shrink-0">
+                  <img
+                    src="/demo-assets/elena-rostova-avatar.svg"
+                    alt="Elena Rostova"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#111111] group-hover:text-[#9A6ADF] transition-colors flex items-center gap-1">
+                    Elena Rostova <span className="text-[10px] text-amber-600 font-normal">★ 4.96</span>
+                  </h4>
+                  <p className="text-[10px] text-[#4B4652]">AI Fashion & Haute Couture</p>
+                </div>
+              </div>
+              <div className="text-[11px] text-slate-500 line-clamp-2">
+                2 Portfolios: Cyber Couture 2026, Ethereal Silk Drapery
+              </div>
+              <div className="flex items-center justify-between text-[10px] text-[#9A6ADF] font-bold pt-1 border-t border-slate-50">
+                <span>View Full Profile & Reels</span>
+                <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </Link>
+
+            <Link
+              to="/creators/00000000-0000-0000-0000-000000000022"
+              className="group p-4 rounded-2xl bg-white border border-[#F4E7FF] hover:border-[#9A6ADF] hover:shadow-md transition-all space-y-2.5"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl overflow-hidden bg-purple-100 border border-purple-200 shrink-0">
+                  <img
+                    src="/demo-assets/marcus-vance-avatar.svg"
+                    alt="Marcus Vance"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#111111] group-hover:text-[#9A6ADF] transition-colors flex items-center gap-1">
+                    Marcus Vance <span className="text-[10px] text-amber-600 font-normal">★ 4.92</span>
+                  </h4>
+                  <p className="text-[10px] text-[#4B4652]">Cinematic AI Video & Motion</p>
+                </div>
+              </div>
+              <div className="text-[11px] text-slate-500 line-clamp-2">
+                2 Portfolios: Kinetic Trails 4K, Temporal Flux Vertical Hook
+              </div>
+              <div className="flex items-center justify-between text-[10px] text-[#9A6ADF] font-bold pt-1 border-t border-slate-50">
+                <span>View Full Profile & Reels</span>
+                <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </Link>
+
+            <Link
+              to="/creators/00000000-0000-0000-0000-000000000023"
+              className="group p-4 rounded-2xl bg-white border border-[#F4E7FF] hover:border-[#9A6ADF] hover:shadow-md transition-all space-y-2.5"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl overflow-hidden bg-purple-100 border border-purple-200 shrink-0">
+                  <img
+                    src="/demo-assets/aaliyah-chen-avatar.svg"
+                    alt="Aaliyah Chen"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-[#111111] group-hover:text-[#9A6ADF] transition-colors flex items-center gap-1">
+                    Aaliyah Chen <span className="text-[10px] text-amber-600 font-normal">★ 4.98</span>
+                  </h4>
+                  <p className="text-[10px] text-[#4B4652]">3D Packshots & Botanical CGI</p>
+                </div>
+              </div>
+              <div className="text-[11px] text-slate-500 line-clamp-2">
+                2 Portfolios: Botanical Elixir 3D, Zen Matcha Packaging
+              </div>
+              <div className="flex items-center justify-between text-[10px] text-[#9A6ADF] font-bold pt-1 border-t border-slate-50">
+                <span>View Full Profile & Reels</span>
+                <ArrowRight className="w-3 h-3 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+            </Link>
+          </div>
+        </div>
       </div>
 
       {/* Modals */}

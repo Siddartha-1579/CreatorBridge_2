@@ -354,6 +354,19 @@ export const BrandCampaignsPage: React.FC = () => {
                         <span>{budgetFormatted}</span>
                       </div>
 
+                      {camp.cpm_rate_cents ? (
+                        <div className="flex items-center gap-1 font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">
+                          <span>${Math.round(camp.cpm_rate_cents / 100)} CPM</span>
+                        </div>
+                      ) : null}
+
+                      {camp.views_count != null && camp.views_count > 0 ? (
+                        <div className="flex items-center gap-1 text-blue-700 font-medium">
+                          <Eye className="h-3.5 w-3.5 text-blue-600" />
+                          <span>{camp.views_count.toLocaleString()} Views</span>
+                        </div>
+                      ) : null}
+
                       <div className="flex items-center gap-1">
                         <Layers className="h-3.5 w-3.5 text-[#9A6ADF]" />
                         <span>{deliverableCount} {deliverableCount === 1 ? "Deliverable" : "Deliverables"}</span>
@@ -377,24 +390,24 @@ export const BrandCampaignsPage: React.FC = () => {
 
                   {/* Actions Column */}
                   <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 self-start lg:self-center border-t lg:border-t-0 pt-3 lg:pt-0 border-slate-100 w-full lg:w-auto">
+                    <Link to={`/brand/campaigns/${camp.id}`} className="w-full sm:w-auto">
+                      <Button variant="primary" size="sm" className="w-full sm:w-auto text-xs gap-1.5 bg-purple-600 hover:bg-purple-700 text-white font-bold shadow-xs">
+                        <Eye className="h-3.5 w-3.5" />
+                        Manage Hub
+                      </Button>
+                    </Link>
+
                     <Link to={`/brand/briefs/${camp.id}/edit`} className="w-full sm:w-auto">
                       <Button variant="outline" size="sm" className="w-full sm:w-auto text-xs gap-1.5 border-[#D8B8FF] text-[#7B42BC] hover:bg-[#F4E7FF]/40">
                         <Edit3 className="h-3.5 w-3.5" />
-                        {isPublished ? "View / Edit Brief" : "Continue Draft"}
+                        {isPublished ? "Edit Brief" : "Continue Draft"}
                       </Button>
                     </Link>
 
                     <Link to={`/brand/discover?briefId=${camp.id}`} className="w-full sm:w-auto">
-                      <Button variant="primary" size="sm" className="w-full sm:w-auto text-xs gap-1.5 bg-gradient-to-r from-[#9A6ADF] to-[#7B42BC] hover:from-[#8852D4] hover:to-[#6C34AC] text-white shadow-sm">
-                        <Users className="h-3.5 w-3.5" />
-                        Find Creators
-                      </Button>
-                    </Link>
-
-                    <Link to={`/brand/projects?briefId=${camp.id}`} className="w-full sm:w-auto">
                       <Button variant="outline" size="sm" className="w-full sm:w-auto text-xs gap-1.5 border-slate-200 text-[#4B4652] hover:text-[#111111]">
-                        <Briefcase className="h-3.5 w-3.5" />
-                        Projects
+                        <Users className="h-3.5 w-3.5" />
+                        Find Talent
                       </Button>
                     </Link>
 

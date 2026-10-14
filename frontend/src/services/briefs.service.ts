@@ -17,6 +17,11 @@ import type {
   CampaignApplicationUpdate,
   GenerateCoverImageRequest,
   GenerateCoverImageResponse,
+  ClipSubmission,
+  ClipSubmissionCreate,
+  ClipSubmissionReview,
+  CampaignParticipant,
+  CampaignAnalytics,
 } from "@/types"
 
 export interface ListBriefsOptions {
@@ -120,5 +125,49 @@ export const briefsService = {
   async validateBrief(data: CampaignBriefCreate): Promise<BriefValidationResult> {
     return apiClient.post<BriefValidationResult>("briefs/validate", data)
   },
+
+  // =========================================================================
+  // CONTENT REWARDS METHODS
+  // =========================================================================
+  async joinCampaign(campaignId: string): Promise<boolean> {
+    return apiClient.post<boolean>(`campaigns/${campaignId}/join`)
+  },
+
+  async getParticipation(campaignId: string): Promise<CampaignParticipant | null> {
+    return apiClient.get<CampaignParticipant | null>(`campaigns/${campaignId}/participation`)
+  },
+
+  async listParticipants(campaignId: string): Promise<CampaignParticipant[]> {
+    return apiClient.get<CampaignParticipant[]>(`campaigns/${campaignId}/participants`)
+  },
+
+  async submitClip(campaignId: string, data: ClipSubmissionCreate): Promise<ClipSubmission> {
+    return apiClient.post<ClipSubmission>(`campaigns/${campaignId}/submissions`, data)
+  },
+
+  async listSubmissionsForCampaign(campaignId: string): Promise<ClipSubmission[]> {
+    return apiClient.get<ClipSubmission[]>(`campaigns/${campaignId}/submissions`)
+  },
+
+  async listMySubmissions(): Promise<ClipSubmission[]> {
+    return apiClient.get<ClipSubmission[]>("campaigns/submissions/my")
+  },
+
+  async reviewSubmission(submissionId: string, data: ClipSubmissionReview): Promise<ClipSubmission> {
+    return apiClient.patch<ClipSubmission>(`campaigns/submissions/${submissionId}/review`, data)
+  },
+
+  async getCampaignAnalytics(campaignId: string): Promise<CampaignAnalytics> {
+    return apiClient.get<CampaignAnalytics>(`campaigns/${campaignId}/analytics`)
+  },
+
+  async pauseCampaign(campaignId: string): Promise<CampaignBrief> {
+    return apiClient.post<CampaignBrief>(`campaigns/${campaignId}/pause`)
+  },
+
+  async resumeCampaign(campaignId: string): Promise<CampaignBrief> {
+    return apiClient.post<CampaignBrief>(`campaigns/${campaignId}/resume`)
+  },
 }
+
 

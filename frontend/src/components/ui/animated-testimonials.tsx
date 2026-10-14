@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ArrowLeft, ArrowRight, ShieldCheck, Sparkles, ExternalLink } from "lucide-react"
 import { Link } from "react-router-dom"
+import { ImageWithFallback } from "@/components/common/ImageWithFallback"
 
 export interface CreatorShowcaseItem {
   id: string
@@ -102,11 +103,24 @@ export const AnimatedTestimonials: React.FC<AnimatedTestimonialsProps> = ({
                 className="absolute inset-0 origin-bottom"
               >
                 <div className="relative w-full h-full rounded-3xl overflow-hidden shadow-2xl border-4 border-white bg-slate-900 group">
-                  <img
+                  <ImageWithFallback
                     src={creator.avatarOrThumbnail}
+                    fallbackSrc={
+                      creator.name?.toLowerCase().includes("elena")
+                        ? "/demo-assets/elena-rostova-avatar.svg"
+                        : creator.name?.toLowerCase().includes("marcus")
+                        ? "/demo-assets/marcus-vance-avatar.svg"
+                        : creator.name?.toLowerCase().includes("aaliyah")
+                        ? "/demo-assets/aaliyah-chen-avatar.svg"
+                        : undefined
+                    }
                     alt={creator.name}
+                    category={creator.specialization}
+                    iconType="user"
+                    fallbackText={creator.name}
                     draggable={false}
                     className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-700"
+                    containerClassName="w-full h-full"
                   />
                   {/* Gradient shadow */}
                   <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/20 to-transparent" />

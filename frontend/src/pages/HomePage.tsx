@@ -138,23 +138,23 @@ export const HomePage: React.FC = () => {
           {/* Prominent Dual CTAs */}
           <ScrollReveal direction="up" delayMs={300}>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-6">
-              <Link to="/auth/brand?mode=register" className="w-full sm:w-auto">
+              <Link to="/auth/creator?mode=register" className="w-full sm:w-auto">
                 <Button
                   variant="primary"
                   size="lg"
                   className="w-full sm:w-auto text-sm font-semibold gap-2 px-8 py-3.5 bg-[#9A6ADF] hover:bg-[#8655cb] text-white shadow-md shadow-[#9A6ADF]/25 rounded-xl cursor-pointer"
                 >
-                  I'm a Brand <ArrowRight className="h-4 w-4" />
+                  Join as an AI Creator <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
 
-              <Link to="/auth/creator?mode=register" className="w-full sm:w-auto">
+              <Link to="/discover" className="w-full sm:w-auto">
                 <Button
                   variant="secondary"
                   size="lg"
                   className="w-full sm:w-auto text-sm font-semibold bg-white hover:bg-[#F4E7FF]/50 border-[#D8B8FF] text-[#111111] px-8 py-3.5 rounded-xl shadow-xs cursor-pointer"
                 >
-                  I'm a Creator
+                  Explore Creator Portfolios
                 </Button>
               </Link>
             </div>
@@ -308,10 +308,10 @@ export const HomePage: React.FC = () => {
                       Status: <strong className="text-[#111111]">Ready to Bridge</strong>
                     </span>
                     <Link
-                      to="/brand/briefs/new"
+                      to="/discover"
                       className="inline-flex items-center gap-1 text-xs font-bold text-[#9A6ADF] hover:text-[#8655cb]"
                     >
-                      Bridge Campaign Brief <ChevronRight className="h-3.5 w-3.5" />
+                      Explore Creator Showcase <ChevronRight className="h-3.5 w-3.5" />
                     </Link>
                   </div>
                 </div>
@@ -511,10 +511,10 @@ export const HomePage: React.FC = () => {
                       Spec: <strong className="text-[#111111] font-semibold">{cat.sampleDeliverable}</strong>
                     </span>
                     <Link
-                      to="/brand/discover"
+                      to="/discover"
                       className="text-[#9A6ADF] font-semibold flex items-center gap-1 group-hover:translate-x-1 transition-transform"
                     >
-                      Find Talent <ChevronRight className="h-3 w-3" />
+                      Explore Talent <ChevronRight className="h-3 w-3" />
                     </Link>
                   </div>
                 </div>
@@ -612,7 +612,7 @@ export const HomePage: React.FC = () => {
                   badge="Verified 4K Upscale"
                   title="Neon Odyssey: Hypercar Reveal"
                   description="A speculative 45s launch commercial created using Runway Gen-3 camera control, FLUX.1 textures, and ElevenLabs synthetic sound design."
-                  image="https://images.unsplash.com/photo-1550745165-9bc0b252726f?q=80&w=1200&auto=format&fit=crop"
+                  image="/demo-assets/elena-project-cyber-fashion.svg"
                   tags={["Runway Gen-3", "FLUX.1 Pro", "ElevenLabs", "After Effects"]}
                   metadata={{
                     "Resolution": "3840 x 2160 (4K)",
@@ -621,8 +621,8 @@ export const HomePage: React.FC = () => {
                     "Commercial License": "Full Rights Transferred",
                   }}
                   action={{
-                    label: "Inspect Generation Log",
-                    href: "/creator/portfolio",
+                    label: "Explore Creator Portfolios",
+                    href: "/discover",
                   }}
                 />
               </ScrollReveal>
@@ -646,7 +646,7 @@ export const HomePage: React.FC = () => {
                   badge="Funded Escrow"
                   title="Aura Spatial Sound Launch"
                   description="Seeking an AI motion director to produce 3 high-impact 9:16 vertical video hooks showing liquid metallic soundwaves for next-gen wireless headphones."
-                  image="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1200&auto=format&fit=crop"
+                  image="/demo-assets/beverage-premium-matcha.svg"
                   tags={["Runway Gen-3", "Midjourney v6", "Commercial Use"]}
                   metadata={{
                     "Budget Allocated": "$3,200 USD",
@@ -655,8 +655,8 @@ export const HomePage: React.FC = () => {
                     "IP Handover": "Commercial Buyout Included",
                   }}
                   action={{
-                    label: "Explore Matching Creators",
-                    href: "/brand/briefs",
+                    label: "View Open Campaigns",
+                    href: "/creator/campaigns",
                   }}
                 />
               </ScrollReveal>
@@ -726,9 +726,9 @@ export const HomePage: React.FC = () => {
 
               <ScrollReveal direction="up" delayMs={350}>
                 <div className="pt-2">
-                  <Link to="/auth/brand?mode=register">
+                  <Link to="/creator/campaigns">
                     <Button variant="primary" size="lg" className="text-xs font-semibold shadow-md shadow-[#9A6ADF]/20 gap-2 px-6">
-                      Post a Campaign Brief <ArrowRight className="h-4 w-4" />
+                      View Open Campaigns <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
@@ -1090,21 +1090,21 @@ export const HomePage: React.FC = () => {
 
             {/* Dual Action Buttons */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-lg mx-auto relative z-10 pt-2">
-              <Link to="/auth/brand?mode=register">
+              <Link to="/auth/creator?mode=register">
                 <Button
                   size="lg"
                   className="w-full bg-white hover:bg-[#F4E7FF] text-[#9A6ADF] font-bold text-xs shadow-lg shadow-black/10 py-6 rounded-xl cursor-pointer"
                 >
-                  I'm a Brand — Post Brief <ArrowRight className="h-4 w-4 ml-1.5" />
+                  Join as an AI Creator <ArrowRight className="h-4 w-4 ml-1.5" />
                 </Button>
               </Link>
 
-              <Link to="/auth/creator?mode=register">
+              <Link to="/discover">
                 <Button
                   size="lg"
                   className="w-full bg-[#5b3096] hover:bg-[#4d2780] text-white border border-[#D8B8FF]/40 font-bold text-xs py-6 rounded-xl cursor-pointer"
                 >
-                  I'm a Creator — Join Roster <ArrowRight className="h-4 w-4 ml-1.5" />
+                  Explore Creator Showcase <ArrowRight className="h-4 w-4 ml-1.5" />
                 </Button>
               </Link>
             </div>

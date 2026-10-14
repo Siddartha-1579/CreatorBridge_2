@@ -800,8 +800,234 @@ def seed_demo_data():
                 (*brief, now_str, now_str)
             )
 
+        # Update Content Rewards attributes on demo campaigns
+        campaign_reward_updates = [
+            ("00000000-0000-0000-0000-000000000041", "CPM", 200, 1500000, 420000, 210000, 14),
+            ("00000000-0000-0000-0000-000000000042", "CPM", 250, 2000000, 680000, 272000, 18),
+            ("00000000-0000-0000-0000-000000000043", "CPM", 180, 1200000, 310000, 172000, 11),
+            ("00000000-0000-0000-0000-000000000044", "CPM", 150, 1000000, 240000, 160000, 12),
+        ]
+        for cid, rtype, cpm, pool, paid, views, parts in campaign_reward_updates:
+            cursor.execute(
+                """
+                UPDATE campaign_briefs
+                SET reward_type = ?, cpm_rate_cents = ?, total_pool_cents = ?, paid_pool_cents = ?,
+                    views_count = ?, participants_count = ?
+                WHERE id = ?
+                """,
+                (rtype, cpm, pool, paid, views, parts, cid)
+            )
+
+        # =====================================================================
+        # 6. DEMO CAMPAIGN PARTICIPANTS
+        # =====================================================================
+        demo_participants = [
+            ("part_elena_skincare", "00000000-0000-0000-0000-000000000041", "00000000-0000-0000-0000-000000000021", "JOINED", now_str),
+            ("part_elena_cyber", "00000000-0000-0000-0000-000000000043", "00000000-0000-0000-0000-000000000021", "JOINED", now_str),
+            ("part_marcus_outdoor", "00000000-0000-0000-0000-000000000042", "00000000-0000-0000-0000-000000000022", "JOINED", now_str),
+            ("part_marcus_matcha", "00000000-0000-0000-0000-000000000044", "00000000-0000-0000-0000-000000000022", "JOINED", now_str),
+            ("part_aaliyah_skincare", "00000000-0000-0000-0000-000000000041", "00000000-0000-0000-0000-000000000023", "JOINED", now_str),
+        ]
+        for p in demo_participants:
+            cursor.execute(
+                """
+                INSERT INTO campaign_participants (id, campaign_id, creator_id, status, joined_at)
+                VALUES (?, ?, ?, ?, ?)
+                ON CONFLICT(campaign_id, creator_id) DO UPDATE SET status = excluded.status
+                """,
+                p
+            )
+
+        # =====================================================================
+        # 7. DEMO CLIP SUBMISSIONS
+        # =====================================================================
+        demo_submissions = [
+            (
+                "sub_elena_skincare_01",
+                "00000000-0000-0000-0000-000000000041",
+                "00000000-0000-0000-0000-000000000021",
+                "00000000-0000-0000-0000-000000000010",
+                "https://tiktok.com/@elena_ai/video/728192301",
+                "TIKTOK",
+                "72-Hour Cellular Radiance Morning Routine",
+                "High-aesthetic amber glass dropper macro hook with natural morning light and cellular animation.",
+                json.dumps(["Midjourney v6.1", "Magnific AI", "CapCut Pro"]),
+                95000,
+                19000,
+                "APPROVED",
+                "Flawless lighting and fluid dynamics. Exceptional engagement in the first 3 seconds!",
+                now_str,
+                now_str,
+                now_str,
+                now_str,
+            ),
+            (
+                "sub_elena_cyber_01",
+                "00000000-0000-0000-0000-000000000043",
+                "00000000-0000-0000-0000-000000000021",
+                "00000000-0000-0000-0000-000000000010",
+                "https://instagram.com/reel/C89xKl29",
+                "INSTAGRAM",
+                "Neo-Couture Origami Pleats in Fluid Motion",
+                "Virtual runway walk showcasing iridescent fabric physics in zero gravity.",
+                json.dumps(["Flux.1 Pro", "Magnific 4x", "Premiere Pro"]),
+                77000,
+                13860,
+                "APPROVED",
+                "Brilliant fabric drape fidelity. Approved for global paid amplification.",
+                now_str,
+                now_str,
+                now_str,
+                now_str,
+            ),
+            (
+                "sub_marcus_outdoor_01",
+                "00000000-0000-0000-0000-000000000042",
+                "00000000-0000-0000-0000-000000000022",
+                "00000000-0000-0000-0000-000000000011",
+                "https://tiktok.com/@marcusv/video/718293819",
+                "TIKTOK",
+                "Simulating 60MPH Alpine Blizzard Water Beading",
+                "Cinematic storm simulation with macro droplet repelling and storm wind audio design.",
+                json.dumps(["Runway Gen-3", "Topaz Video AI", "Audition"]),
+                140000,
+                35000,
+                "APPROVED",
+                "Incredible kinetic pacing and sound design. Top performing clip of the sprint!",
+                now_str,
+                now_str,
+                now_str,
+                now_str,
+            ),
+            (
+                "sub_marcus_matcha_01",
+                "00000000-0000-0000-0000-000000000044",
+                "00000000-0000-0000-0000-000000000022",
+                "00000000-0000-0000-0000-000000000010",
+                "https://youtube.com/shorts/kL92jF019",
+                "YOUTUBE_SHORTS",
+                "Slow-Mo Emerald Microfoam Pour Test",
+                "Macro slow-motion pour with wabi-sabi tea room background and ASMR audio.",
+                json.dumps(["Runway Gen-3 Alpha", "Premiere Pro"]),
+                80000,
+                12000,
+                "APPROVED",
+                "Clean sound design and beautiful color grading. Approved!",
+                now_str,
+                now_str,
+                now_str,
+                now_str,
+            ),
+            (
+                "sub_aaliyah_skincare_01",
+                "00000000-0000-0000-0000-000000000041",
+                "00000000-0000-0000-0000-000000000023",
+                "00000000-0000-0000-0000-000000000010",
+                "https://instagram.com/reel/C91mPo88",
+                "INSTAGRAM",
+                "Amber Glass Dropper Refraction Macro Pass",
+                "Photorealistic glass refraction and droplet physics staged on travertine stone.",
+                json.dumps(["Blender 3D", "SDXL", "ControlNet Depth"]),
+                38000,
+                0,
+                "PENDING_REVIEW",
+                None,
+                now_str,
+                None,
+                now_str,
+                now_str,
+            ),
+        ]
+        for s in demo_submissions:
+            cursor.execute(
+                """
+                INSERT INTO clip_submissions (
+                    id, campaign_id, creator_id, brand_id, clip_url, platform,
+                    title, description, ai_tools, views_count, earned_cents,
+                    status, feedback, submitted_at, reviewed_at, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    views_count = excluded.views_count,
+                    earned_cents = excluded.earned_cents,
+                    status = excluded.status,
+                    feedback = excluded.feedback,
+                    updated_at = excluded.updated_at
+                """,
+                s
+            )
+
+        # =====================================================================
+        # 8. DEMO BRAND COMMUNITY POSTS
+        # =====================================================================
+        demo_posts = [
+            (
+                "post_lumina_guidelines",
+                "00000000-0000-0000-0000-000000000010",
+                "Q4 High-Converting Video Hook Formula for TikTok & Reels",
+                "When clipping our Cellular Radiance serum, leading with the amber dropper release within the first 1.5 seconds drives a 4.2x higher completion rate. Use trending audio and ensure 9:16 vertical orientation!",
+                "GUIDELINES",
+                1,
+                48,
+                "/demo-assets/skincare-luxury-serum.svg",
+                now_str,
+                now_str,
+            ),
+            (
+                "post_lumina_winners",
+                "00000000-0000-0000-0000-000000000010",
+                "October Radiance Clipper Contest Winners Announced!",
+                "Huge congratulations to Elena Rostova and our top clippers who generated over 210,000 verified views this week! Over $4,200 has been disbursed to creator balances. Check the leaderboard for full standings.",
+                "WINNERS",
+                0,
+                92,
+                None,
+                now_str,
+                now_str,
+            ),
+            (
+                "post_terra_assets",
+                "00000000-0000-0000-0000-000000000011",
+                "New 4K Raw Weather Effects Asset Pack Available",
+                "We've added 12 new torrential rain overlay loops and wind audio stems to help you build cinematic clips for the Apex 3L Technical Shell. Download from the resources tab!",
+                "ASSET_PACK",
+                1,
+                35,
+                "/demo-assets/outdoor-sustainable-gear.svg",
+                now_str,
+                now_str,
+            ),
+            (
+                "post_terra_contest",
+                "00000000-0000-0000-0000-000000000011",
+                "November Alpine Storm 48-Hour Clipping Sprint: $5,000 Bounty",
+                "The creator whose clip drives the highest engagement over the next 48 hours gets an additional $1,500 cash bounty on top of the standard $2.50/1K views rate. Submissions close Friday midnight!",
+                "CONTEST",
+                0,
+                114,
+                None,
+                now_str,
+                now_str,
+            ),
+        ]
+        for p in demo_posts:
+            cursor.execute(
+                """
+                INSERT INTO brand_community_posts (
+                    id, brand_id, title, content, category, pinned, likes_count, media_url, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    title = excluded.title,
+                    content = excluded.content,
+                    category = excluded.category,
+                    pinned = excluded.pinned,
+                    likes_count = excluded.likes_count,
+                    updated_at = excluded.updated_at
+                """,
+                p
+            )
+
         conn.commit()
-        logger.info("Successfully seeded demo data: 2 Brands, 3 Creators, 6 Portfolio Projects, 4 Campaign Briefs.")
+        logger.info("Successfully seeded demo data: 2 Brands, 3 Creators, 6 Portfolio Projects, 4 Campaign Briefs, 5 Submissions, 4 Community Posts.")
 
 
 if __name__ == "__main__":

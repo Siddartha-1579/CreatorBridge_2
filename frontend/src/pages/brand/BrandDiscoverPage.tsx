@@ -10,6 +10,7 @@ import type { CreatorProfile, CreatorMatchResult, CampaignBrief } from "@/types"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { ImageWithFallback } from "@/components/common/ImageWithFallback"
 import {
   Search,
   Sparkles,
@@ -605,19 +606,39 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
                       </div>
                     </div>
 
-                    {/* Creator Identity */}
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <CardTitle className="text-lg font-bold text-[#111111] group-hover:text-[#9A6ADF] transition-colors">
-                          {creator.full_name || creator.fullName || "AI Creator"}
-                        </CardTitle>
-                        {creator.is_verified && (
-                          <span title="Certified Platform Creator">
-                            <ShieldCheck className="h-4 w-4 text-[#9A6ADF]" />
-                          </span>
-                        )}
+                    {/* Creator Identity with Avatar */}
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-xl overflow-hidden bg-purple-100 border border-purple-200 shrink-0">
+                        <ImageWithFallback
+                          src={creator.avatar_url || creator.avatarUrl}
+                          fallbackSrc={
+                            creator.handle?.includes("elena")
+                              ? "/demo-assets/elena-rostova-avatar.svg"
+                              : creator.handle?.includes("marcus")
+                              ? "/demo-assets/marcus-vance-avatar.svg"
+                              : creator.handle?.includes("aaliyah")
+                              ? "/demo-assets/aaliyah-chen-avatar.svg"
+                              : undefined
+                          }
+                          alt={creator.full_name || "Creator Avatar"}
+                          iconType="user"
+                          className="w-full h-full object-cover"
+                          containerClassName="w-full h-full"
+                        />
                       </div>
-                      <p className="text-xs text-[#4B4652] font-mono">@{creator.handle}</p>
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <CardTitle className="text-base font-bold text-[#111111] group-hover:text-[#9A6ADF] transition-colors">
+                            {creator.full_name || creator.fullName || "AI Creator"}
+                          </CardTitle>
+                          {creator.is_verified && (
+                            <span title="Certified Platform Creator">
+                              <ShieldCheck className="h-4 w-4 text-[#9A6ADF]" />
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-[#4B4652] font-mono">@{creator.handle}</p>
+                      </div>
                     </div>
 
                     <CardDescription className="text-xs line-clamp-2 text-[#4B4652]">
@@ -714,16 +735,18 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleOpenInvite(creator)}
-                      className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#9A6ADF] bg-[#F4E7FF] hover:bg-[#F4E7FF]/80 border border-[#D8B8FF] transition-colors cursor-pointer"
-                    >
-                      Invite
-                    </button>
+                    {!isPublicView && (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenInvite(creator)}
+                        className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#9A6ADF] bg-[#F4E7FF] hover:bg-[#F4E7FF]/80 border border-[#D8B8FF] transition-colors cursor-pointer"
+                      >
+                        Invite
+                      </button>
+                    )}
                     <Link to={`/creators/${creator.id}`}>
                       <Button variant="primary" size="sm" className="text-xs h-8">
-                        View Profile
+                        View Portfolios
                       </Button>
                     </Link>
                   </div>

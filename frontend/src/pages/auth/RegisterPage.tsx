@@ -55,7 +55,7 @@ export const RegisterPage: React.FC = () => {
     <Card className="w-full">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Create Account</CardTitle>
-        <CardDescription>Join HacXLerate AI Creator Marketplace</CardDescription>
+        <CardDescription>Join CreatorBridge — Where Brands Meet Creativity</CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">

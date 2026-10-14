@@ -76,28 +76,12 @@ export const PublicFooter: React.FC = () => {
             </ul>
           </div>
 
-          {/* Col 3: Role Portals */}
+          {/* Col 3: Creator Portals */}
           <div className="space-y-3">
             <p className="text-xs font-bold uppercase tracking-wider text-[#111111]">
-              Marketplace Portals
+              Creator Hub
             </p>
             <ul className="space-y-2 text-xs">
-              <li>
-                <Link
-                  to="/brand/dashboard"
-                  className="inline-flex items-center gap-1 hover:text-[#9A6ADF] transition-colors"
-                >
-                  Brand Dashboard <ArrowUpRight className="h-3 w-3" />
-                </Link>
-              </li>
-              <li>
-                <Link
-                  to="/brand/briefs/new"
-                  className="inline-flex items-center gap-1 hover:text-[#9A6ADF] transition-colors"
-                >
-                  AI Brief Builder <ArrowUpRight className="h-3 w-3" />
-                </Link>
-              </li>
               <li>
                 <Link
                   to="/creator/dashboard"
@@ -108,10 +92,26 @@ export const PublicFooter: React.FC = () => {
               </li>
               <li>
                 <Link
+                  to="/creator/campaigns"
+                  className="inline-flex items-center gap-1 hover:text-[#9A6ADF] transition-colors"
+                >
+                  Creator Campaigns <ArrowUpRight className="h-3 w-3" />
+                </Link>
+              </li>
+              <li>
+                <Link
                   to="/creator/portfolio"
                   className="inline-flex items-center gap-1 hover:text-[#9A6ADF] transition-colors"
                 >
                   AI Portfolio Showcase <ArrowUpRight className="h-3 w-3" />
+                </Link>
+              </li>
+              <li>
+                <Link
+                  to="/discover"
+                  className="inline-flex items-center gap-1 hover:text-[#9A6ADF] transition-colors"
+                >
+                  Explore AI Creators <ArrowUpRight className="h-3 w-3" />
                 </Link>
               </li>
             </ul>
@@ -139,8 +139,8 @@ export const PublicFooter: React.FC = () => {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-[#F4E7FF] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#4B4652]">
           <p>© 2026 CreatorBridge. All rights reserved. Where Brands Meet Creativity.</p>
-          <p className="flex items-center gap-1">
-            Engineered for <span className="font-semibold text-[#9A6ADF]">HacXLerate 2026</span>
+          <p className="text-xs text-[#4B4652]">
+            Intelligent AI Creator Marketplace
           </p>
         </div>
       </div>
