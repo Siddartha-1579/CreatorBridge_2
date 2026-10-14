@@ -20,8 +20,11 @@ import {
   ExternalLink,
   Info,
 } from "lucide-react"
-import { apiClient } from "@/lib/apiClient"
-import type { ApiResponse, SystemReadinessReport, IntegrationDetail } from "@/types"
+import { apiClient, ApiError } from "@/lib/apiClient"
+import type { SystemReadinessReport, IntegrationDetail } from "@/types"
+import { isValidReadinessReport, extractReadinessPayload } from "@/lib/readinessValidator"
+
+export { isValidReadinessReport, extractReadinessPayload }
 
 export const IntegrationsReadiness: React.FC<{
   className?: string
@@ -30,6 +33,7 @@ export const IntegrationsReadiness: React.FC<{
   const [report, setReport] = useState<SystemReadinessReport | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
+  const [errorTitle, setErrorTitle] = useState<string>("Unable to connect to readiness endpoint")
   const [filterCategory, setFilterCategory] = useState<string>("ALL")
   const [lastChecked, setLastChecked] = useState<Date | null>(null)
 
@@ -37,16 +41,34 @@ export const IntegrationsReadiness: React.FC<{
     try {
       setLoading(true)
       setError(null)
-      const res = await apiClient.get<ApiResponse<SystemReadinessReport>>("/health/readiness")
-      if (res && res.data) {
-        setReport(res.data)
+      setErrorTitle("Unable to connect to readiness endpoint")
+
+      const res = await apiClient.get<SystemReadinessReport>("/health/readiness")
+      const payload = extractReadinessPayload(res)
+
+      if (isValidReadinessReport(payload)) {
+        setReport(payload)
       } else {
-        setError("Unexpected response format from readiness check")
+        setErrorTitle("Unexpected readiness response format")
+        setError(
+          "The server responded, but the readiness report was missing required fields (system_status, total_integrations, or integrations array)."
+        )
       }
       setLastChecked(new Date())
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to load readiness status"
-      setError(msg)
+      if (err instanceof ApiError) {
+        if (err.statusCode === 0) {
+          setErrorTitle("Unable to connect to readiness endpoint")
+          setError(err.message || "Network error: failed to reach backend server")
+        } else {
+          setErrorTitle(`Readiness service error (HTTP ${err.statusCode})`)
+          setError(err.message || `Server returned error status ${err.statusCode}`)
+        }
+      } else {
+        const msg = err instanceof Error ? err.message : "Failed to load readiness status"
+        setErrorTitle("Unable to connect to readiness endpoint")
+        setError(msg)
+      }
     } finally {
       setLoading(false)
     }
@@ -119,7 +141,7 @@ export const IntegrationsReadiness: React.FC<{
     }
   }
 
-  const filteredIntegrations = report?.integrations.filter((item) => {
+  const filteredIntegrations = (report?.integrations || []).filter((item) => {
     if (filterCategory === "ALL") return true
     if (filterCategory === "PRODUCTION") return item.category === "REQUIRED_FOR_PRODUCTION"
     if (filterCategory === "AI") return item.category.includes("AI") || item.category === "CREATIVE_MODALITY"
@@ -225,7 +247,7 @@ export const IntegrationsReadiness: React.FC<{
         <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-sm flex items-center gap-3">
           <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0" />
           <div>
-            <p className="font-semibold">Unable to connect to readiness endpoint</p>
+            <p className="font-semibold">{errorTitle}</p>
             <p className="text-xs text-rose-600 mt-0.5">{error}</p>
           </div>
         </div>
@@ -280,7 +302,7 @@ export const IntegrationsReadiness: React.FC<{
             <div className="mt-3 pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
               <div className="flex items-center gap-1.5 flex-wrap">
                 <span className="text-slate-400 font-medium">Checked keys:</span>
-                {item.env_keys_checked.map((k) => (
+                {(item.env_keys_checked || []).map((k) => (
                   <code
                     key={k}
                     className="font-mono text-[11px] bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200/60"
