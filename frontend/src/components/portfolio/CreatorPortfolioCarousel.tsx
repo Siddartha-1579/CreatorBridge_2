@@ -30,6 +30,7 @@ export const CreatorPortfolioCarousel: React.FC<CreatorPortfolioCarouselProps> =
   }
 
   const items = publicProjects.map((project, idx) => {
+    const isVideo = project.media_type === "VIDEO" || project.media_type === "ANIMATION"
     const cardData: CardData = {
       category: project.category || project.content_type || "AI Production",
       title: project.title,
@@ -39,6 +40,7 @@ export const CreatorPortfolioCarousel: React.FC<CreatorPortfolioCarouselProps> =
         "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=800&auto=format&fit=crop&q=80",
       tag: project.media_type || "PROJECT",
       alt: project.title,
+      onOpen: isVideo && onSelectProject ? () => onSelectProject(project) : undefined,
       content: (
         <div className="space-y-6">
           <p className="text-sm sm:text-base leading-relaxed text-slate-600 dark:text-zinc-300">

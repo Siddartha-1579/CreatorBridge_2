@@ -4,6 +4,7 @@ from typing import Any, List, Optional
 from uuid import UUID, uuid4
 from datetime import datetime, timezone
 from app.services.base import BaseService
+from app.core.config import settings
 from app.core.errors import NotFoundException, ForbiddenException, ValidationException
 from app.repositories import portfolio_repository, PortfolioRepository
 from app.integrations.storage import storage_provider, StorageProvider
@@ -152,14 +153,14 @@ class PortfolioService(BaseService):
             raise NotFoundException("Portfolio Project", project_id)
         return updated
 
-    def validate_and_process_upload(
+    async def validate_and_process_upload(
         self,
         filename: str,
-        file_size_bytes: int,
+        content: bytes,
         content_type: str,
         creator_id: UUID,
     ) -> PortfolioUploadResponse:
-        """Validates file format and size limits, returning mock or real cloud path."""
+        """Validates an uploaded asset and stores it through the configured provider."""
         allowed_types = {
             "image/jpeg": ("jpg", "IMAGE", 15 * 1024 * 1024),
             "image/png": ("png", "IMAGE", 15 * 1024 * 1024),
@@ -181,6 +182,7 @@ class PortfolioService(BaseService):
                 "png": ("image/png", "IMAGE", 15 * 1024 * 1024),
                 "webp": ("image/webp", "IMAGE", 15 * 1024 * 1024),
                 "mp4": ("video/mp4", "VIDEO", 100 * 1024 * 1024),
+                "webm": ("video/webm", "VIDEO", 100 * 1024 * 1024),
                 "mov": ("video/quicktime", "VIDEO", 100 * 1024 * 1024),
                 "mp3": ("audio/mpeg", "AUDIO", 30 * 1024 * 1024),
                 "wav": ("audio/wav", "AUDIO", 30 * 1024 * 1024),
@@ -191,14 +193,33 @@ class PortfolioService(BaseService):
                 raise ValidationException(f"Unsupported media file type: {content_type} ({filename})")
         else:
             _, media_type, max_size = rule
+            ct = content_type.lower()
 
+        file_size_bytes = len(content)
+        if file_size_bytes == 0:
+            raise ValidationException("Uploaded media file is empty")
         if file_size_bytes > max_size:
             max_mb = max_size // (1024 * 1024)
             raise ValidationException(f"File size exceeds maximum allowed threshold of {max_mb} MB")
 
+        signatures = {
+            "image/jpeg": lambda data: data.startswith(b"\xff\xd8\xff"),
+            "image/png": lambda data: data.startswith(b"\x89PNG\r\n\x1a\n"),
+            "image/webp": lambda data: data.startswith(b"RIFF") and data[8:12] == b"WEBP",
+            "video/mp4": lambda data: data[4:8] == b"ftyp",
+            "video/webm": lambda data: data.startswith(b"\x1a\x45\xdf\xa3"),
+            "video/quicktime": lambda data: data[4:8] == b"ftyp",
+            "audio/mpeg": lambda data: data.startswith(b"ID3") or data[:2] in {b"\xff\xfb", b"\xff\xf3", b"\xff\xf2"},
+            "audio/wav": lambda data: data.startswith(b"RIFF") and data[8:12] == b"WAVE",
+        }
+        if not signatures[ct](content):
+            raise ValidationException("Uploaded media bytes do not match the declared file format")
+
+        filename = filename.rsplit("/", 1)[-1].rsplit("\\", 1)[-1]
         clean_filename = f"{uuid4()}_{filename.replace(' ', '_')}"
         storage_path = f"creators/{creator_id}/portfolio/{clean_filename}"
-        public_url = f"https://mock.supabase.co/storage/v1/object/public/portfolios/{storage_path}"
+        await self.storage.upload_file(settings.storage_portfolios_bucket, storage_path, content, ct)
+        public_url = await self.storage.get_public_url(settings.storage_portfolios_bucket, storage_path)
 
         return PortfolioUploadResponse(
             storage_path=storage_path,

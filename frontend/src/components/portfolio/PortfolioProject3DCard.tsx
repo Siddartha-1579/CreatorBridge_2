@@ -59,7 +59,15 @@ export const PortfolioProject3DCard: React.FC<PortfolioProject3DCardProps> = ({
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-purple-200/30 rounded-full blur-3xl pointer-events-none group-hover:bg-purple-300/40 transition-colors duration-500" />
 
         {/* Media Thumbnail Container */}
-        <CardItem translateZ={25} className="relative w-full aspect-video overflow-hidden bg-slate-950">
+        <CardItem
+          as="button"
+          type="button"
+          translateZ={25}
+          onClick={() => onSelect?.(project)}
+          disabled={!onSelect}
+          aria-label={`Open ${project.title}`}
+          className="relative w-full aspect-video overflow-hidden bg-slate-950 text-left cursor-pointer disabled:cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-400"
+        >
           <ImageWithFallback
             src={project.thumbnail_url || project.media_url}
             alt={project.title}
@@ -90,6 +98,11 @@ export const PortfolioProject3DCard: React.FC<PortfolioProject3DCardProps> = ({
               {project.aspect_ratio && (
                 <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-black/50 backdrop-blur-md text-slate-200 border border-white/10">
                   {project.aspect_ratio}
+                </span>
+              )}
+              {project.duration_seconds != null && project.duration_seconds > 0 && (
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-medium bg-black/50 backdrop-blur-md text-slate-200 border border-white/10">
+                  {project.duration_seconds}s
                 </span>
               )}
             </div>

@@ -338,7 +338,7 @@ def seed_demo_data():
                 "Short-form Video",
                 AssetType.VIDEO.value,
                 "/demo-assets/marcus-project-kinetic-trail.svg",
-                "/demo-assets/marcus-project-kinetic-trail.svg",
+                "/demo-assets/marcus-project-kinetic-trail.mp4",
                 json.dumps(["Runway Gen-3 Alpha", "Topaz Video AI", "Premiere Pro"]),
                 json.dumps(["Gen-3 Alpha Turbo", "Topaz Artemis High Quality"]),
                 json.dumps(["Camera Motion Tracking", "Frame Interpolation", "Color Grading"]),
@@ -356,7 +356,7 @@ def seed_demo_data():
                 ProjectVisibility.PUBLIC.value,
                 1,
                 "VERIFIED",
-                "/demo-assets/marcus-project-kinetic-trail.svg",
+                "/demo-assets/marcus-project-kinetic-trail.mp4",
             ),
             # Marcus Project 2
             (
@@ -368,7 +368,7 @@ def seed_demo_data():
                 "Social Hook 9:16",
                 AssetType.VIDEO.value,
                 "/demo-assets/marcus-project-temporal-flux.svg",
-                "/demo-assets/marcus-project-temporal-flux.svg",
+                "/demo-assets/marcus-project-temporal-flux.mp4",
                 json.dumps(["Kling AI 1.5", "Luma Dream Machine", "CapCut Pro"]),
                 json.dumps(["Kling 1.5 Pro", "Luma Photon"]),
                 json.dumps(["First 3-Second Retention", "Kinetic Typography", "Audio Reactive Cuts"]),
@@ -386,7 +386,7 @@ def seed_demo_data():
                 ProjectVisibility.PUBLIC.value,
                 1,
                 "VERIFIED",
-                "/demo-assets/marcus-project-temporal-flux.svg",
+                "/demo-assets/marcus-project-temporal-flux.mp4",
             ),
             # Aaliyah Project 1
             (
@@ -472,6 +472,7 @@ def seed_demo_data():
                     workflow_summary=excluded.workflow_summary,
                     workflow_stages=excluded.workflow_stages,
                     verification_status=excluded.verification_status,
+                    public_url=excluded.public_url,
                     updated_at=excluded.updated_at
                 """,
                 (*p, now_str, now_str)

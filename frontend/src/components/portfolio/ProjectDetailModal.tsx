@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useEffect, useState } from "react"
 import type { PortfolioProject } from "@/types"
 import {
   X,
@@ -11,8 +11,17 @@ import {
   ExternalLink,
   Lock,
   ArrowRight,
+  AlertCircle,
+  Loader2,
 } from "lucide-react"
 import { ImageWithFallback } from "@/components/common/ImageWithFallback"
+
+const directVideoUrlPattern = /\.(mp4|m4v|mov|webm|ogv|ogg)(?:$|[?#])/i
+
+const isDirectVideoUrl = (url: string) => {
+  if (url.startsWith("blob:") || url.startsWith("data:video/")) return true
+  return directVideoUrlPattern.test(url)
+}
 
 interface ProjectDetailModalProps {
   project: PortfolioProject | null
@@ -29,10 +38,27 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
   onEdit,
   isOwner = false,
 }) => {
+  const [isVideoLoading, setIsVideoLoading] = useState(false)
+  const [videoError, setVideoError] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!isOpen || !project) {
+      setIsVideoLoading(false)
+      setVideoError(null)
+      return
+    }
+
+    setIsVideoLoading(project.media_type === "VIDEO" || project.media_type === "ANIMATION")
+    setVideoError(null)
+  }, [isOpen, project])
+
   if (!isOpen || !project) return null
 
   const isVideo = project.media_type === "VIDEO" || project.media_type === "ANIMATION"
   const isAudio = project.media_type === "AUDIO"
+  const isDirectVideo = isDirectVideoUrl(project.media_url)
+  const shouldUseExternalVideoFlow = isVideo && !isDirectVideo
+  const externalVideoUrl = project.external_url || project.media_url
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
@@ -65,15 +91,70 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
         <div className="overflow-y-auto p-6 space-y-6">
           {/* Media Player / Viewer */}
           <div className="relative w-full rounded-xl overflow-hidden bg-slate-950 border border-slate-200 aspect-video flex items-center justify-center">
-            {isVideo ? (
-              <video
-                src={project.media_url}
-                controls
-                poster={project.thumbnail_url}
-                className="w-full h-full object-contain"
-                playsInline
-              />
-            ) : isAudio ? (
+            {isVideo ? shouldUseExternalVideoFlow ? (
+              <div className="max-w-md p-8 text-center space-y-4 text-white">
+                <ExternalLink className="w-10 h-10 text-purple-300 mx-auto" />
+                <div className="space-y-1.5">
+                  <h3 className="font-semibold">This video is hosted externally</h3>
+                  <p className="text-sm text-slate-300">
+                    Open the creator&apos;s original source to view this portfolio item.
+                  </p>
+                </div>
+                <a
+                  href={externalVideoUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 text-sm font-semibold text-white hover:bg-purple-500 transition-colors"
+                >
+                  Open Original Video
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              </div>
+            ) : videoError ? (
+              <div className="max-w-md p-8 text-center space-y-4 text-white" role="alert">
+                <AlertCircle className="w-10 h-10 text-amber-300 mx-auto" />
+                <div className="space-y-1.5">
+                  <h3 className="font-semibold">Video unavailable</h3>
+                  <p className="text-sm text-slate-300">{videoError}</p>
+                </div>
+                <a
+                  href={project.media_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-white/30 text-sm font-semibold text-white hover:bg-white/10 transition-colors"
+                >
+                  Open Original Media
+                  <ExternalLink className="w-4 h-4" />
+                </a>
+              </div>
+            ) : (
+              <>
+                <video
+                  key={project.media_url}
+                  src={project.media_url}
+                  controls
+                  poster={project.thumbnail_url}
+                  className="w-full h-full object-contain"
+                  playsInline
+                  preload="metadata"
+                  onLoadStart={() => setIsVideoLoading(true)}
+                  onLoadedData={() => setIsVideoLoading(false)}
+                  onCanPlay={() => setIsVideoLoading(false)}
+                  onPlaying={() => setIsVideoLoading(false)}
+                  onError={() => {
+                    setIsVideoLoading(false)
+                    setVideoError("The original media file could not be loaded. Please verify that its URL is available and serves a supported video format.")
+                  }}
+                />
+                {isVideoLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-slate-950/70 text-sm text-white pointer-events-none">
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                    Loading video...
+                  </div>
+                )}
+              </>
+            )
+            : isAudio ? (
               <div className="w-full p-8 flex flex-col items-center justify-center space-y-4">
                 <div className="w-20 h-20 rounded-full bg-purple-600/20 text-purple-400 flex items-center justify-center">
                   <Play className="w-10 h-10 fill-current ml-1" />

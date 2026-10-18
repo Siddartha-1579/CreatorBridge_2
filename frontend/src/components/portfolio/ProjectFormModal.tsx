@@ -97,7 +97,7 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
       setSkills(["Prompt Engineering", "Cinematography"])
       setAspectRatio("16:9")
       setResolution("1080p")
-      setDurationSeconds(30)
+      setDurationSeconds(undefined)
       setCommercialUseStatus("COMMERCIAL_READY")
       setAiGenerationType("AI_GENERATED")
       setVisibility("PUBLIC")
@@ -112,6 +112,28 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
 
   if (!isOpen) return null
 
+  const readMediaDuration = (file: File): Promise<number | undefined> =>
+    new Promise((resolve) => {
+      if (!file.type.startsWith("video/")) {
+        resolve(undefined)
+        return
+      }
+
+      const objectUrl = URL.createObjectURL(file)
+      const video = document.createElement("video")
+      const finish = (duration?: number) => {
+        URL.revokeObjectURL(objectUrl)
+        resolve(duration)
+      }
+
+      video.preload = "metadata"
+      video.onloadedmetadata = () => {
+        finish(Number.isFinite(video.duration) ? Math.round(video.duration) : undefined)
+      }
+      video.onerror = () => finish(undefined)
+      video.src = objectUrl
+    })
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -119,6 +141,10 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
     setIsUploading(true)
     setErrorMessage(null)
     try {
+      const duration = await readMediaDuration(file)
+      if (duration !== undefined) {
+        setDurationSeconds(duration)
+      }
       const res = await portfoliosService.uploadAsset(file)
       setMediaUrl(res.public_url)
       if (res.media_type === "IMAGE") {
@@ -336,6 +362,7 @@ export const ProjectFormModal: React.FC<ProjectFormModalProps> = ({
                 <div className="relative">
                   <input
                     type="file"
+                    accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime,audio/mpeg,audio/wav"
                     onChange={handleFileUpload}
                     disabled={isUploading}
                     className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700 cursor-pointer"

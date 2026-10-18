@@ -3,7 +3,8 @@
 from typing import List, Optional
 from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Path, UploadFile, File, Form
-from app.core.security import get_current_user, AuthenticatedUser, require_role, UserRole
+from app.core.security import AuthenticatedUser, get_optional_user, require_role, UserRole
+from app.core.errors import ForbiddenException, NotFoundException, UnauthorizedException
 from app.schemas.common import ApiResponse
 from app.schemas.portfolio import (
     PortfolioProjectCreate,
@@ -21,11 +22,20 @@ router = APIRouter()
 async def list_portfolios(
     creator_id: str = Query(..., description="Creator ID (UUID)"),
     public_only: bool = Query(True, description="Filter for public projects only"),
+    current_user: Optional[AuthenticatedUser] = Depends(get_optional_user),
 ) -> ApiResponse[List[PortfolioProjectResponse]]:
     """Retrieves portfolio projects for a creator."""
     if public_only:
         items = await portfolio_service.list_public_by_creator(creator_id)
     else:
+        if not current_user:
+            raise UnauthorizedException()
+        if current_user.role != UserRole.CREATOR and current_user.role != UserRole.ADMIN:
+            raise ForbiddenException("Only creators can access private portfolio projects")
+        if current_user.role != UserRole.ADMIN:
+            profile = await creator_service.get_profile_by_user_id(current_user.id, current_user.email)
+            if str(profile.id) != creator_id:
+                raise ForbiddenException("You cannot access another creator's private portfolio projects")
         items = await portfolio_service.list_by_creator(creator_id)
     return ApiResponse(success=True, data=items)
 
@@ -33,9 +43,19 @@ async def list_portfolios(
 @router.get("/{project_id}", response_model=ApiResponse[PortfolioProjectResponse], summary="Get portfolio project")
 async def get_portfolio_project(
     project_id: UUID = Path(..., description="Portfolio Project ID"),
+    current_user: Optional[AuthenticatedUser] = Depends(get_optional_user),
 ) -> ApiResponse[PortfolioProjectResponse]:
     """Retrieves single portfolio project by ID."""
     item = await portfolio_service.get_project_by_id(project_id)
+    if item.visibility != ProjectVisibility.PUBLIC:
+        if not current_user:
+            raise NotFoundException("Portfolio Project", project_id)
+        if current_user.role != UserRole.CREATOR and current_user.role != UserRole.ADMIN:
+            raise NotFoundException("Portfolio Project", project_id)
+        if current_user.role != UserRole.ADMIN:
+            profile = await creator_service.get_profile_by_user_id(current_user.id, current_user.email)
+            if profile.id != item.creator_id:
+                raise NotFoundException("Portfolio Project", project_id)
     return ApiResponse(success=True, data=item)
 
 
@@ -93,13 +113,11 @@ async def upload_portfolio_asset(
     """Validates and processes media file upload for portfolio showcases."""
     profile = await creator_service.get_profile_by_user_id(current_user.id, current_user.email)
     
-    # Read bytes or measure length
     content = await file.read()
-    file_size = len(content)
 
-    upload_result = portfolio_service.validate_and_process_upload(
+    upload_result = await portfolio_service.validate_and_process_upload(
         filename=file.filename or "upload.mp4",
-        file_size_bytes=file_size,
+        content=content,
         content_type=file.content_type or "video/mp4",
         creator_id=profile.id,
     )

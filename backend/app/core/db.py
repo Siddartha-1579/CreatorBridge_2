@@ -353,6 +353,26 @@ def init_db():
             cursor.execute("ALTER TABLE campaign_briefs ADD COLUMN participants_count INTEGER DEFAULT 0")
             logger.info("Migrated campaign_briefs table: added participants_count column")
 
+        # Migrate legacy video demo items from SVG placeholders to MP4
+        cursor.execute(
+            """
+            UPDATE portfolio_items
+            SET media_url = '/demo-assets/marcus-project-kinetic-trail.mp4',
+                public_url = '/demo-assets/marcus-project-kinetic-trail.mp4',
+                thumbnail_url = '/demo-assets/marcus-project-kinetic-trail.svg'
+            WHERE id = '00000000-0000-0000-0000-000000000033'
+            """
+        )
+        cursor.execute(
+            """
+            UPDATE portfolio_items
+            SET media_url = '/demo-assets/marcus-project-temporal-flux.mp4',
+                public_url = '/demo-assets/marcus-project-temporal-flux.mp4',
+                thumbnail_url = '/demo-assets/marcus-project-temporal-flux.svg'
+            WHERE id = '00000000-0000-0000-0000-000000000034'
+            """
+        )
+
         conn.commit()
         logger.info(f"Persistent database schema initialized at {DB_PATH}")
 

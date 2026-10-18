@@ -1,9 +1,13 @@
 """Unit and integration tests for Creator Profile, AI Portfolio, Completeness, and Verification Signals."""
 
-import pytest
+import asyncio
 from uuid import UUID
+
+import pytest
 from starlette.testclient import TestClient
+from app.core.errors import ValidationException
 from app.schemas.creator import CreatorLevel, VerificationType, VerificationStatus
+from app.services.portfolio_service import PortfolioService
 
 
 def get_auth_headers(user_id: str = "creator-user-001", role: str = "CREATOR") -> dict:
@@ -12,6 +16,53 @@ def get_auth_headers(user_id: str = "creator-user-001", role: str = "CREATOR") -
         "X-User-Id": user_id,
         "X-User-Role": role,
     }
+
+
+class InMemoryStorage:
+    def __init__(self):
+        self.uploads = []
+
+    async def upload_file(self, bucket: str, path: str, content: bytes, content_type: str) -> str:
+        self.uploads.append((bucket, path, content, content_type))
+        return f"{bucket}/{path}"
+
+    async def get_public_url(self, bucket: str, path: str) -> str:
+        return f"https://storage.example.test/{bucket}/{path}"
+
+
+def test_portfolio_upload_stores_a_valid_mp4():
+    storage = InMemoryStorage()
+    service = PortfolioService(storage=storage)
+    content = b"\x00\x00\x00\x18ftypisom" + b"\x00" * 16
+
+    upload = asyncio.run(
+        service.validate_and_process_upload(
+            filename="portfolio reel.mp4",
+            content=content,
+            content_type="video/mp4",
+            creator_id=UUID("00000000-0000-0000-0000-000000000001"),
+        )
+    )
+
+    assert upload.media_type == "VIDEO"
+    assert upload.public_url.startswith("https://storage.example.test/portfolios/creators/")
+    assert storage.uploads[0][0] == "portfolios"
+    assert storage.uploads[0][2] == content
+    assert storage.uploads[0][3] == "video/mp4"
+
+
+def test_portfolio_upload_rejects_mismatched_media_bytes():
+    service = PortfolioService(storage=InMemoryStorage())
+
+    with pytest.raises(ValidationException, match="do not match"):
+        asyncio.run(
+            service.validate_and_process_upload(
+                filename="not-a-video.mp4",
+                content=b"not a video",
+                content_type="video/mp4",
+                creator_id=UUID("00000000-0000-0000-0000-000000000001"),
+            )
+        )
 
 
 def test_get_my_profile_and_completeness(client: TestClient):
@@ -135,6 +186,50 @@ def test_portfolio_project_lifecycle(client: TestClient):
     assert del_resp.json()["data"] is True
 
 
+def test_private_portfolio_projects_are_only_available_to_the_owner(client: TestClient):
+    owner_headers = get_auth_headers("creator-private-owner", "CREATOR")
+    create_response = client.post(
+        "/api/v1/portfolios",
+        json={
+            "title": "Private campaign cut",
+            "category": "AI Video",
+            "content_type": "Campaign Video",
+            "media_type": "VIDEO",
+            "media_url": "https://media.example.test/private-campaign.mp4",
+            "tools": [],
+            "aspect_ratio": "16:9",
+            "resolution": "1080p",
+            "commercial_use_status": "COMMERCIAL_READY",
+            "ai_generation_type": "AI_GENERATED",
+            "visibility": "PRIVATE",
+        },
+        headers=owner_headers,
+    )
+    assert create_response.status_code == 200
+    project_id = create_response.json()["data"]["id"]
+    creator_id = create_response.json()["data"]["creator_id"]
+
+    public_list = client.get(f"/api/v1/portfolios?creator_id={creator_id}&public_only=true")
+    assert public_list.status_code == 200
+    assert all(project["id"] != project_id for project in public_list.json()["data"])
+
+    assert client.get(f"/api/v1/portfolios/{project_id}").status_code == 404
+    assert client.get(
+        f"/api/v1/portfolios/{project_id}",
+        headers=get_auth_headers("creator-private-viewer", "CREATOR"),
+    ).status_code == 404
+
+    owner_response = client.get(f"/api/v1/portfolios/{project_id}", headers=owner_headers)
+    assert owner_response.status_code == 200
+    assert owner_response.json()["data"]["visibility"] == "PRIVATE"
+
+    private_list_without_auth = client.get(f"/api/v1/portfolios?creator_id={creator_id}&public_only=false")
+    assert private_list_without_auth.status_code == 401
+
+    delete_response = client.delete(f"/api/v1/portfolios/{project_id}", headers=owner_headers)
+    assert delete_response.status_code == 200
+
+
 def test_verification_claims_and_badges(client: TestClient):
     headers = get_auth_headers("creator-verified-user", "CREATOR")
 
@@ -178,3 +273,30 @@ def test_public_creator_profile_details(client: TestClient):
     handle_resp = client.get("/api/v1/creators/alex_ai_art")
     assert handle_resp.status_code == 200
     assert handle_resp.json()["data"]["id"] == data["id"]
+
+
+def test_marcus_vance_portfolio_videos_serve_mp4_and_correct_durations(client: TestClient):
+    marcus_id = "00000000-0000-0000-0000-000000000022"
+    resp = client.get(f"/api/v1/portfolios?creator_id={marcus_id}&public_only=true")
+    assert resp.status_code == 200
+    projects = resp.json()["data"]
+
+    # Marcus Vance has 2 video projects
+    assert len(projects) >= 2
+    video_projects = [p for p in projects if p["media_type"] == "VIDEO"]
+    assert len(video_projects) >= 2
+
+    # Check Kinetic Trails project (30s)
+    kinetic = next((p for p in video_projects if "Kinetic Trails" in p["title"]), None)
+    assert kinetic is not None
+    assert kinetic["media_url"].endswith(".mp4")
+    assert not kinetic["media_url"].endswith(".svg")
+    assert kinetic["duration_seconds"] == 30
+
+    # Check Temporal Flux project (15s)
+    temporal = next((p for p in video_projects if "Temporal Flux" in p["title"]), None)
+    assert temporal is not None
+    assert temporal["media_url"].endswith(".mp4")
+    assert not temporal["media_url"].endswith(".svg")
+    assert temporal["duration_seconds"] == 15
+

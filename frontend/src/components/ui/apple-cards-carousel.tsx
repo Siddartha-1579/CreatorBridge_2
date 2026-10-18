@@ -19,6 +19,7 @@ export interface CardData {
   content: React.ReactNode
   tag?: string
   alt?: string
+  onOpen?: () => void
 }
 
 interface CarouselContextType {
@@ -165,6 +166,10 @@ export const Card: React.FC<CardProps> = ({ card, index, layout = true }) => {
   const { onCardClose } = useContext(CarouselContext)
 
   const handleOpen = () => {
+    if (card.onOpen) {
+      card.onOpen()
+      return
+    }
     setOpen(true)
   }
 

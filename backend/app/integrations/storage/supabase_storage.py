@@ -1,6 +1,7 @@
 """Supabase Storage Provider implementation."""
 
 from typing import Optional
+import httpx
 from app.core.config import settings
 from app.core.errors import IntegrationException
 from app.core.logging import get_logger
@@ -19,6 +20,10 @@ class SupabaseStorageProvider(StorageProvider):
         self.supabase_url = (supabase_url or settings.effective_supabase_url).rstrip("/")
         self.service_key = service_key or settings.effective_supabase_secret_key
 
+    def _ensure_configured(self) -> None:
+        if not self.supabase_url or "mock.supabase.co" in self.supabase_url or not self.service_key or self.service_key.startswith("mock-"):
+            raise IntegrationException("Supabase Storage", "Storage is not configured with a real project URL and service key")
+
     async def upload_file(
         self,
         bucket: str,
@@ -28,13 +33,27 @@ class SupabaseStorageProvider(StorageProvider):
     ) -> str:
         clean_path = path.lstrip("/")
         logger.info(f"Uploading file to Supabase storage [{bucket}/{clean_path}] ({len(content)} bytes)")
-        
-        # When configured, executes HTTP multipart upload to Supabase storage REST endpoint:
-        # /storage/v1/object/{bucket}/{path}
+        self._ensure_configured()
+
+        upload_url = f"{self.supabase_url}/storage/v1/object/{bucket}/{clean_path}"
+        headers = {
+            "Authorization": f"Bearer {self.service_key}",
+            "apikey": self.service_key,
+            "Content-Type": content_type,
+            "x-upsert": "false",
+        }
+        try:
+            async with httpx.AsyncClient(timeout=30.0) as client:
+                response = await client.post(upload_url, content=content, headers=headers)
+                response.raise_for_status()
+        except httpx.HTTPError as exc:
+            raise IntegrationException("Supabase Storage", "The media file could not be uploaded") from exc
+
         storage_ref = f"{bucket}/{clean_path}"
         return storage_ref
 
     async def get_public_url(self, bucket: str, path: str) -> str:
+        self._ensure_configured()
         clean_path = path.lstrip("/")
         return f"{self.supabase_url}/storage/v1/object/public/{bucket}/{clean_path}"
 
