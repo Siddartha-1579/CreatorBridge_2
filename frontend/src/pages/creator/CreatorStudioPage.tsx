@@ -26,6 +26,7 @@ import {
   Info,
   Sliders,
   ExternalLink,
+  AlertCircle,
 } from "lucide-react"
 
 type StudioMode = "image" | "video" | "voice" | "writing" | "repurpose" | "portfolio"
@@ -166,6 +167,11 @@ export const CreatorStudioPage: React.FC = () => {
         parameters,
       })
       setActiveJob(job)
+      if (job.status === "PROVIDER_NOT_CONFIGURED") {
+        setErrorMessage(job.errorMessage || "AI Video provider is not configured. Please see configuration guide below.")
+      } else if (job.status === "FAILED") {
+        setErrorMessage(job.errorMessage || "Generation failed. Please try again.")
+      }
     } catch (err: unknown) {
       setErrorMessage(err instanceof Error ? err.message : "Generation failed. Please try again.")
     } finally {
@@ -174,11 +180,26 @@ export const CreatorStudioPage: React.FC = () => {
   }
 
   const handleSaveToPortfolio = async () => {
-    if (!activeJob) return
+    if (
+      !activeJob ||
+      (activeJob.status !== "COMPLETED" && activeJob.status !== "DEMO_SAMPLE") ||
+      !activeJob.resultAssetPath
+    ) {
+      setErrorMessage("Cannot save an uncompleted or unconfigured job to portfolio.")
+      return
+    }
+    if (
+      activeJob.resultAssetPath.includes("ForBiggerBlazes") ||
+      activeJob.resultAssetPath.includes("gtv-videos-bucket")
+    ) {
+      setErrorMessage("Cannot save invalid placeholder media to portfolio.")
+      return
+    }
     try {
+      const isDemo = activeJob.status === "DEMO_SAMPLE"
       const res = await generationService.saveToPortfolio(
         activeJob.id,
-        `${currentStudio.name} - ${prompt.slice(0, 32)}...`
+        isDemo ? `Demo Reel - ${prompt.slice(0, 24)}...` : `${currentStudio.name} - ${prompt.slice(0, 32)}...`
       )
       setSavedSuccess(res.title)
     } catch (err: unknown) {
@@ -219,8 +240,21 @@ export const CreatorStudioPage: React.FC = () => {
             <span className="text-[11px] px-2 py-0.5 rounded-md bg-[#F4E7FF]/60 text-[#9A6ADF] font-medium border border-[#D8B8FF]/60">
               Image: {aiStatus.image.is_fallback ? "Ready (Simulation)" : aiStatus.image.provider}
             </span>
-            <span className="text-[11px] px-2 py-0.5 rounded-md bg-[#F4E7FF]/60 text-[#9A6ADF] font-medium border border-[#D8B8FF]/60">
-              Video: {aiStatus.video.is_fallback ? "Ready (Simulation)" : aiStatus.video.provider}
+            <span
+              className={`text-[11px] px-2 py-0.5 rounded-md font-medium border ${
+                aiStatus.video.mode === "demo" || aiStatus.video.provider === "demo"
+                  ? "bg-purple-50 text-purple-700 border-purple-200"
+                  : aiStatus.video.status === "UNCONFIGURED"
+                  ? "bg-amber-50 text-amber-700 border-amber-200"
+                  : "bg-[#F4E7FF]/60 text-[#9A6ADF] border-[#D8B8FF]/60"
+              }`}
+            >
+              Video:{" "}
+              {aiStatus.video.mode === "demo" || aiStatus.video.provider === "demo"
+                ? "Demo Mode (₹0 Zero Cost)"
+                : aiStatus.video.status === "UNCONFIGURED"
+                ? "Live (Key Required)"
+                : `${aiStatus.video.provider} (${aiStatus.video.model})`}
             </span>
             <span className="text-[11px] px-2 py-0.5 rounded-md bg-[#F4E7FF]/60 text-[#9A6ADF] font-medium border border-[#D8B8FF]/60">
               Voice: {aiStatus.voice.is_fallback ? "Ready (Simulation)" : aiStatus.voice.provider}
@@ -436,8 +470,20 @@ export const CreatorStudioPage: React.FC = () => {
                   <CardTitle className="text-base font-bold text-[#111111]">Studio Output Preview</CardTitle>
                 </div>
                 {activeJob && (
-                  <Badge variant={activeJob.status === "COMPLETED" ? "purple" : "outline"}>
-                    {activeJob.status}
+                  <Badge
+                    variant={
+                      activeJob.status === "COMPLETED" || activeJob.status === "DEMO_SAMPLE"
+                        ? "purple"
+                        : activeJob.status === "PROVIDER_NOT_CONFIGURED"
+                        ? "warning"
+                        : "outline"
+                    }
+                  >
+                    {activeJob.status === "DEMO_SAMPLE"
+                      ? "DEMO SAMPLE"
+                      : activeJob.status === "PROVIDER_NOT_CONFIGURED"
+                      ? "UNCONFIGURED"
+                      : activeJob.status}
                   </Badge>
                 )}
               </div>
@@ -455,6 +501,157 @@ export const CreatorStudioPage: React.FC = () => {
                       Dispatching to multi-modal gateway with automated fallback resilience...
                     </p>
                   </div>
+                </div>
+              ) : activeJob && activeJob.status === "DEMO_SAMPLE" ? (
+                <div className="space-y-4">
+                  {/* Demo Sample Notice Banner */}
+                  <div className="p-3.5 rounded-xl bg-purple-50/80 border border-purple-200 text-left text-xs space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="font-bold text-purple-900 flex items-center gap-1.5">
+                        <Sparkles className="h-4 w-4 text-[#9A6ADF]" />
+                        <span>Curated Showcase Reel (Zero-Cost Hackathon Mode)</span>
+                      </div>
+                      <Badge variant="purple" className="text-[10px] bg-purple-100 border-purple-300">
+                        ₹0 Zero Cost
+                      </Badge>
+                    </div>
+                    <p className="text-[11px] text-purple-800 leading-relaxed">
+                      This video is a verified showcase sample from Marcus Chen&apos;s curated portfolio reels.
+                      Because cloud video generation models require paid GPU compute credits, CreatorBridge provides high-fidelity local demo assets at ₹0 cost for seamless hackathon evaluation.
+                    </p>
+                    <div className="p-2 rounded-lg bg-white/80 border border-purple-100 text-[11px] text-slate-700">
+                      <span className="font-semibold text-purple-900">Theme Match: </span>
+                      <span className="italic">&ldquo;{prompt.slice(0, 80)}{prompt.length > 80 ? "..." : ""}&rdquo;</span>
+                    </div>
+                  </div>
+
+                  {/* Video Player */}
+                  {activeJob.resultAssetPath && (
+                    <div className="rounded-xl overflow-hidden border border-purple-200 bg-black relative group">
+                      <video
+                        key={activeJob.resultAssetPath}
+                        src={activeJob.resultAssetPath}
+                        controls
+                        autoPlay
+                        loop
+                        muted
+                        playsInline
+                        preload="metadata"
+                        className="w-full h-auto max-h-[380px]"
+                      />
+                      <div className="absolute top-2 left-2 pointer-events-none">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-black/75 text-amber-300 border border-amber-500/50 backdrop-blur-xs">
+                          Demo Sample
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Metadata & Mode Details */}
+                  <div className="p-3 rounded-xl bg-[#F4E7FF]/30 border border-[#D8B8FF] text-[11px] text-[#4B4652] space-y-1">
+                    <div className="flex justify-between">
+                      <span className="font-semibold">Mode:</span>
+                      <span className="font-mono text-[#111111] font-bold">Demo Mode (₹0 Zero Cost)</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-semibold">Provider / Source:</span>
+                      <span className="font-mono text-[#111111] font-bold">{activeJob.providerName} (Curated Showcase Reel)</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-semibold">Live Mode Available:</span>
+                      <span className="text-slate-600">Requires <code className="bg-slate-200 px-1 py-0.5 rounded text-[#111111] font-mono">RUNWAY_API_KEY</code> &amp; <code className="bg-slate-200 px-1 py-0.5 rounded text-[#111111] font-mono">VIDEO_GENERATION_MODE=live</code></span>
+                    </div>
+                  </div>
+
+                  {/* Save to Portfolio Action */}
+                  <div className="pt-2">
+                    {savedSuccess ? (
+                      <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-xs text-emerald-800 font-semibold">
+                          <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                          <span>Saved Demo Showcase Reel to Creator Portfolio!</span>
+                        </div>
+                        <Link to="/creator/portfolio">
+                          <Button variant="outline" size="sm" className="text-xs gap-1 bg-white">
+                            View Portfolio <ArrowRight className="h-3 w-3" />
+                          </Button>
+                        </Link>
+                      </div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          onClick={handleSaveToPortfolio}
+                          className="w-full gap-2 text-xs font-bold text-[#9A6ADF]"
+                        >
+                          <FolderPlus className="h-4 w-4 text-[#9A6ADF]" />
+                          Save Demo Showcase Reel to Portfolio
+                        </Button>
+                        <p className="text-[10px] text-center text-slate-500">
+                          Saves with explicit &ldquo;Showcase Reel (Demo)&rdquo; tag to maintain full disclosure and portfolio transparency.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : activeJob && activeJob.status === "PROVIDER_NOT_CONFIGURED" ? (
+                <div className="py-8 px-2 text-center space-y-4">
+                  <div className="p-3.5 w-14 h-14 mx-auto rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shadow-2xs">
+                    <AlertCircle className="h-7 w-7" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-[#111111]">
+                      {currentStudio.name} Setup Required
+                    </h3>
+                    <p className="text-xs text-[#4B4652] mt-1 max-w-sm mx-auto">
+                      {activeJob.errorMessage ||
+                        "AI Video generation requires an active provider API key configured on the server."}
+                    </p>
+                  </div>
+
+                  <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-left text-xs space-y-2">
+                    <div className="font-semibold text-slate-800 flex items-center gap-1.5">
+                      <Sliders className="h-3.5 w-3.5 text-[#9A6ADF]" />
+                      <span>Required Configuration</span>
+                    </div>
+                    <ul className="text-[11px] text-slate-600 space-y-1 list-disc list-inside">
+                      <li>
+                        Set <code className="bg-slate-200 px-1 py-0.5 rounded text-[#111111] font-mono">RUNWAY_API_KEY</code> or <code className="bg-slate-200 px-1 py-0.5 rounded text-[#111111] font-mono">VIDEO_AI_API_KEY</code> in Railway backend variables
+                      </li>
+                      <li>
+                        Model: <code className="bg-slate-200 px-1 py-0.5 rounded text-[#111111] font-mono">gen3a_turbo</code> (Runway Gen-3 Alpha)
+                      </li>
+                      <li>
+                        Persistent storage: Supabase bucket <code className="bg-slate-200 px-1 py-0.5 rounded text-[#111111] font-mono">generated-assets</code>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <p className="text-[11px] text-slate-400">
+                    CreatorBridge does not simulate video generation or save inaccessible placeholder links.
+                  </p>
+                </div>
+              ) : activeJob && activeJob.status === "FAILED" ? (
+                <div className="py-8 px-2 text-center space-y-4">
+                  <div className="p-3.5 w-14 h-14 mx-auto rounded-2xl bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 shadow-2xs">
+                    <AlertCircle className="h-7 w-7" />
+                  </div>
+                  <div>
+                    <h3 className="text-base font-bold text-[#111111]">Synthesis Failed</h3>
+                    <p className="text-xs text-rose-600 mt-1 max-w-sm mx-auto font-medium">
+                      {activeJob.errorMessage || "The AI generation provider encountered an unexpected failure."}
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setActiveJob(null)}
+                    className="text-xs"
+                  >
+                    Dismiss & Adjust Parameters
+                  </Button>
                 </div>
               ) : activeJob && activeJob.status === "COMPLETED" ? (
                 <div className="space-y-4">
@@ -487,6 +684,8 @@ export const CreatorStudioPage: React.FC = () => {
                         autoPlay
                         loop
                         muted
+                        playsInline
+                        preload="metadata"
                         className="w-full h-auto max-h-[380px]"
                       />
                     </div>

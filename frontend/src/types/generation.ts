@@ -1,6 +1,12 @@
 import { AssetType } from "./portfolio"
 
-export type GenerationJobStatus = "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED"
+export type GenerationJobStatus =
+  | "PENDING"
+  | "PROCESSING"
+  | "COMPLETED"
+  | "FAILED"
+  | "PROVIDER_NOT_CONFIGURED"
+  | "DEMO_SAMPLE"
 
 export interface GenerationJob {
   id: string
@@ -30,6 +36,7 @@ export interface ModalityConfigInfo {
   status: "READY" | "UNCONFIGURED" | "RATE_LIMITED" | "DEGRADED"
   model: string
   is_fallback: boolean
+  mode?: "demo" | "live"
 }
 
 export interface AIStatusData {

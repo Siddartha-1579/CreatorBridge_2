@@ -20,8 +20,16 @@ class SupabaseStorageProvider(StorageProvider):
         self.supabase_url = (supabase_url or settings.effective_supabase_url).rstrip("/")
         self.service_key = service_key or settings.effective_supabase_secret_key
 
+    def is_configured(self) -> bool:
+        return bool(
+            self.supabase_url
+            and "mock.supabase.co" not in self.supabase_url
+            and self.service_key
+            and not self.service_key.startswith("mock-")
+        )
+
     def _ensure_configured(self) -> None:
-        if not self.supabase_url or "mock.supabase.co" in self.supabase_url or not self.service_key or self.service_key.startswith("mock-"):
+        if not self.is_configured():
             raise IntegrationException("Supabase Storage", "Storage is not configured with a real project URL and service key")
 
     async def upload_file(

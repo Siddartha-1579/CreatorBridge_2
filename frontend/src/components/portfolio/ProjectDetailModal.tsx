@@ -59,6 +59,12 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
   const isDirectVideo = isDirectVideoUrl(project.media_url)
   const shouldUseExternalVideoFlow = isVideo && !isDirectVideo
   const externalVideoUrl = project.external_url || project.media_url
+  const isDemoShowcase =
+    project.category?.toLowerCase().includes("demo") ||
+    project.title?.toLowerCase().includes("demo") ||
+    project.description?.toLowerCase().includes("curated demo") ||
+    project.description?.toLowerCase().includes("showcase reel (demo)") ||
+    project.tools?.some((t: string) => t.toLowerCase().includes("demo"))
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
@@ -72,6 +78,12 @@ export const ProjectDetailModal: React.FC<ProjectDetailModalProps> = ({
             <span className="text-sm text-slate-500 font-medium">
               {project.content_type}
             </span>
+            {isDemoShowcase && (
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
+                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                Demo Showcase Reel
+              </span>
+            )}
             {project.verification_status === "VERIFIED" && (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
                 <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />

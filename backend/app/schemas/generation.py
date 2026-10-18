@@ -12,6 +12,8 @@ class GenerationJobStatus(str, Enum):
     PROCESSING = "PROCESSING"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
+    PROVIDER_NOT_CONFIGURED = "PROVIDER_NOT_CONFIGURED"
+    DEMO_SAMPLE = "DEMO_SAMPLE"
 
 
 class GenerationJobCreate(BaseModel):

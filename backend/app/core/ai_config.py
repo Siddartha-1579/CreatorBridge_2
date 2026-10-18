@@ -27,9 +27,11 @@ class AIConfigValidator:
             or (settings.fal_ai_api_key and len(settings.fal_ai_api_key.strip()) > 8)
         )
 
+        is_video_demo = (getattr(settings, "video_generation_mode", "demo") or "demo").lower() == "demo"
         has_video = bool(
             (settings.video_api_key and len(settings.video_api_key.strip()) > 8)
             or (settings.runway_api_key and len(settings.runway_api_key.strip()) > 8)
+            or (settings.video_ai_api_key and len(settings.video_ai_api_key.strip()) > 8)
         )
 
         has_voice = bool(
@@ -56,10 +58,11 @@ class AIConfigValidator:
                 "is_fallback": not has_image,
             },
             "video": {
-                "provider": settings.video_provider,
-                "status": "READY" if has_video else "UNCONFIGURED",
-                "model": settings.video_model,
-                "is_fallback": not has_video,
+                "provider": "demo" if is_video_demo else settings.video_provider,
+                "status": "READY" if (is_video_demo or has_video) else "UNCONFIGURED",
+                "model": "demo-curated-reel" if is_video_demo else settings.video_model,
+                "is_fallback": is_video_demo or (not has_video),
+                "mode": "demo" if is_video_demo else "live",
             },
             "voice": {
                 "provider": settings.voice_provider,

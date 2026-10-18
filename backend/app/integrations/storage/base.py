@@ -32,3 +32,7 @@ class StorageProvider(ABC):
     async def delete_file(self, bucket: str, path: str) -> bool:
         """Removes an asset from storage."""
         pass
+
+    def is_configured(self) -> bool:
+        """Returns True if the storage provider has valid remote credentials configured."""
+        return True

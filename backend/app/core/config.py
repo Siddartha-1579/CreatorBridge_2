@@ -133,6 +133,7 @@ class Settings(BaseSettings):
     fal_ai_api_key: str = Field(default="", alias="FAL_AI_API_KEY")
 
     # 8. AI Video Generation Configuration (E)
+    video_generation_mode: str = Field(default="demo", alias="VIDEO_GENERATION_MODE")
     video_ai_api_key: str = Field(default="", alias="VIDEO_AI_API_KEY")
     video_ai_base_url: str = Field(default="", alias="VIDEO_AI_BASE_URL")
     video_ai_model: str = Field(default="gen3a_turbo", alias="VIDEO_AI_MODEL")

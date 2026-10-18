@@ -86,6 +86,16 @@ class IntegrationException(AppException):
         )
 
 
+class ProviderNotConfiguredException(AppException):
+    def __init__(self, provider: str, message: str):
+        super().__init__(
+            message=message,
+            code="PROVIDER_NOT_CONFIGURED",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            details={"provider": provider},
+        )
+
+
 def format_error_response(code: str, message: str, details: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Builds a standardized error envelope."""
     return {

@@ -373,6 +373,18 @@ def init_db():
             """
         )
 
+        # Idempotently repair any simulated or legacy items referencing the broken Google sample video
+        cursor.execute(
+            """
+            UPDATE portfolio_items
+            SET media_url = '/demo-assets/marcus-project-kinetic-trail.mp4',
+                public_url = '/demo-assets/marcus-project-kinetic-trail.mp4',
+                thumbnail_url = '/demo-assets/marcus-project-kinetic-trail.svg',
+                description = REPLACE(description, '(runway-simulated)', '(repaired-demo)')
+            WHERE media_url LIKE '%ForBiggerBlazes%' OR media_url LIKE '%gtv-videos-bucket%'
+            """
+        )
+
         conn.commit()
         logger.info(f"Persistent database schema initialized at {DB_PATH}")
 

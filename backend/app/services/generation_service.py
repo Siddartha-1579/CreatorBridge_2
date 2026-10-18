@@ -4,7 +4,11 @@ from typing import List, Optional
 from uuid import UUID, uuid4
 from app.services.base import BaseService
 from app.core.config import settings
-from app.core.errors import NotFoundException, ValidationException
+from app.core.errors import (
+    NotFoundException,
+    ValidationException,
+    ProviderNotConfiguredException,
+)
 from app.repositories import generation_repository, GenerationJobRepository, portfolio_repository, PortfolioRepository
 from app.integrations.ai.gateway import ai_gateway, AIProviderGateway
 from app.integrations.ai.base import (
@@ -137,16 +141,35 @@ class GenerationService(BaseService):
                 result_metadata.update({"tokens_used": res.tokens_used, "model": res.model})
                 actual_provider = res.provider
 
+            target_status = GenerationJobStatus.COMPLETED
+            if data.modality == AssetType.VIDEO and (actual_provider == "demo" or result_metadata.get("is_demo")):
+                target_status = GenerationJobStatus.DEMO_SAMPLE
+
             updated_job = await self.repo.update(
                 job_id,
                 {
-                    "status": GenerationJobStatus.COMPLETED,
+                    "status": target_status,
                     "provider_name": actual_provider,
                     "result_asset_path": result_asset_path,
                     "result_metadata": result_metadata,
                 },
             )
             return updated_job or saved_job
+
+        except ProviderNotConfiguredException as e:
+            self.logger.warning(f"Generation job {job_id} provider not configured: {e.message}")
+            unconfigured_job = await self.repo.update(
+                job_id,
+                {
+                    "status": GenerationJobStatus.PROVIDER_NOT_CONFIGURED,
+                    "error_message": e.message,
+                    "result_metadata": {
+                        "requires_configuration": True,
+                        "provider": e.details.get("provider", "video"),
+                    },
+                },
+            )
+            return unconfigured_job or saved_job
 
         except Exception as e:
             self.logger.error(f"Job execution failed for {job_id}: {e}")
@@ -160,40 +183,79 @@ class GenerationService(BaseService):
             return failed_job or saved_job
 
     async def save_asset_to_portfolio(self, user_id: str, job_id: UUID, title: str) -> dict:
-        """Saves a completed AI generation asset directly into creator's portfolio."""
+        """Saves a completed AI generation or confirmed demo showcase asset directly into creator's portfolio."""
         from datetime import datetime, timezone
         from app.schemas.portfolio import PortfolioProjectResponse
         from app.services import creator_service
 
         job = await self.get_job_by_id(job_id)
-        if job.status != GenerationJobStatus.COMPLETED or not job.result_asset_path:
-            raise ValidationException("Cannot save incomplete or failed generation job to portfolio")
+        if job.status not in (GenerationJobStatus.COMPLETED, GenerationJobStatus.DEMO_SAMPLE) or not job.result_asset_path:
+            raise ValidationException("Cannot save incomplete, unconfigured, or failed generation job to portfolio")
+
+        if "ForBiggerBlazes" in job.result_asset_path or "gtv-videos-bucket" in job.result_asset_path:
+            raise ValidationException("Cannot save invalid placeholder video to portfolio")
 
         creator = await creator_service.get_profile_by_user_id(user_id)
         creator_id = creator.id
         now = datetime.now(timezone.utc)
         item_id = uuid4()
 
+        is_demo = job.status == GenerationJobStatus.DEMO_SAMPLE or bool(job.result_metadata.get("is_demo"))
+
+        if is_demo:
+            item_title = title or "Demo Showcase Reel"
+            prompt_used = job.result_metadata.get("prompt_entered") or job.parameters.get("prompt") or ""
+            item_desc = (
+                f"Curated Showcase Reel (Demo Mode). Prompt entered: '{prompt_used}'. "
+                "Note: Pre-generated sample video for zero-cost hackathon demonstration."
+            )
+            item_tools = ["Showcase Reel (Demo)"]
+            item_models = ["Curated Demo Reel"]
+            thumbnail = (
+                "/demo-assets/marcus-project-temporal-flux.svg"
+                if "temporal-flux" in job.result_asset_path
+                else "/demo-assets/marcus-project-kinetic-trail.svg"
+            )
+            content_type = "Curated Demo Showcase"
+            skills = ["Demo Showcase", "Curated Media"]
+        else:
+            item_title = title or f"AI Studio {job.modality.value.title()} Asset"
+            item_desc = f"Generated via CreatorBridge AI Studio ({job.provider_name}). Parameters: {job.parameters}"
+            item_tools = [job.provider_name.replace("-simulated", "")]
+            item_models = [str(job.parameters.get("model", "default"))]
+            thumbnail = (
+                job.result_asset_path
+                if job.modality == AssetType.IMAGE
+                else "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80"
+            )
+            content_type = "Studio Creation"
+            skills = ["Generative AI", "Asset Synthesis"]
+
         proj = PortfolioProjectResponse(
             id=item_id,
             creator_id=creator_id,
-            title=title or f"AI Studio {job.modality.value.title()} Asset",
-            description=f"Generated via CreatorBridge AI Studio ({job.provider_name}). Parameters: {job.parameters}",
+            title=item_title,
+            description=item_desc,
             category=f"AI {job.modality.value.title()}",
-            content_type="Studio Creation",
+            content_type=content_type,
             media_type=job.modality,
-            thumbnail_url=job.result_asset_path if job.modality == AssetType.IMAGE else "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80",
+            thumbnail_url=thumbnail,
             media_url=job.result_asset_path,
             public_url=job.result_asset_path,
-            tools=[job.provider_name.replace("-simulated", "")],
-            models=[str(job.parameters.get("model", "default"))],
-            skills=["Generative AI", "Asset Synthesis"],
+            tools=item_tools,
+            models=item_models,
+            skills=skills,
             aspect_ratio=str(job.parameters.get("aspect_ratio", "16:9")),
             resolution="1080p",
             created_at=now,
             updated_at=now,
         )
         saved_item = await self.portfolio_repo.create(proj)
-        self.logger.info(f"Saved generated job asset {job_id} to portfolio item {saved_item.id}")
-        return {"success": True, "portfolio_item_id": str(saved_item.id), "title": saved_item.title}
+        self.logger.info(f"Saved job asset {job_id} to portfolio item {saved_item.id} (is_demo={is_demo})")
+        return {
+            "success": True,
+            "portfolio_item_id": str(saved_item.id),
+            "title": saved_item.title,
+            "is_demo": is_demo,
+        }
 

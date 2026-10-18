@@ -60,7 +60,7 @@ def test_generation_service_multi_modal_execution():
         assert img_job.status.value == "COMPLETED"
         assert img_job.result_asset_path is not None
 
-        # Test Video generation
+        # Test Video generation in default zero-cost Demo Mode -> DEMO_SAMPLE
         video_job = await service.submit_job(
             user_id="test-user",
             data=GenerationJobCreate(
@@ -69,8 +69,9 @@ def test_generation_service_multi_modal_execution():
                 parameters={"duration": 5, "aspect_ratio": "16:9"},
             ),
         )
-        assert video_job.status.value == "COMPLETED"
+        assert video_job.status.value == "DEMO_SAMPLE"
         assert video_job.result_asset_path is not None
+        assert video_job.result_asset_path.startswith("/demo-assets/marcus-project-")
 
         # Test Voice generation
         voice_job = await service.submit_job(
