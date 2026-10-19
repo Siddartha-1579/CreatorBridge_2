@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ImageWithFallback } from "@/components/common/ImageWithFallback"
 import { creatorMatchesTool, getAvailableToolsForCreators, isToolMatch } from "@/lib/toolMatching"
+import { isMatchCompatible, parseMatchScore, formatMatchScore } from "@/lib/matchCompatibility"
 import {
   Search,
   Sparkles,
@@ -84,19 +85,21 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
         setCreators(creatorsList || [])
         setBriefs(briefsList || [])
 
-        // Initial match computation respecting briefId in URL
-        const initialBrief = (briefIdFromUrl && briefsList?.find((b) => b.id === briefIdFromUrl)) ||
-                             (briefsList && briefsList.length > 0 ? briefsList[0] : null)
-        const briefIdToUse = initialBrief ? initialBrief.id : "demo-brief-01"
+        // Initial match computation: respect briefId from URL if present, otherwise default to Global Benchmark ("general")
+        const initialBrief = (briefIdFromUrl && briefsList?.find((b) => b.id === briefIdFromUrl)) || null
+        const briefIdToUse = initialBrief ? initialBrief.id : "general"
         if (initialBrief) {
           setSelectedBriefId(initialBrief.id)
           setInviteBriefId(initialBrief.id)
+        } else {
+          setSelectedBriefId("general")
+          setInviteBriefId("")
         }
 
         const matchRes = await matchingService.computeMatches({
           brief_id: briefIdToUse,
-          required_tools: initialBrief?.required_tools?.length ? initialBrief.required_tools : ["Runway Gen-3", "Midjourney"],
-          required_skills: initialBrief?.creator_capabilities?.required_capabilities || ["Cinematics", "Prompt Engineering"],
+          required_tools: initialBrief?.required_tools || [],
+          required_skills: initialBrief?.creator_capabilities?.required_capabilities || [],
           target_niches: initialBrief?.creator_capabilities?.preferred_niches || [],
           target_platforms: initialBrief?.platforms || [],
           max_budget_cents: initialBrief?.budget_cents,
@@ -114,14 +117,14 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
   // Trigger matching engine when active campaign brief changes
   const handleBriefChange = async (briefId: string) => {
     setSelectedBriefId(briefId)
-    setInviteBriefId(briefId)
+    setInviteBriefId(briefId === "general" ? "" : briefId)
     setRefreshing(true)
     try {
       const activeBrief = briefs.find((b) => b.id === briefId)
       const matchRes = await matchingService.computeMatches({
         brief_id: briefId,
-        required_tools: activeBrief?.required_tools || ["Runway Gen-3", "Midjourney"],
-        required_skills: activeBrief?.creator_capabilities?.required_capabilities || ["Cinematics"],
+        required_tools: activeBrief?.required_tools || [],
+        required_skills: activeBrief?.creator_capabilities?.required_capabilities || [],
         target_niches: activeBrief?.creator_capabilities?.preferred_niches || [],
         target_platforms: activeBrief?.platforms || [],
         max_budget_cents: activeBrief?.budget_cents,
@@ -261,8 +264,7 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
         const matchesTool = creatorMatchesTool(creator, selectedTool)
 
         // Min match score filter
-        const score = matchInfo ? matchInfo.overall_match_score : 75
-        const matchesScore = score >= minMatchScore
+        const matchesScore = isMatchCompatible(matchInfo?.overall_match_score, minMatchScore)
 
         // Rate filter
         const rateDollars = creator.hourly_rate_cents ? creator.hourly_rate_cents / 100 : 75
@@ -291,8 +293,8 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
         )
       })
       .sort((a, b) => {
-        const scoreA = a.matchInfo?.overall_match_score ?? 0
-        const scoreB = b.matchInfo?.overall_match_score ?? 0
+        const scoreA = parseMatchScore(a.matchInfo?.overall_match_score) ?? -1
+        const scoreB = parseMatchScore(b.matchInfo?.overall_match_score) ?? -1
         return scoreB - scoreA
       })
   }, [
@@ -557,9 +559,9 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCreators.map(({ creator, matchInfo }) => {
-            const overallScore = matchInfo ? matchInfo.overall_match_score : 82
-            const isHighMatch = overallScore >= 85
-            const isMediumMatch = overallScore >= 70 && overallScore < 85
+            const overallScore = parseMatchScore(matchInfo?.overall_match_score)
+            const isHighMatch = overallScore !== null && overallScore >= 85
+            const isMediumMatch = overallScore !== null && overallScore >= 70 && overallScore < 85
             const isShortlisted = shortlistedIds.includes(creator.id)
 
             return (
@@ -576,7 +578,7 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
                       </Badge>
 
                       <div className="flex items-center gap-1.5">
-                        {matchInfo && (
+                        {matchInfo && overallScore !== null && (
                           <button
                             type="button"
                             onClick={() => setInspectingMatch(matchInfo)}
@@ -590,7 +592,7 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
                             title="Click to view full 7-factor explainable breakdown"
                           >
                             <Sparkles className="h-3 w-3" />
-                            <span>{overallScore}% Match</span>
+                            <span>{formatMatchScore(overallScore)} Match</span>
                             <ChevronRight className="h-3 w-3 opacity-60" />
                           </button>
                         )}
@@ -778,7 +780,9 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
                     <span className="text-xs font-bold text-[#9A6ADF] uppercase tracking-wider">
                       Explainable AI Match Report
                     </span>
-                    <Badge variant="purple">{inspectingMatch.overall_match_score}% Affinity</Badge>
+                    <Badge variant="purple">
+                      {formatMatchScore(inspectingMatch.overall_match_score) || `${inspectingMatch.overall_match_score}%`} Affinity
+                    </Badge>
                   </div>
                   <h3 className="text-lg font-extrabold text-[#111111]">
                     Candidate: @{inspectingMatch.creator_handle}
