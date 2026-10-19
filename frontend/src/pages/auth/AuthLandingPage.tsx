@@ -86,7 +86,7 @@ export const AuthLandingPage: React.FC = () => {
               <div className="h-14 w-14 rounded-2xl bg-[#F4E7FF] border border-[#D8B8FF] flex items-center justify-center text-[#9A6ADF] mb-6 group-hover:scale-105 transition-transform">
                 <Building2 className="h-7 w-7" />
               </div>
-              <span className="text-xs font-bold tracking-wider uppercase text-[#111111] bg-slate-100 px-2.5 py-1 rounded-full border border-slate-200">
+              <span className="text-xs font-bold tracking-wider uppercase text-[#9A6ADF] bg-[#F4E7FF] px-2.5 py-1 rounded-full border border-[#D8B8FF]">
                 For Brands & Creative Agencies
               </span>
               <h2 className="text-2xl font-bold text-[#111111] mt-3 mb-2">
@@ -112,7 +112,7 @@ export const AuthLandingPage: React.FC = () => {
               </ul>
             </div>
 
-            <button className="w-full py-3 px-6 rounded-xl bg-[#111111] hover:bg-[#9A6ADF] text-white font-semibold text-xs shadow-sm transition-all flex items-center justify-center space-x-2 cursor-pointer">
+            <button className="w-full py-3 px-6 rounded-xl bg-[#9A6ADF] hover:bg-[#8552D4] text-white font-semibold text-xs shadow-sm transition-all flex items-center justify-center space-x-2 cursor-pointer">
               <span>Continue to Brand Hub</span>
               <ArrowRight className="h-4 w-4" />
             </button>
