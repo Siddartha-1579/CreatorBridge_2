@@ -14,6 +14,7 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ImageWithFallback } from "@/components/common/ImageWithFallback"
+import { briefMatchesTool, getAvailableToolsForBriefs } from "@/lib/toolMatching"
 import {
   Megaphone,
   Search,
@@ -136,6 +137,11 @@ export const CreatorCampaignsPage: React.FC = () => {
     return ["ALL", ...Array.from(set)]
   }, [briefs])
 
+  // Unique available AI tools
+  const availableTools = useMemo(() => {
+    return getAvailableToolsForBriefs(briefs)
+  }, [briefs])
+
   // Filtered briefs
   const filteredBriefs = useMemo(() => {
     return briefs.filter((b) => {
@@ -168,7 +174,7 @@ export const CreatorCampaignsPage: React.FC = () => {
 
       // Tool filter
       if (selectedTool !== "ALL") {
-        const hasTool = b.required_tools?.includes(selectedTool)
+        const hasTool = briefMatchesTool(b, selectedTool)
         if (!hasTool) return false
       }
 
@@ -507,11 +513,13 @@ export const CreatorCampaignsPage: React.FC = () => {
               className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-800 focus:border-[#9A6ADF] focus:bg-white focus:outline-none"
             >
               <option value="ALL">All AI Tools</option>
-              <option value="Midjourney">Midjourney</option>
-              <option value="Runway Gen-3">Runway Gen-3</option>
-              <option value="Kling">Kling AI</option>
-              <option value="ElevenLabs">ElevenLabs</option>
-              <option value="ComfyUI">ComfyUI</option>
+              {availableTools
+                .filter((t) => t !== "ALL")
+                .map((tool) => (
+                  <option key={tool} value={tool}>
+                    {tool}
+                  </option>
+                ))}
             </select>
           </div>
         </div>
@@ -534,13 +542,28 @@ export const CreatorCampaignsPage: React.FC = () => {
               ? "Browse open campaigns and submit a proposal with your tailored AI pitch and portfolio samples."
               : "Try adjusting your search query, content format, or category filters to discover more open briefs."}
           </p>
-          {activeTab === "APPLIED" && (
+          {activeTab === "APPLIED" ? (
             <Button
               onClick={() => setActiveTab("DISCOVER")}
               className="mt-4 bg-[#9A6ADF] text-white hover:bg-[#8654CF] text-xs"
             >
               Explore Open Campaigns
             </Button>
+          ) : (
+            (searchQuery || selectedCategory !== "ALL" || selectedPlatform !== "ALL" || selectedTool !== "ALL") && (
+              <Button
+                onClick={() => {
+                  setSearchQuery("")
+                  setSelectedCategory("ALL")
+                  setSelectedPlatform("ALL")
+                  setSelectedTool("ALL")
+                }}
+                variant="outline"
+                className="mt-4 border-[#F4E7FF] text-[#9A6ADF] hover:bg-[#F4E7FF]/30 text-xs"
+              >
+                Reset All Filters
+              </Button>
+            )
           )}
         </div>
       ) : (
