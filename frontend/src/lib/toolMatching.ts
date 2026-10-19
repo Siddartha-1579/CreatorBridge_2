@@ -14,6 +14,12 @@ export interface BriefToolMetadata {
   } | null
 }
 
+export interface CreatorToolMetadata {
+  ai_tools?: string[] | null
+  aiTools?: string[] | null
+  skills?: string[] | null
+}
+
 /**
  * Strips punctuation, whitespace, and lowercases for uniform comparison.
  */
@@ -36,37 +42,41 @@ export const TOOL_SYNONYM_GROUPS: string[][] = [
   ["blender", "blender3d", "blender3dunrealengine"],
   ["magnific", "magnificai"],
   ["elevenlabs", "elevenlabsaudio"],
-  ["photoshop", "adobephotoshop"],
+  ["photoshop", "adobephotoshop", "photoshopgenerativefill"],
   ["luma", "lumadreammachine"],
   ["suno", "sunoai"],
+  ["controlnet", "controlnetdepth", "controlnetcanny"],
+  ["unreal", "unrealengine", "unrealengine5", "ue5"],
+  ["premiere", "adobepremiere", "premierepro"],
 ]
 
 /**
- * Determines whether a tool name from a brief matches a selected filter tool.
+ * Determines whether a tool name from an entity matches a selected filter tool.
  * Handles exact matches, substring containment, version suffixes, and synonym groups.
  */
-export function isToolMatch(toolFromBrief: string, filterTool: string): boolean {
-  if (!toolFromBrief || !filterTool) return false
-  if (filterTool === "ALL") return true
+export function isToolMatch(toolFromEntity: string, filterTool: string): boolean {
+  if (!toolFromEntity || !filterTool) return false
+  const filterUpper = filterTool.trim().toUpperCase()
+  if (filterUpper === "ALL" || filterUpper === "") return true
 
-  const normBrief = normalizeToolName(toolFromBrief)
+  const normEntity = normalizeToolName(toolFromEntity)
   const normFilter = normalizeToolName(filterTool)
 
-  if (!normBrief || !normFilter) return false
+  if (!normEntity || !normFilter) return false
 
   // 1. Exact normalized match
-  if (normBrief === normFilter) return true
+  if (normEntity === normFilter) return true
 
   // 2. Substring match (e.g. "klingai" contains "kling", "midjourneyv6" contains "midjourney")
-  if (normBrief.includes(normFilter) || normFilter.includes(normBrief)) {
+  if (normEntity.includes(normFilter) || normFilter.includes(normEntity)) {
     return true
   }
 
   // 3. Synonym cluster match (e.g. "SDXL" matches "Stable Diffusion")
   for (const group of TOOL_SYNONYM_GROUPS) {
-    const briefInGroup = group.some((syn) => normBrief.includes(syn) || syn.includes(normBrief))
+    const entityInGroup = group.some((syn) => normEntity.includes(syn) || syn.includes(normEntity))
     const filterInGroup = group.some((syn) => normFilter.includes(syn) || syn.includes(normFilter))
-    if (briefInGroup && filterInGroup) {
+    if (entityInGroup && filterInGroup) {
       return true
     }
   }
@@ -140,4 +150,67 @@ export function getAvailableToolsForBriefs(
   })
 
   return ["ALL", ...Array.from(toolSet)]
+}
+
+/**
+ * Checks whether a creator profile contains the selected tool in either its
+ * ai_tools or aiTools arrays (and optionally skills).
+ */
+export function creatorMatchesTool(creator: CreatorToolMetadata, selectedTool: string): boolean {
+  if (!selectedTool) return true
+  const upper = selectedTool.trim().toUpperCase()
+  if (upper === "ALL" || upper === "") return true
+
+  const tools: string[] = [
+    ...(creator.ai_tools || []),
+    ...(creator.aiTools || []),
+  ]
+
+  // Primary check: toolchains
+  if (tools.some((t) => isToolMatch(t, selectedTool))) {
+    return true
+  }
+
+  // Secondary fallback: skills (e.g. "ComfyUI Node Graphs")
+  if (creator.skills && Array.isArray(creator.skills)) {
+    if (creator.skills.some((s) => isToolMatch(s, selectedTool))) {
+      return true
+    }
+  }
+
+  return false
+}
+
+/**
+ * Extracts and deduplicates available tools across creators and the supported tool catalog.
+ */
+export function getAvailableToolsForCreators(
+  creators: CreatorToolMetadata[],
+  catalogTools: readonly string[] = SUPPORTED_AI_TOOLS
+): string[] {
+  const toolSet = new Set<string>()
+
+  // 1. Add catalog tools
+  catalogTools.forEach((tool) => toolSet.add(tool))
+
+  // 2. Add any unique tools present in the creator profiles
+  creators.forEach((c) => {
+    const allTools = [
+      ...(c.ai_tools || []),
+      ...(c.aiTools || []),
+    ]
+    allTools.forEach((tool) => {
+      if (!tool || typeof tool !== "string") return
+      const trimmed = tool.trim()
+      if (!trimmed) return
+
+      // If already covered by an existing tool in toolSet, skip
+      const alreadyCovered = Array.from(toolSet).some((existing) => isToolMatch(trimmed, existing))
+      if (!alreadyCovered) {
+        toolSet.add(trimmed)
+      }
+    })
+  })
+
+  return ["all", ...Array.from(toolSet)]
 }

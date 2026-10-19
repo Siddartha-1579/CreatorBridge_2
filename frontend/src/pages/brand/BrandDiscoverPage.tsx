@@ -11,6 +11,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ImageWithFallback } from "@/components/common/ImageWithFallback"
+import { creatorMatchesTool, getAvailableToolsForCreators, isToolMatch } from "@/lib/toolMatching"
 import {
   Search,
   Sparkles,
@@ -221,6 +222,11 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
     }
   }
 
+  // Unique available AI tools across creators and standard catalog
+  const availableTools = useMemo(() => {
+    return getAvailableToolsForCreators(creators)
+  }, [creators])
+
   // Filtered and ranked creator roster
   const filteredCreators = useMemo(() => {
     return creators
@@ -242,7 +248,7 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
           fullName.includes(query) ||
           handle.includes(query) ||
           spec.includes(query) ||
-          tools.some((t) => t.includes(query)) ||
+          tools.some((t) => t.includes(query) || isToolMatch(t, query)) ||
           skills.some((s) => s.includes(query))
 
         // Style / Specialization filter
@@ -252,9 +258,7 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
           skills.some((s) => s.includes(selectedStyle.toLowerCase()))
 
         // AI Tool filter
-        const matchesTool =
-          selectedTool === "all" ||
-          tools.some((t) => t.includes(selectedTool.toLowerCase()))
+        const matchesTool = creatorMatchesTool(creator, selectedTool)
 
         // Min match score filter
         const score = matchInfo ? matchInfo.overall_match_score : 75
@@ -442,13 +446,13 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
               className="w-full bg-[#FFFDFD] border border-[#D8B8FF] rounded-xl px-2.5 py-1.5 text-xs text-[#111111] font-medium focus:outline-none focus:ring-2 focus:ring-[#9A6ADF]/40"
             >
               <option value="all">All AI Tools</option>
-              <option value="Midjourney">Midjourney</option>
-              <option value="Runway">Runway Gen-3</option>
-              <option value="ElevenLabs">ElevenLabs</option>
-              <option value="ComfyUI">ComfyUI</option>
-              <option value="Flux">Flux.1</option>
-              <option value="Luma">Luma Dream Machine</option>
-              <option value="Stable Diffusion">Stable Diffusion</option>
+              {availableTools
+                .filter((t) => t.toLowerCase() !== "all")
+                .map((tool) => (
+                  <option key={tool} value={tool}>
+                    {tool}
+                  </option>
+                ))}
             </select>
           </div>
 
