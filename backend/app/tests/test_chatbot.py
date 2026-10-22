@@ -189,3 +189,64 @@ def test_read_only_no_database_side_effects(client):
         final_users = cursor.fetchone()[0]
 
     assert initial_users == final_users
+
+
+def test_chatbot_route_registration_paths(client):
+    """Verify that exact API endpoints /chatbot/message and /chatbot/suggestions are registered."""
+    from app.main import app
+    route_paths = [route.path for route in app.routes]
+    assert "/api/v1/chatbot/message" in route_paths
+    assert "/api/v1/chatbot/suggestions" in route_paths
+
+
+def test_all_default_starter_questions_submission(client):
+    """Verify that every default starter question submits cleanly and receives an in-scope answer."""
+    starter_questions = [
+        "How does creator matching work?",
+        "How do I create and publish a portfolio?",
+        "How does a brand publish a campaign brief?",
+        "What AI tools are supported on the platform?",
+        "How does the trust score system work?",
+    ]
+    with patch("app.services.chatbot_service.OpenAITextProvider.generate_text", new_callable=AsyncMock) as mock_gen:
+        mock_gen.return_value = TextGenerationResult(
+            content="Verified platform information regarding your inquiry.",
+            tokens_used=15,
+            model="gpt-4o-mini",
+            provider="openai",
+            raw_response={"finish_reason": "stop"},
+        )
+        for question in starter_questions:
+            response = client.post(
+                "/api/v1/chatbot/message",
+                json={"message": question},
+            )
+            assert response.status_code == 200
+            data = response.json()
+            assert data["in_scope"] is True
+            assert len(data["answer"]) > 0
+
+
+def test_chatbot_endpoint_graceful_on_unexpected_error(client):
+    """Verify endpoint catches unhandled exceptions and returns a graceful 200 fallback instead of a 500 error."""
+    with patch("app.services.chatbot_service.chatbot_service.answer_message", side_effect=RuntimeError("Unexpected server failure")):
+        response = client.post(
+            "/api/v1/chatbot/message",
+            json={"message": "How do I sign up as a creator?"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["in_scope"] is True
+        assert data["fallback_used"] is True
+        assert "experiencing high load" in data["answer"]
+
+
+def test_no_regression_to_existing_api_endpoints(client):
+    """Verify existing health and readiness endpoints remain functional."""
+    health_resp = client.get("/api/v1/health")
+    assert health_resp.status_code == 200
+    assert health_resp.json()["status"] == "ok"
+
+    readiness_resp = client.get("/api/v1/health/readiness")
+    assert readiness_resp.status_code == 200
+    assert readiness_resp.json()["success"] is True

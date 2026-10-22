@@ -47,6 +47,7 @@ export const ChatbotWidget: React.FC = () => {
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const lastAttemptedTextRef = useRef<string>("")
 
   // Auto-scroll to bottom of conversation
   useEffect(() => {
@@ -79,13 +80,15 @@ export const ChatbotWidget: React.FC = () => {
   }, [isOpen])
 
   const handleSend = async (overrideText?: string) => {
-    const textToSend = (overrideText || inputText).trim()
+    const textToSend = (overrideText ?? inputText).trim()
     if (!textToSend || isLoading) return
 
     if (textToSend.length > 500) {
       setError("Please keep your question under 500 characters.")
       return
     }
+
+    lastAttemptedTextRef.current = textToSend
 
     const userMsg: MessageItem = {
       id: `user-${Date.now()}`,
@@ -114,8 +117,19 @@ export const ChatbotWidget: React.FC = () => {
 
       setMessages((prev) => [...prev, assistantMsg])
     } catch (err: unknown) {
-      const errorMsg =
-        err instanceof Error ? err.message : "Failed to reach the support assistant. Please try again."
+      let errorMsg = "The CreatorBridge support service is temporarily unreachable. Please try again shortly."
+      if (err instanceof Error) {
+        const msg = err.message
+        if (msg === "Not Found" || msg.includes("404") || msg.includes("NOT_FOUND")) {
+          errorMsg =
+            "CreatorBridge Assistant is temporarily unable to reach the support service (HTTP 404). If the backend is restarting or syncing, please try again in a moment."
+        } else if (msg.includes("Failed to fetch") || msg.includes("Network error") || msg.includes("network")) {
+          errorMsg =
+            "Unable to connect to CreatorBridge support. Please check your network connection and try again."
+        } else if (msg.trim()) {
+          errorMsg = msg
+        }
+      }
       setError(errorMsg)
     } finally {
       setIsLoading(false)
@@ -125,7 +139,9 @@ export const ChatbotWidget: React.FC = () => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
-      handleSend()
+      if (!isLoading && inputText.trim()) {
+        handleSend()
+      }
     }
   }
 
@@ -139,6 +155,7 @@ export const ChatbotWidget: React.FC = () => {
       },
     ])
     setError(null)
+    lastAttemptedTextRef.current = ""
   }
 
   return (
@@ -267,10 +284,11 @@ export const ChatbotWidget: React.FC = () => {
             {error && (
               <div className="flex items-center space-x-2 text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl px-3 py-2">
                 <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
-                <span className="flex-1 text-[11px]">{error}</span>
+                <span className="flex-1 text-[11px] leading-snug">{error}</span>
                 <button
-                  onClick={() => handleSend()}
-                  className="font-semibold text-[11px] underline hover:text-rose-900 shrink-0"
+                  onClick={() => handleSend(lastAttemptedTextRef.current)}
+                  disabled={isLoading || !lastAttemptedTextRef.current}
+                  className="font-semibold text-[11px] underline hover:text-rose-900 shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Retry
                 </button>
@@ -286,7 +304,8 @@ export const ChatbotWidget: React.FC = () => {
                     <button
                       key={idx}
                       onClick={() => handleSend(q)}
-                      className="text-left text-[11px] text-[#6E48A0] bg-white hover:bg-[#F7F2FD] border border-[#E8DCF7] rounded-xl px-3 py-1.5 transition-colors shadow-2xs hover:border-[#9A6ADF]/40 active:scale-[0.99]"
+                      disabled={isLoading}
+                      className="text-left text-[11px] text-[#6E48A0] bg-white hover:bg-[#F7F2FD] border border-[#E8DCF7] rounded-xl px-3 py-1.5 transition-colors shadow-2xs hover:border-[#9A6ADF]/40 active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       💡 {q}
                     </button>
