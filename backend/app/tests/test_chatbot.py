@@ -3,6 +3,15 @@
 import pytest
 from unittest.mock import AsyncMock, patch
 from app.integrations.ai.base import TextGenerationResult
+from app.api.v1.endpoints.chatbot import chatbot_limiter
+
+
+@pytest.fixture(autouse=True)
+def reset_chatbot_limiter():
+    """Reset rate limiter state before and after each test to prevent test runner rate limiting."""
+    chatbot_limiter._history.clear()
+    yield
+    chatbot_limiter._history.clear()
 
 
 def test_get_chatbot_suggestions(client):
