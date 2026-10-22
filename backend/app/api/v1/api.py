@@ -17,6 +17,7 @@ from app.api.v1.endpoints import (
     surveys,
     trust,
     ai_intelligence,
+    chatbot,
 )
 
 api_v1_router = APIRouter()
@@ -37,5 +38,6 @@ api_v1_router.include_router(projects.router, prefix="/projects", tags=["Project
 api_v1_router.include_router(generation.router, prefix="/generation", tags=["AI Generation"])
 api_v1_router.include_router(ai.router, prefix="/ai", tags=["AI Infrastructure"])
 api_v1_router.include_router(ai_intelligence.router, prefix="/ai", tags=["AI Intelligence"])
+api_v1_router.include_router(chatbot.router, prefix="/chatbot", tags=["Support Chatbot"])
 
 

@@ -51,6 +51,9 @@ import { BrandProjectsPage } from "@/pages/brand/BrandProjectsPage"
 // Settings & Infrastructure
 import { IntegrationsSettingsPage } from "@/pages/settings/IntegrationsSettingsPage"
 
+// Support Chatbot
+import { ChatbotWidget } from "@/components/chatbot/ChatbotWidget"
+
 const DashboardRedirect: React.FC = () => {
   const { user, isAuthenticated } = useAuth()
   if (!isAuthenticated || !user) {
@@ -153,6 +156,7 @@ export const App: React.FC = () => {
           {/* Fallback Catch-All */}
           <Route path="*" element={<Navigate to="/404" replace />} />
         </Routes>
+        <ChatbotWidget />
       </BrowserRouter>
     </AuthProvider>
   )
