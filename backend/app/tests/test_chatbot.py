@@ -189,3 +189,19 @@ def test_read_only_no_database_side_effects(client):
         final_users = cursor.fetchone()[0]
 
     assert initial_users == final_users
+
+
+
+def test_chatbot_route_registration_paths(client):
+    """Verify chatbot endpoints through FastAPI's generated OpenAPI contract.
+
+    Inspecting app.routes directly is not compatible with all supported
+    FastAPI/Starlette versions: modern versions may include router wrapper
+    objects that do not expose a path attribute.
+    """
+    from app.main import app
+    paths = app.openapi()["paths"]
+    assert "/api/v1/chatbot/message" in paths
+    assert "post" in paths["/api/v1/chatbot/message"]
+    assert "/api/v1/chatbot/suggestions" in paths
+    assert "get" in paths["/api/v1/chatbot/suggestions"]
