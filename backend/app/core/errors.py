@@ -1,13 +1,44 @@
 """Centralized error handling and standard structured exception definitions."""
 
 from typing import Any, Dict, Optional
+import re
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from app.core.config import settings
 from app.core.logging import get_logger
 
 logger = get_logger("errors")
+
+ALLOWED_ORIGIN_REGEX = re.compile(r"^https://creatorbridge2.*\.vercel\.app$")
+DEFAULT_ALLOWED_ORIGINS = {
+    "https://creatorbridge2.vercel.app",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+}
+
+
+def add_cors_headers(request: Request, response: JSONResponse) -> JSONResponse:
+    """Explicitly attaches CORS headers to error responses for allowed origins."""
+    origin = request.headers.get("origin")
+    if not origin:
+        return response
+    cleaned = origin.strip().rstrip("/")
+    is_allowed = (
+        cleaned in DEFAULT_ALLOWED_ORIGINS
+        or cleaned in settings.cors_origins
+        or (settings.frontend_url and cleaned == settings.frontend_url.strip().rstrip("/"))
+        or bool(ALLOWED_ORIGIN_REGEX.match(cleaned))
+    )
+    if is_allowed:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD"
+        response.headers["Access-Control-Allow-Headers"] = "*"
+        response.headers["Vary"] = "Origin"
+    return response
 
 
 class AppException(Exception):
@@ -111,10 +142,11 @@ def format_error_response(code: str, message: str, details: Optional[Dict[str, A
 async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
     """Handles custom domain application exceptions."""
     logger.warning(f"AppException: [{exc.code}] {exc.message} on {request.url.path}")
-    return JSONResponse(
+    response = JSONResponse(
         status_code=exc.status_code,
         content=format_error_response(code=exc.code, message=exc.message, details=exc.details),
     )
+    return add_cors_headers(request, response)
 
 
 async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
@@ -127,7 +159,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
     elif exc.status_code == 403:
         code = "FORBIDDEN"
 
-    return JSONResponse(
+    response = JSONResponse(
         status_code=exc.status_code,
         content=format_error_response(
             code=code,
@@ -135,6 +167,7 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
             details={},
         ),
     )
+    return add_cors_headers(request, response)
 
 
 async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
@@ -149,7 +182,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         })
 
     logger.info(f"Validation failure on {request.url.path}: {simplified_errors}")
-    return JSONResponse(
+    response = JSONResponse(
         status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
         content=format_error_response(
             code="VALIDATION_ERROR",
@@ -157,12 +190,13 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             details={"fields": simplified_errors},
         ),
     )
+    return add_cors_headers(request, response)
 
 
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
     """Handles unexpected internal server errors without leaking stack traces."""
     logger.error(f"Unhandled exception on {request.url.path}: {str(exc)}", exc_info=True)
-    return JSONResponse(
+    response = JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content=format_error_response(
             code="INTERNAL_SERVER_ERROR",
@@ -170,3 +204,4 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
             details={},
         ),
     )
+    return add_cors_headers(request, response)

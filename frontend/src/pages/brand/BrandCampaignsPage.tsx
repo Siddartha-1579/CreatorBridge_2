@@ -41,17 +41,24 @@ export const BrandCampaignsPage: React.FC = () => {
   const [inspectingBrief, setInspectingBrief] = useState<CampaignBrief | null>(null)
   const [briefApplications, setBriefApplications] = useState<CampaignApplication[]>([])
   const [loadingApps, setLoadingApps] = useState(false)
+  const [appsError, setAppsError] = useState<string | null>(null)
   const [updatingAppId, setUpdatingAppId] = useState<string | null>(null)
 
   const handleOpenApplications = async (brief: CampaignBrief) => {
     setInspectingBrief(brief)
     setLoadingApps(true)
+    setAppsError(null)
     try {
       const apps = await briefsService.listApplicationsForBrief(brief.id)
       setBriefApplications(apps || [])
     } catch (err: any) {
-      console.error("Failed to load applications for brief:", err)
+      console.warn("Failed to load applications for brief:", err)
       setBriefApplications([])
+      if (err?.statusCode === 403 || err?.code === "FORBIDDEN") {
+        setAppsError("You only have permission to view proposals for campaigns published by your organization.")
+      } else {
+        setAppsError(err?.message || "Unable to load proposals for this campaign.")
+      }
     } finally {
       setLoadingApps(false)
     }
@@ -73,28 +80,16 @@ export const BrandCampaignsPage: React.FC = () => {
     }
   }
 
-
   const loadCampaigns = async () => {
     setLoading(true)
     setError(null)
     try {
-      // First try fetching brand's private briefs (which includes drafts)
+      // Fetch only the authenticated brand's private briefs (drafts and published)
       const myBriefs = await briefsService.listMyBriefs()
-      if (myBriefs && myBriefs.length > 0) {
-        setCampaigns(myBriefs)
-      } else {
-        const publicBriefs = await briefsService.listBriefs()
-        setCampaigns(publicBriefs || [])
-      }
+      setCampaigns(myBriefs || [])
     } catch (err: any) {
-      console.warn("Could not load private briefs, falling back to public briefs:", err)
-      try {
-        const publicBriefs = await briefsService.listBriefs()
-        setCampaigns(publicBriefs || [])
-      } catch (fallbackErr: any) {
-        console.error("Failed to load campaigns:", fallbackErr)
-        setError("Unable to retrieve campaigns. Please check your connection or retry.")
-      }
+      console.error("Failed to load campaigns:", err)
+      setError("Unable to retrieve your campaigns. Please check your connection or retry.")
     } finally {
       setLoading(false)
     }
@@ -468,6 +463,13 @@ export const BrandCampaignsPage: React.FC = () => {
                 Review tailored proposals, rates, and specialized capabilities submitted by creators.
               </p>
             </div>
+
+            {appsError && (
+              <div className="mb-4 rounded-xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-700 flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 text-rose-500" />
+                <span>{appsError}</span>
+              </div>
+            )}
 
             {loadingApps ? (
               <div className="py-12 flex flex-col items-center justify-center space-y-2">

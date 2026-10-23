@@ -28,22 +28,11 @@ export const BrandBriefsPage: React.FC = () => {
 
   const loadBriefs = async () => {
     try {
-      // First try fetching brand's own briefs (including drafts)
+      // Fetch only the authenticated brand's private briefs (drafts and published)
       const myBriefs = await briefsService.listMyBriefs()
-      if (myBriefs && myBriefs.length > 0) {
-        setBriefs(myBriefs)
-      } else {
-        const publicBriefs = await briefsService.listBriefs()
-        setBriefs(publicBriefs || [])
-      }
+      setBriefs(myBriefs || [])
     } catch (err) {
-      console.warn("Could not load private briefs, falling back to public briefs:", err)
-      try {
-        const publicBriefs = await briefsService.listBriefs()
-        setBriefs(publicBriefs || [])
-      } catch (e) {
-        console.error("Failed to load briefs:", e)
-      }
+      console.error("Failed to load brand briefs:", err)
     } finally {
       setLoading(false)
     }

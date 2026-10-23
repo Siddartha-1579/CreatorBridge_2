@@ -13,6 +13,10 @@ from app.schemas.brief import (
     BriefStatus,
     BriefValidationResult,
     DeliverableItem,
+    CreativeDirection,
+    CreatorCapabilityRequirements,
+    CommercialTerms,
+    BriefAIMetadata,
     GenerateCoverImageRequest,
     GenerateCoverImageResponse,
     CampaignApplicationCreate,
@@ -46,6 +50,10 @@ class BriefService(BaseService):
         # Demo Lumina Skincare parity alias check
         lumina_aliases = {"usr_lumina_skincare", "00000000-0000-0000-0000-000000000002", "00000000-0000-0000-0000-000000000010"}
         if str(brief_brand_id) in lumina_aliases and str(current_user_id) in lumina_aliases:
+            return True
+        # Demo Terra Outdoor Gear parity alias check
+        terra_aliases = {"usr_terra_outdoor", "00000000-0000-0000-0000-000000000011"}
+        if str(brief_brand_id) in terra_aliases and str(current_user_id) in terra_aliases:
             return True
         from app.core.db import get_db_connection
         with get_db_connection() as conn:
@@ -162,10 +170,50 @@ class BriefService(BaseService):
     async def update_brief(
         self, brief_id: UUID, brand_id: str, data: CampaignBriefUpdate
     ) -> CampaignBriefResponse:
-        """Updates an existing campaign brief, checking ownership."""
+        """Updates an existing campaign brief, checking ownership, or upserts if creating with known ID."""
         existing = await self.repo.get_by_id(brief_id)
         if not existing:
-            raise NotFoundException("Campaign Brief", brief_id)
+            # Upsert fallback: allows draft briefs with pre-generated or client-referenced IDs
+            # (e.g. c3e6063a-5bab-4a0c-acb5-09505594026f) to be safely created and persisted.
+            now = datetime.now(timezone.utc)
+            update_dict = data.model_dump(exclude_unset=True)
+            title = update_dict.get("title") or "Untitled Creative Brief"
+            new_brief = CampaignBriefResponse(
+                id=brief_id,
+                brand_id=brand_id,
+                title=title.strip() if title else "Untitled Creative Brief",
+                description=update_dict.get("description", update_dict.get("executive_summary", "")),
+                brand_or_product_name=update_dict.get("brand_or_product_name"),
+                product_or_service=update_dict.get("product_or_service"),
+                product_description=update_dict.get("product_description"),
+                campaign_idea=update_dict.get("campaign_idea"),
+                executive_summary=update_dict.get("executive_summary"),
+                objectives=update_dict.get("objectives", []),
+                primary_objective=update_dict.get("primary_objective"),
+                target_audience=update_dict.get("target_audience"),
+                target_market=update_dict.get("target_market"),
+                preferred_language=update_dict.get("preferred_language", "English"),
+                campaign_category=update_dict.get("campaign_category"),
+                primary_message=update_dict.get("primary_message"),
+                desired_cta=update_dict.get("desired_cta"),
+                platforms=update_dict.get("platforms", []),
+                deliverables=update_dict.get("deliverables", []),
+                creative_direction=update_dict.get("creative_direction") or CreativeDirection(),
+                creator_capabilities=update_dict.get("creator_capabilities") or CreatorCapabilityRequirements(),
+                commercial_terms=update_dict.get("commercial_terms") or CommercialTerms(),
+                sections=update_dict.get("sections", {}),
+                budget_cents=update_dict.get("budget_cents"),
+                start_date=update_dict.get("start_date"),
+                deadline=update_dict.get("deadline"),
+                required_tools=update_dict.get("required_tools", []),
+                ai_metadata=update_dict.get("ai_metadata") or BriefAIMetadata(),
+                cover_image_url=update_dict.get("cover_image_url"),
+                is_public=update_dict.get("is_public", False),
+                status=update_dict.get("status") or BriefStatus.DRAFT,
+                created_at=now,
+                updated_at=now,
+            )
+            return await self.repo.create(new_brief)
 
         if not self._is_brand_owner(existing.brand_id, brand_id):
             raise ForbiddenException("You do not have permission to modify this brief")

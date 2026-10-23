@@ -336,8 +336,10 @@ export const BrandBriefBuilderPage: React.FC = () => {
         if (b.cover_image_url) {
           setCoverImageUrl(b.cover_image_url)
         }
-      } catch (err) {
-        console.error("Failed to load draft brief:", err)
+      } catch (err: any) {
+        console.warn("Failed to load draft brief from server:", err)
+        // If the brief does not exist (404), reset savedBriefId to null so subsequent saves create a fresh, valid brief
+        setSavedBriefId(null)
       }
     }
     loadDraft()
@@ -473,8 +475,23 @@ export const BrandBriefBuilderPage: React.FC = () => {
     try {
       const payload = buildPayload("DRAFT")
       if (savedBriefId) {
-        const updated = await briefsService.updateBrief(savedBriefId, payload)
-        setSavedBriefId(updated.id)
+        try {
+          const updated = await briefsService.updateBrief(savedBriefId, payload)
+          setSavedBriefId(updated.id)
+        } catch (updateErr: any) {
+          const isNotFound =
+            updateErr?.statusCode === 404 ||
+            updateErr?.code === "NOT_FOUND" ||
+            String(updateErr?.message || "").toLowerCase().includes("not found")
+          if (isNotFound) {
+            console.warn(`Brief ${savedBriefId} not found during draft save; creating new persistent brief.`)
+            const created = await briefsService.createBrief(payload)
+            setSavedBriefId(created.id)
+            navigate(`/brand/briefs/${created.id}/edit`, { replace: true })
+          } else {
+            throw updateErr
+          }
+        }
       } else {
         const created = await briefsService.createBrief(payload)
         setSavedBriefId(created.id)
@@ -506,8 +523,23 @@ export const BrandBriefBuilderPage: React.FC = () => {
       try {
         const payload = buildPayload("DRAFT")
         if (savedBriefId) {
-          const updated = await briefsService.updateBrief(savedBriefId, payload)
-          setSavedBriefId(updated.id)
+          try {
+            const updated = await briefsService.updateBrief(savedBriefId, payload)
+            setSavedBriefId(updated.id)
+          } catch (updateErr: any) {
+            const isNotFound =
+              updateErr?.statusCode === 404 ||
+              updateErr?.code === "NOT_FOUND" ||
+              String(updateErr?.message || "").toLowerCase().includes("not found")
+            if (isNotFound) {
+              console.warn(`Brief ${savedBriefId} not found during autosave; recovering by creating persistent brief.`)
+              const created = await briefsService.createBrief(payload)
+              setSavedBriefId(created.id)
+              navigate(`/brand/briefs/${created.id}/edit`, { replace: true })
+            } else {
+              throw updateErr
+            }
+          }
         } else {
           const created = await briefsService.createBrief(payload)
           setSavedBriefId(created.id)
@@ -595,15 +627,39 @@ export const BrandBriefBuilderPage: React.FC = () => {
         const created = await briefsService.createBrief(initialPayload)
         currentId = created.id
         setSavedBriefId(created.id)
+        navigate(`/brand/briefs/${created.id}/edit`, { replace: true })
       }
-      const res = await briefsService.generateCoverImage(currentId, {
-        custom_prompt: campaignIdea ? `${title}: ${campaignIdea}` : undefined,
-        style_preset: creativeStyle || "Editorial commercial advertising",
-        aspect_ratio: "16:9",
-      })
-      setCoverImageUrl(res.image_url)
-      setStatusMessage(`✨ Campaign cover image synthesized (${res.provider})!`)
-      setTimeout(() => setStatusMessage(null), 4000)
+      try {
+        const res = await briefsService.generateCoverImage(currentId, {
+          custom_prompt: campaignIdea ? `${title}: ${campaignIdea}` : undefined,
+          style_preset: creativeStyle || "Editorial commercial advertising",
+          aspect_ratio: "16:9",
+        })
+        setCoverImageUrl(res.image_url)
+        setStatusMessage(`✨ Campaign cover image synthesized (${res.provider})!`)
+        setTimeout(() => setStatusMessage(null), 4000)
+      } catch (genErr: any) {
+        const isNotFound =
+          genErr?.statusCode === 404 ||
+          genErr?.code === "NOT_FOUND" ||
+          String(genErr?.message || "").toLowerCase().includes("not found")
+        if (isNotFound) {
+          const initialPayload = buildPayload("DRAFT")
+          const created = await briefsService.createBrief(initialPayload)
+          setSavedBriefId(created.id)
+          navigate(`/brand/briefs/${created.id}/edit`, { replace: true })
+          const res = await briefsService.generateCoverImage(created.id, {
+            custom_prompt: campaignIdea ? `${title}: ${campaignIdea}` : undefined,
+            style_preset: creativeStyle || "Editorial commercial advertising",
+            aspect_ratio: "16:9",
+          })
+          setCoverImageUrl(res.image_url)
+          setStatusMessage(`✨ Campaign cover image synthesized (${res.provider})!`)
+          setTimeout(() => setStatusMessage(null), 4000)
+        } else {
+          throw genErr
+        }
+      }
     } catch (err: any) {
       console.error("Failed to generate cover image:", err)
       setErrorMessage(err.message || "AI cover image generation was unable to complete.")
@@ -876,12 +932,29 @@ export const BrandBriefBuilderPage: React.FC = () => {
       let activeId = savedBriefId
       const payload = buildPayload("PUBLISHED")
 
-      if (!activeId) {
+      if (activeId) {
+        try {
+          await briefsService.updateBrief(activeId, payload)
+        } catch (updateErr: any) {
+          const isNotFound =
+            updateErr?.statusCode === 404 ||
+            updateErr?.code === "NOT_FOUND" ||
+            String(updateErr?.message || "").toLowerCase().includes("not found")
+          if (isNotFound) {
+            console.warn(`Brief ${activeId} not found during publishing; creating persistent brief before publishing.`)
+            const created = await briefsService.createBrief(payload)
+            activeId = created.id
+            setSavedBriefId(activeId)
+            navigate(`/brand/briefs/${created.id}/edit`, { replace: true })
+          } else {
+            throw updateErr
+          }
+        }
+      } else {
         const created = await briefsService.createBrief(payload)
         activeId = created.id
         setSavedBriefId(activeId)
-      } else {
-        await briefsService.updateBrief(activeId, payload)
+        navigate(`/brand/briefs/${created.id}/edit`, { replace: true })
       }
 
       await briefsService.publishBrief(activeId)

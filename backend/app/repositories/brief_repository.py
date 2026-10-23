@@ -489,8 +489,11 @@ class BriefRepository(BaseRepository[CampaignBriefResponse]):
         brand_id_str = str(brand_id)
         candidate_ids = {brand_id_str}
         lumina_aliases = {"usr_lumina_skincare", "00000000-0000-0000-0000-000000000002", "00000000-0000-0000-0000-000000000010"}
+        terra_aliases = {"usr_terra_outdoor", "00000000-0000-0000-0000-000000000011"}
         if brand_id_str in lumina_aliases:
             candidate_ids.update(lumina_aliases)
+        if brand_id_str in terra_aliases:
+            candidate_ids.update(terra_aliases)
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute("SELECT id, user_id FROM brand_profiles WHERE id = ? OR user_id = ?", (brand_id_str, brand_id_str))
