@@ -1,5 +1,6 @@
 """Authentication request and response schemas with strict input validation."""
 
+from datetime import datetime
 from typing import Optional
 from pydantic import BaseModel, EmailStr, Field, field_validator, ConfigDict, computed_field
 from app.core.security import UserRole
@@ -63,6 +64,8 @@ class UserResponse(BaseModel):
     is_verified: bool = False
     email_verified: bool = False
     avatar_url: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     @computed_field
     @property

@@ -65,6 +65,19 @@ class BrandService(BaseService):
             return profile
 
         now = datetime.now(timezone.utc)
+        user_created_at = now
+        try:
+            from app.core.db import get_db_connection
+            with get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT created_at FROM users WHERE id = ?", (str(user_id),))
+                u_row = cursor.fetchone()
+                if u_row and u_row["created_at"]:
+                    parsed = datetime.fromisoformat(u_row["created_at"])
+                    user_created_at = parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+        except Exception:
+            user_created_at = now
+
         email_prefix = user_email.split("@")[0] if user_email else "Organization"
         company_name = f"{email_prefix.replace('.', ' ').capitalize()} Brand"
 
@@ -90,7 +103,7 @@ class BrandService(BaseService):
             onboarding_completed=False,
             profile_completeness_pct=25,
             metadata={},
-            created_at=now,
+            created_at=user_created_at,
             updated_at=now,
         )
         return await self.repo.create(new_profile)
@@ -139,7 +152,7 @@ class BrandService(BaseService):
         update_dict = {k: v for k, v in data.model_dump().items() if v is not None}
 
         # Guard against tampering with server-calculated fields
-        protected_fields = ["id", "user_id", "verification_status"]
+        protected_fields = ["id", "user_id", "verification_status", "created_at"]
         for field in protected_fields:
             update_dict.pop(field, None)
 

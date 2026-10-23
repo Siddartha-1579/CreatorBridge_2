@@ -144,7 +144,7 @@ def test_authorization_cross_brand_restrictions(client: TestClient):
     assert elena_subs.status_code == 200
     for sub in elena_subs.json()["data"]:
         # Creator cannot see another creator's submission
-        assert sub["creator_id"] in ["usr_elena_rostova", "00000000-0000-0000-0000-000000000001"]
+        assert sub["creator_id"] in ["usr_elena_rostova", "00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000021"]
 
 
 def test_reward_integrity_and_pool_limits(client: TestClient):
@@ -233,5 +233,5 @@ def test_participant_privacy_and_cross_brand_isolation(client: TestClient):
     assert creator_res.status_code == 200
     creator_parts = creator_res.json()["data"]
     for part in creator_parts:
-        assert part["creator_id"] in ["usr_elena_rostova", "00000000-0000-0000-0000-000000000001"]
+        assert part["creator_id"] in ["usr_elena_rostova", "00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000021"]
 

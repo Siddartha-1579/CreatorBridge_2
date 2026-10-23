@@ -124,6 +124,12 @@ export interface CampaignBrief {
   participants_count?: number
   start_date?: string
   deadline?: string
+  published_at?: string
+  brand_created_at?: string
+  brand_name?: string
+  brand_logo_url?: string
+  brand_location?: string
+  brand_website?: string
   required_tools: string[]
   ai_metadata: BriefAIMetadata
   cover_image_url?: string
@@ -158,6 +164,7 @@ export interface CampaignBriefCreate {
   budget_cents?: number
   start_date?: string
   deadline?: string
+  published_at?: string
   required_tools?: string[]
   ai_metadata?: Partial<BriefAIMetadata>
   cover_image_url?: string

@@ -23,7 +23,55 @@ import {
   Send,
   Loader2,
   Share2,
+  Building2,
+  Calendar,
+  MapPin,
+  Globe,
+  FileText,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react"
+
+const BRIEF_SECTIONS_LIST: { id: string; title: string }[] = [
+  { id: "campaign_overview", title: "1. Campaign Overview" },
+  { id: "campaign_objectives", title: "2. Campaign Objectives" },
+  { id: "target_audience", title: "3. Target Audience" },
+  { id: "campaign_concept", title: "4. Campaign Concept" },
+  { id: "key_messages", title: "5. Key Messages" },
+  { id: "creative_direction", title: "6. Creative Direction" },
+  { id: "deliverables_and_specs", title: "7. Deliverables & Specifications" },
+  { id: "creator_eligibility", title: "8. Creator Eligibility & Preferences" },
+  { id: "mandatory_requirements", title: "9. Mandatory Requirements" },
+  { id: "content_restrictions", title: "10. Content Restrictions" },
+  { id: "timeline_and_milestones", title: "11. Timeline & Milestones" },
+  { id: "budget_and_compensation", title: "12. Budget & Proposed Compensation" },
+  { id: "usage_rights_and_licensing", title: "13. Usage Rights & Licensing" },
+  { id: "submission_requirements", title: "14. Submission Requirements" },
+  { id: "success_metrics", title: "15. Success Metrics" },
+  { id: "call_to_action", title: "16. Call to Action" },
+]
+
+const formatMonthYear = (dateStr?: string) => {
+  if (!dateStr) return null
+  try {
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return null
+    return d.toLocaleDateString(undefined, { month: "long", year: "numeric" })
+  } catch {
+    return null
+  }
+}
+
+const formatFullDate = (dateStr?: string) => {
+  if (!dateStr) return null
+  try {
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return null
+    return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })
+  } catch {
+    return null
+  }
+}
 
 export const CreatorCampaignDetailPage: React.FC = () => {
   const { campaignId } = useParams<{ campaignId: string }>()
@@ -217,8 +265,18 @@ export const CreatorCampaignDetailPage: React.FC = () => {
                 <CheckCircle2 className="w-3.5 h-3.5" />
                 Verified Reward Campaign
               </span>
+              {(campaign.brand_name || campaign.brand_or_product_name) && (
+                <span className="text-xs font-semibold text-purple-300">
+                  by <strong className="text-white">{campaign.brand_name || campaign.brand_or_product_name}</strong>
+                </span>
+              )}
+              {campaign.published_at && (
+                <span className="text-xs text-slate-400">
+                  • Published {formatFullDate(campaign.published_at)}
+                </span>
+              )}
               <span className="text-xs text-slate-400">
-                {campaign.platforms?.join(" • ") || "TikTok • Instagram • YouTube Shorts"}
+                • {campaign.platforms?.join(" • ") || "TikTok • Instagram • YouTube Shorts"}
               </span>
             </div>
 
@@ -397,6 +455,37 @@ export const CreatorCampaignDetailPage: React.FC = () => {
             </div>
           </div>
 
+          {/* 16-Section Production Brief (if sections present) */}
+          {campaign.sections && Object.keys(campaign.sections).length > 0 && (
+            <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-6">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-purple-600" />
+                  Full 16-Section Creative Brief
+                </h2>
+                <span className="text-xs px-2.5 py-1 rounded-full bg-purple-50 text-purple-700 font-semibold border border-purple-200">
+                  {Object.keys(campaign.sections).length} Sections
+                </span>
+              </div>
+              <p className="text-xs text-slate-500 -mt-3">
+                Authoritative brand specifications, commercial terms, and production requirements.
+              </p>
+
+              <div className="space-y-4 pt-2">
+                {BRIEF_SECTIONS_LIST.filter(sec => campaign.sections?.[sec.id]).map((sec) => (
+                  <div key={sec.id} className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1.5">
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-purple-900">
+                      {sec.title}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-slate-700 whitespace-pre-line leading-relaxed">
+                      {campaign.sections?.[sec.id]}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* Creator's Submissions for this Campaign */}
           <div className="p-6 sm:p-8 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
@@ -496,8 +585,81 @@ export const CreatorCampaignDetailPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Column: Pool Utilization & Summary */}
+        {/* Right Column: Brand Sponsor & Pool Utilization */}
         <div className="lg:col-span-4 space-y-6">
+          {/* Brand Sponsor Profile Card */}
+          <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Brand Sponsor
+              </h3>
+              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-2 py-0.5 rounded-full">
+                <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                Verified Brand
+              </span>
+            </div>
+
+            <div className="flex items-center gap-3 pt-1">
+              <div className="w-12 h-12 rounded-2xl bg-purple-100 border border-purple-200 flex items-center justify-center overflow-hidden shrink-0">
+                {campaign.brand_logo_url ? (
+                  <img
+                    src={campaign.brand_logo_url}
+                    alt={campaign.brand_name || "Brand"}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.currentTarget as HTMLElement).style.display = "none"
+                    }}
+                  />
+                ) : (
+                  <Building2 className="w-6 h-6 text-purple-600" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <h4 className="text-sm font-bold text-slate-900 truncate">
+                  {campaign.brand_name || campaign.brand_or_product_name || "Lumina Skincare"}
+                </h4>
+                {formatMonthYear(campaign.brand_created_at) && (
+                  <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
+                    <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
+                    <span>Member since {formatMonthYear(campaign.brand_created_at)}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="space-y-2 pt-2 border-t border-slate-100 text-xs text-slate-600">
+              {campaign.published_at && (
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Campaign Published</span>
+                  <span className="font-semibold text-slate-700">{formatFullDate(campaign.published_at)}</span>
+                </div>
+              )}
+              {campaign.brand_location && (
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Headquarters</span>
+                  <span className="font-semibold text-slate-700 flex items-center gap-1">
+                    <MapPin className="w-3 h-3 text-slate-400" />
+                    {campaign.brand_location}
+                  </span>
+                </div>
+              )}
+              {campaign.brand_website && (
+                <div className="flex items-center justify-between">
+                  <span className="text-slate-400">Website</span>
+                  <a
+                    href={campaign.brand_website.startsWith("http") ? campaign.brand_website : `https://${campaign.brand_website}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-semibold text-purple-600 hover:underline flex items-center gap-1 truncate max-w-[180px]"
+                  >
+                    <span>{campaign.brand_website.replace(/^https?:\/\//, "")}</span>
+                    <ExternalLink className="w-3 h-3 shrink-0" />
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* Rewards Summary Card */}
           <div className="p-6 rounded-3xl bg-white border border-slate-200/80 shadow-xs space-y-5">
             <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900">

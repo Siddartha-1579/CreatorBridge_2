@@ -84,6 +84,29 @@ def _row_to_brief(row) -> CampaignBriefResponse:
     views_count = row["views_count"] if "views_count" in keys and row["views_count"] is not None else 0
     participants_count = row["participants_count"] if "participants_count" in keys and row["participants_count"] is not None else 0
 
+    published_at_dt = None
+    if "published_at" in keys and row["published_at"]:
+        try:
+            published_at_dt = datetime.fromisoformat(row["published_at"])
+            if published_at_dt.tzinfo is None:
+                published_at_dt = published_at_dt.replace(tzinfo=timezone.utc)
+        except Exception:
+            published_at_dt = None
+
+    brand_created_at_dt = None
+    if "brand_created_at" in keys and row["brand_created_at"]:
+        try:
+            brand_created_at_dt = datetime.fromisoformat(row["brand_created_at"])
+            if brand_created_at_dt.tzinfo is None:
+                brand_created_at_dt = brand_created_at_dt.replace(tzinfo=timezone.utc)
+        except Exception:
+            brand_created_at_dt = None
+
+    brand_name = row["brand_company_name"] if "brand_company_name" in keys and row["brand_company_name"] else (row["brand_or_product_name"] if "brand_or_product_name" in keys else None)
+    brand_logo_url = row["brand_profile_logo"] if "brand_profile_logo" in keys else None
+    brand_location = row["brand_profile_location"] if "brand_profile_location" in keys else None
+    brand_website = row["brand_profile_website"] if "brand_profile_website" in keys else None
+
     return CampaignBriefResponse(
         id=UUID(row["id"]),
         brand_id=row["brand_id"],
@@ -117,6 +140,12 @@ def _row_to_brief(row) -> CampaignBriefResponse:
         participants_count=participants_count,
         start_date=start_date_dt,
         deadline=deadline_dt,
+        published_at=published_at_dt,
+        brand_created_at=brand_created_at_dt,
+        brand_name=brand_name,
+        brand_logo_url=brand_logo_url,
+        brand_location=brand_location,
+        brand_website=brand_website,
         required_tools=json.loads(row["required_tools"]) if row["required_tools"] else [],
         ai_metadata=ai_metadata,
         cover_image_url=cover_image_url,
@@ -284,73 +313,92 @@ class BriefRepository(BaseRepository[CampaignBriefResponse]):
 
     def _seed_foundational_brief(self):
         sample_id = UUID("00000000-0000-0000-0000-000000000004")
-        brand_id = "00000000-0000-0000-0000-000000000002"
+        brand_id = "00000000-0000-0000-0000-000000000010"
+        now_str = datetime.now(timezone.utc).isoformat()
+        deliverables = [
+            {
+                "id": "deliv_001",
+                "content_type": "video",
+                "quantity": 3,
+                "placement_or_platform": "TikTok & Reels",
+                "aspect_ratio": "9:16",
+                "resolution": "4K",
+                "duration_seconds": 15,
+                "production_notes": "High energy pacing with product hero lock in last 3 seconds.",
+            },
+            {
+                "id": "deliv_002",
+                "content_type": "image",
+                "quantity": 5,
+                "placement_or_platform": "E-Commerce Catalog",
+                "aspect_ratio": "1:1",
+                "resolution": "8K",
+                "production_notes": "Clean studio lighting with volumetric backlighting.",
+            },
+        ]
+        cd = {
+            "styles": ["Photorealistic", "Cinematic", "Futuristic"],
+            "custom_style_notes": "High-contrast volumetric rim lighting, neon cyan and magenta reflections.",
+            "color_palette": "Electric Cyan (#00F0FF), Neon Violet (#9D00FF), Matte Obsidian (#111115)",
+            "mood_atmosphere": "Energetic, premium, forward-thinking, sleek",
+            "visual_references": ["Blade Runner 2049 aesthetic", "Apple Keynote lighting"],
+            "things_to_include": ["Distinct condensation beads on the can", "Crisp liquid splash dynamics"],
+            "things_to_avoid": ["Cartoonish renders", "Blurry motion artifacts", "Inconsistent product logo"],
+            "experimentation_level": "BALANCED",
+        }
+        cc = {
+            "required_capabilities": ["AI Video Generation", "Advanced Prompting", "Character / Object Consistency"],
+            "preferred_capabilities": ["Motion Design & VFX", "Audio & Sound Design"],
+            "flexible_capabilities": ["3D Pre-visualization"],
+            "preferred_tools": ["Runway Gen-3", "Midjourney v6", "ElevenLabs", "ComfyUI"],
+        }
+        ct = {
+            "budget_tier": "GROWTH",
+            "budget_cents": 250000,
+            "currency": "USD",
+            "payment_model": "MILESTONE",
+            "intended_usage": ["PAID_ADS", "ORGANIC_SOCIAL", "ECOMMERCE"],
+            "commercial_rights_required": True,
+            "source_files_required": True,
+            "revisions_count": 2,
+            "exclusivity_required": False,
+            "territory": "Global",
+            "usage_duration": "Perpetual",
+            "attribution_required": False,
+            "ongoing_work_considered": True,
+        }
+        ai = {
+            "ai_generated": True,
+            "open_questions": ["Will 3D CAD models of the can geometry be provided, or should the creator model it?"],
+            "constraints": ["Product typography must match brand vector guide precisely."],
+            "success_criteria": "At least 3 viable video cuts ready for paid Meta/TikTok advertising with certified commercial rights.",
+            "provider_used": "ai_gateway",
+            "generated_at": now_str,
+        }
+        sections_dict = {
+            "campaign_overview": "CyberElixir Zero Sugar Energy is launching its flagship zero-sugar, nootropic-infused functional drink to high-performance creators, gamers, and tech professionals. This campaign focuses on dynamic, high-visual-impact short-form AI video content that positions CyberElixir as the ultimate neural fuel for creative breakthroughs.",
+            "campaign_objectives": "1. Drive high-engagement awareness across short-form video platforms (TikTok, Instagram Reels, YouTube Shorts).\n2. Achieve a minimum 3.5% CTR to the pre-order landing page.\n3. Establish CyberElixir's futuristic cyberpunk visual identity through cutting-edge generative video aesthetics.",
+            "target_audience": "Primary: Gen-Z and millennial creators, developers, esports competitors, and digital artists aged 18–34. They value clean sustained energy without jitters, appreciate high-end visual design, and actively consume AI-generated media.",
+            "campaign_concept": "'Pure Neural Energy' — Visualizing mental clarity and cognitive acceleration as luminous cyan and violet neural currents activating upon taking a sip of CyberElixir.",
+            "key_messages": "- Zero sugar, zero crash, zero compromises.\n- Infused with clean botanical nootropics (L-Theanine, Lion's Mane, and natural caffeine).\n- Designed for hyper-focused creators and late-night builders.",
+            "creative_direction": "Cinematic sci-fi / cyberpunk realism. High-contrast volumetric rim lighting with electric cyan (#00F0FF) and neon violet (#9D00FF) against matte obsidian surfaces. Crisp liquid dynamics, condensation macro shots, and seamless camera zooms.",
+            "deliverables_and_specs": "- 3x 15-second 9:16 vertical video assets (4K resolution, 60fps or high-frame-rate interpolation).\n- 5x 1:1 square high-res still renders for social feeds and e-commerce hero cards.\n- Clean master files with separate audio stems (music, sound FX, voiceover).",
+            "creator_eligibility": "Verified AI video creators with demonstrated experience in tools like Runway Gen-3, Midjourney v6, ComfyUI, or ElevenLabs. Must have proven ability to maintain product geometry and typography consistency across scene cuts.",
+            "mandatory_requirements": "- Official CyberElixir logo and can geometry must be accurate to the brand asset kit.\n- All generated video clips must include organic sound design (fizz, click-clack can opening, synth bass drops).\n- Final exports must pass commercial licensing verification.",
+            "content_restrictions": "- No cartoonish or unrendered 3D artifacts.\n- No violent, hazardous, or extreme stunts.\n- Do not disparage competing conventional energy drink brands directly.",
+            "timeline_and_milestones": "- Day 1–3: Concept storyboard and styleframe submission.\n- Day 4–7: First draft video cut review and feedback iteration.\n- Day 8–10: Final 4K asset master delivery and certified rights transfer.",
+            "budget_and_compensation": "Total campaign budget: $2,500.00 USD. Milestone payout model: 40% upon storyboard & styleframe approval, 60% upon final master asset sign-off and commercial verification.",
+            "usage_rights_and_licensing": "Perpetual, worldwide commercial rights across digital channels including paid social advertising (Meta, TikTok), owned websites, e-commerce storefronts, and brand sizzle reels. Creator retains portfolio display rights.",
+            "submission_requirements": "All video submissions must be delivered via CreatorBridge platform upload or unlisted high-bitrate MP4/ProRes download links. Include prompt logs and workflow documentation for audit compliance.",
+            "success_metrics": "- Engagement rate > 4.5% across organic creator posts.\n- Video completion rate > 65% for 15-second cuts.\n- Verified commercial compliance score of 100%.",
+            "call_to_action": "'Unlock Your Neural Flow — Pre-order CyberElixir Zero at cyberelixir.io and use creator code for 20% off.'",
+        }
+
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT id FROM campaign_briefs WHERE id = ?", (str(sample_id),))
-            if not cursor.fetchone():
-                now_str = datetime.now(timezone.utc).isoformat()
-                deliverables = [
-                    {
-                        "id": "deliv_001",
-                        "content_type": "video",
-                        "quantity": 3,
-                        "placement_or_platform": "TikTok & Reels",
-                        "aspect_ratio": "9:16",
-                        "resolution": "4K",
-                        "duration_seconds": 15,
-                        "production_notes": "High energy pacing with product hero lock in last 3 seconds.",
-                    },
-                    {
-                        "id": "deliv_002",
-                        "content_type": "image",
-                        "quantity": 5,
-                        "placement_or_platform": "E-Commerce Catalog",
-                        "aspect_ratio": "1:1",
-                        "resolution": "8K",
-                        "production_notes": "Clean studio lighting with volumetric backlighting.",
-                    },
-                ]
-                cd = {
-                    "styles": ["Photorealistic", "Cinematic", "Futuristic"],
-                    "custom_style_notes": "High-contrast volumetric rim lighting, neon cyan and magenta reflections.",
-                    "color_palette": "Electric Cyan (#00F0FF), Neon Violet (#9D00FF), Matte Obsidian (#111115)",
-                    "mood_atmosphere": "Energetic, premium, forward-thinking, sleek",
-                    "visual_references": ["Blade Runner 2049 aesthetic", "Apple Keynote lighting"],
-                    "things_to_include": ["Distinct condensation beads on the can", "Crisp liquid splash dynamics"],
-                    "things_to_avoid": ["Cartoonish renders", "Blurry motion artifacts", "Inconsistent product logo"],
-                    "experimentation_level": "BALANCED",
-                }
-                cc = {
-                    "required_capabilities": ["AI Video Generation", "Advanced Prompting", "Character / Object Consistency"],
-                    "preferred_capabilities": ["Motion Design & VFX", "Audio & Sound Design"],
-                    "flexible_capabilities": ["3D Pre-visualization"],
-                    "preferred_tools": ["Runway Gen-3", "Midjourney v6", "ElevenLabs", "ComfyUI"],
-                }
-                ct = {
-                    "budget_tier": "GROWTH",
-                    "budget_cents": 250000,
-                    "currency": "USD",
-                    "payment_model": "MILESTONE",
-                    "intended_usage": ["PAID_ADS", "ORGANIC_SOCIAL", "ECOMMERCE"],
-                    "commercial_rights_required": True,
-                    "source_files_required": True,
-                    "revisions_count": 2,
-                    "exclusivity_required": False,
-                    "territory": "Global",
-                    "usage_duration": "Perpetual",
-                    "attribution_required": False,
-                    "ongoing_work_considered": True,
-                }
-                ai = {
-                    "ai_generated": True,
-                    "open_questions": ["Will 3D CAD models of the can geometry be provided, or should the creator model it?"],
-                    "constraints": ["Product typography must match brand vector guide precisely."],
-                    "success_criteria": "At least 3 viable video cuts ready for paid Meta/TikTok advertising with certified commercial rights.",
-                    "provider_used": "ai_gateway",
-                    "generated_at": now_str,
-                }
-
+            cursor.execute("SELECT id, sections, published_at FROM campaign_briefs WHERE id = ?", (str(sample_id),))
+            existing_row = cursor.fetchone()
+            if not existing_row:
                 cursor.execute(
                     """
                     INSERT INTO campaign_briefs (
@@ -360,8 +408,8 @@ class BriefRepository(BaseRepository[CampaignBriefResponse]):
                         preferred_language, campaign_category, primary_message, desired_cta,
                         platforms, deliverables, creative_direction, creator_capabilities,
                         commercial_terms, sections, budget_cents, start_date, deadline,
-                        required_tools, ai_metadata, is_public, status, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        published_at, required_tools, ai_metadata, is_public, status, created_at, updated_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         str(sample_id),
@@ -386,10 +434,11 @@ class BriefRepository(BaseRepository[CampaignBriefResponse]):
                         json.dumps(cd),
                         json.dumps(cc),
                         json.dumps(ct),
-                        json.dumps({}),
+                        json.dumps(sections_dict),
                         250000,
                         None,
                         None,
+                        now_str,
                         json.dumps(["Runway Gen-3", "Midjourney", "ElevenLabs"]),
                         json.dumps(ai),
                         1,
@@ -399,22 +448,74 @@ class BriefRepository(BaseRepository[CampaignBriefResponse]):
                     ),
                 )
                 conn.commit()
+            else:
+                raw_sec = existing_row["sections"]
+                sec_parsed = json.loads(raw_sec) if raw_sec else {}
+                if not sec_parsed or len(sec_parsed) < 16 or not existing_row["published_at"]:
+                    cursor.execute(
+                        """
+                        UPDATE campaign_briefs
+                        SET sections = ?,
+                            published_at = COALESCE(published_at, ?),
+                            brand_id = ?
+                        WHERE id = ?
+                        """,
+                        (json.dumps(sections_dict), now_str, brand_id, str(sample_id)),
+                    )
+                    conn.commit()
 
     async def get_by_id(self, id: UUID) -> Optional[CampaignBriefResponse]:
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM campaign_briefs WHERE id = ?", (str(id),))
+            cursor.execute(
+                """
+                SELECT b.*,
+                       bp.company_name AS brand_company_name,
+                       bp.logo_url AS brand_profile_logo,
+                       bp.location AS brand_profile_location,
+                       bp.website AS brand_profile_website,
+                       COALESCE(bp.created_at, u.created_at) AS brand_created_at
+                FROM campaign_briefs b
+                LEFT JOIN brand_profiles bp ON (b.brand_id = bp.id OR b.brand_id = bp.user_id)
+                LEFT JOIN users u ON (b.brand_id = u.id OR bp.user_id = u.id)
+                WHERE b.id = ?
+                """,
+                (str(id),),
+            )
             row = cursor.fetchone()
             return _row_to_brief(row) if row else None
 
     async def list_by_brand(self, brand_id: Any) -> List[CampaignBriefResponse]:
         brand_id_str = str(brand_id)
+        candidate_ids = {brand_id_str}
+        lumina_aliases = {"usr_lumina_skincare", "00000000-0000-0000-0000-000000000002", "00000000-0000-0000-0000-000000000010"}
+        if brand_id_str in lumina_aliases:
+            candidate_ids.update(lumina_aliases)
         with get_db_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(
-                "SELECT * FROM campaign_briefs WHERE brand_id = ? ORDER BY created_at DESC",
-                (brand_id_str,),
-            )
+            cursor.execute("SELECT id, user_id FROM brand_profiles WHERE id = ? OR user_id = ?", (brand_id_str, brand_id_str))
+            row = cursor.fetchone()
+            if row:
+                if row["id"]:
+                    candidate_ids.add(str(row["id"]))
+                if row["user_id"]:
+                    candidate_ids.add(str(row["user_id"]))
+
+            placeholders = ",".join("?" for _ in candidate_ids)
+            query = f"""
+                SELECT b.*,
+                       bp.company_name AS brand_company_name,
+                       bp.logo_url AS brand_profile_logo,
+                       bp.location AS brand_profile_location,
+                       bp.website AS brand_profile_website,
+                       COALESCE(bp.created_at, u.created_at) AS brand_created_at
+                FROM campaign_briefs b
+                LEFT JOIN brand_profiles bp ON (b.brand_id = bp.id OR b.brand_id = bp.user_id)
+                LEFT JOIN users u ON (b.brand_id = u.id OR bp.user_id = u.id)
+                WHERE b.brand_id IN ({placeholders})
+                ORDER BY b.created_at DESC
+            """
+            cursor.execute(query, tuple(candidate_ids))
             rows = cursor.fetchall()
             return [_row_to_brief(r) for r in rows]
 
@@ -429,37 +530,48 @@ class BriefRepository(BaseRepository[CampaignBriefResponse]):
         tool: Optional[str] = None,
         search: Optional[str] = None,
     ) -> List[CampaignBriefResponse]:
-        query = "SELECT * FROM campaign_briefs WHERE status = ? AND is_public = 1"
+        query = """
+            SELECT b.*,
+                   bp.company_name AS brand_company_name,
+                   bp.logo_url AS brand_profile_logo,
+                   bp.location AS brand_profile_location,
+                   bp.website AS brand_profile_website,
+                   COALESCE(bp.created_at, u.created_at) AS brand_created_at
+            FROM campaign_briefs b
+            LEFT JOIN brand_profiles bp ON (b.brand_id = bp.id OR b.brand_id = bp.user_id)
+            LEFT JOIN users u ON (b.brand_id = u.id OR bp.user_id = u.id)
+            WHERE b.status = ? AND b.is_public = 1
+        """
         params: List[Any] = [BriefStatus.PUBLISHED.value]
 
         if category and category.strip():
-            query += " AND campaign_category LIKE ?"
+            query += " AND b.campaign_category LIKE ?"
             params.append(f"%{category.strip()}%")
 
         if content_type and content_type.strip():
-            query += " AND (deliverables LIKE ? OR platforms LIKE ?)"
+            query += " AND (b.deliverables LIKE ? OR b.platforms LIKE ?)"
             params.append(f"%{content_type.strip()}%")
             params.append(f"%{content_type.strip()}%")
 
         if min_budget_cents is not None:
-            query += " AND (budget_cents >= ? OR budget_cents IS NULL)"
+            query += " AND (b.budget_cents >= ? OR b.budget_cents IS NULL)"
             params.append(min_budget_cents)
 
         if max_budget_cents is not None:
-            query += " AND budget_cents <= ?"
+            query += " AND b.budget_cents <= ?"
             params.append(max_budget_cents)
 
         if tool and tool.strip():
-            query += " AND (required_tools LIKE ? OR creator_capabilities LIKE ?)"
+            query += " AND (b.required_tools LIKE ? OR b.creator_capabilities LIKE ?)"
             params.append(f"%{tool.strip()}%")
             params.append(f"%{tool.strip()}%")
 
         if search and search.strip():
             s = f"%{search.strip()}%"
-            query += " AND (title LIKE ? OR description LIKE ? OR brand_or_product_name LIKE ? OR campaign_idea LIKE ?)"
+            query += " AND (b.title LIKE ? OR b.description LIKE ? OR b.brand_or_product_name LIKE ? OR b.campaign_idea LIKE ?)"
             params.extend([s, s, s, s])
 
-        query += " ORDER BY created_at DESC LIMIT ? OFFSET ?"
+        query += " ORDER BY b.created_at DESC LIMIT ? OFFSET ?"
         params.extend([limit, skip])
 
         with get_db_connection() as conn:
@@ -474,7 +586,18 @@ class BriefRepository(BaseRepository[CampaignBriefResponse]):
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT * FROM campaign_briefs ORDER BY created_at DESC LIMIT ? OFFSET ?",
+                """
+                SELECT b.*,
+                       bp.company_name AS brand_company_name,
+                       bp.logo_url AS brand_profile_logo,
+                       bp.location AS brand_profile_location,
+                       bp.website AS brand_profile_website,
+                       COALESCE(bp.created_at, u.created_at) AS brand_created_at
+                FROM campaign_briefs b
+                LEFT JOIN brand_profiles bp ON (b.brand_id = bp.id OR b.brand_id = bp.user_id)
+                LEFT JOIN users u ON (b.brand_id = u.id OR bp.user_id = u.id)
+                ORDER BY b.created_at DESC LIMIT ? OFFSET ?
+                """,
                 (limit, skip),
             )
             rows = cursor.fetchall()
@@ -483,13 +606,29 @@ class BriefRepository(BaseRepository[CampaignBriefResponse]):
     async def create(self, entity: CampaignBriefResponse) -> CampaignBriefResponse:
         now_str = entity.created_at.isoformat()
         updated_str = entity.updated_at.isoformat()
+        published_str = entity.published_at.isoformat() if entity.published_at else None
 
         # Serialize nested objects
-        deliverables_json = json.dumps([d.model_dump() if hasattr(d, "model_dump") else d for d in entity.deliverables])
-        cd_json = json.dumps(entity.creative_direction.model_dump() if hasattr(entity.creative_direction, "model_dump") else entity.creative_direction)
-        cc_json = json.dumps(entity.creator_capabilities.model_dump() if hasattr(entity.creator_capabilities, "model_dump") else entity.creator_capabilities)
-        ct_json = json.dumps(entity.commercial_terms.model_dump() if hasattr(entity.commercial_terms, "model_dump") else entity.commercial_terms)
-        ai_json = json.dumps(entity.ai_metadata.model_dump() if hasattr(entity.ai_metadata, "model_dump") else entity.ai_metadata)
+        deliverables_json = json.dumps(
+            [d.model_dump(mode="json") if hasattr(d, "model_dump") else d for d in entity.deliverables],
+            default=str,
+        )
+        cd_json = json.dumps(
+            entity.creative_direction.model_dump(mode="json") if hasattr(entity.creative_direction, "model_dump") else entity.creative_direction,
+            default=str,
+        )
+        cc_json = json.dumps(
+            entity.creator_capabilities.model_dump(mode="json") if hasattr(entity.creator_capabilities, "model_dump") else entity.creator_capabilities,
+            default=str,
+        )
+        ct_json = json.dumps(
+            entity.commercial_terms.model_dump(mode="json") if hasattr(entity.commercial_terms, "model_dump") else entity.commercial_terms,
+            default=str,
+        )
+        ai_json = json.dumps(
+            entity.ai_metadata.model_dump(mode="json") if hasattr(entity.ai_metadata, "model_dump") else entity.ai_metadata,
+            default=str,
+        )
 
         reward_type = entity.reward_type or "CPM"
         cpm_rate_cents = entity.cpm_rate_cents or 150
@@ -510,9 +649,9 @@ class BriefRepository(BaseRepository[CampaignBriefResponse]):
                     platforms, deliverables, creative_direction, creator_capabilities,
                     commercial_terms, sections, budget_cents, reward_type, cpm_rate_cents,
                     total_pool_cents, paid_pool_cents, views_count, participants_count,
-                    start_date, deadline, required_tools, ai_metadata, cover_image_url,
+                    start_date, deadline, published_at, required_tools, ai_metadata, cover_image_url,
                     is_public, status, created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     str(entity.id),
@@ -547,6 +686,7 @@ class BriefRepository(BaseRepository[CampaignBriefResponse]):
                     participants_count,
                     entity.start_date.isoformat() if entity.start_date else None,
                     entity.deadline.isoformat() if entity.deadline else None,
+                    published_str,
                     json.dumps(entity.required_tools),
                     ai_json,
                     entity.cover_image_url,
@@ -615,12 +755,34 @@ class BriefRepository(BaseRepository[CampaignBriefResponse]):
             row = cursor.fetchone()
             return _row_to_application(row) if row else None
 
+    def _resolve_creator_ids(self, creator_id: str) -> List[str]:
+        c_id = str(creator_id)
+        candidate_ids = {c_id}
+        elena_aliases = {"usr_elena_rostova", "00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000021"}
+        if c_id in elena_aliases:
+            candidate_ids.update(elena_aliases)
+        try:
+            with get_db_connection() as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT id, user_id FROM creator_profiles WHERE id = ? OR user_id = ?", (c_id, c_id))
+                row = cursor.fetchone()
+                if row:
+                    if row["id"]:
+                        candidate_ids.add(str(row["id"]))
+                    if row["user_id"]:
+                        candidate_ids.add(str(row["user_id"]))
+        except Exception:
+            pass
+        return list(candidate_ids)
+
     async def get_application_by_brief_and_creator(self, brief_id: str, creator_id: str) -> Optional[CampaignApplicationResponse]:
+        creator_ids = self._resolve_creator_ids(creator_id)
+        placeholders = ",".join("?" for _ in creator_ids)
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT * FROM campaign_applications WHERE brief_id = ? AND creator_id = ?",
-                (str(brief_id), str(creator_id)),
+                f"SELECT * FROM campaign_applications WHERE brief_id = ? AND creator_id IN ({placeholders}) ORDER BY created_at DESC LIMIT 1",
+                (str(brief_id), *creator_ids),
             )
             row = cursor.fetchone()
             return _row_to_application(row) if row else None
@@ -645,17 +807,19 @@ class BriefRepository(BaseRepository[CampaignBriefResponse]):
             return [_row_to_application(r) for r in rows]
 
     async def list_applications_for_creator(self, creator_id: str) -> List[CampaignApplicationResponse]:
+        creator_ids = self._resolve_creator_ids(creator_id)
+        placeholders = ",".join("?" for _ in creator_ids)
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
-                """
+                f"""
                 SELECT a.*, cb.title as brief_title
                 FROM campaign_applications a
                 LEFT JOIN campaign_briefs cb ON a.brief_id = cb.id
-                WHERE a.creator_id = ?
+                WHERE a.creator_id IN ({placeholders})
                 ORDER BY a.created_at DESC
                 """,
-                (str(creator_id),),
+                tuple(creator_ids),
             )
             rows = cursor.fetchall()
             return [_row_to_application(r) for r in rows]
@@ -675,6 +839,11 @@ class BriefRepository(BaseRepository[CampaignBriefResponse]):
     # CAMPAIGN PARTICIPATION (Content Rewards Join Workflow)
     # =========================================================================
     async def join_campaign(self, campaign_id: str, creator_id: str) -> bool:
+        # Check if already joined under any alias
+        existing = await self.get_campaign_participant(campaign_id, creator_id)
+        if existing:
+            return True
+
         now_str = datetime.now(timezone.utc).isoformat()
         part_id = f"part_{int(datetime.now(timezone.utc).timestamp()*1000)}"
         with get_db_connection() as conn:
@@ -690,7 +859,7 @@ class BriefRepository(BaseRepository[CampaignBriefResponse]):
             cursor.execute(
                 """
                 UPDATE campaign_briefs 
-                SET participants_count = (SELECT COUNT(*) FROM campaign_participants WHERE campaign_id = ? AND status = 'JOINED')
+                SET participants_count = (SELECT COUNT(DISTINCT creator_id) FROM campaign_participants WHERE campaign_id = ? AND status = 'JOINED')
                 WHERE id = ?
                 """,
                 (str(campaign_id), str(campaign_id))
@@ -699,16 +868,19 @@ class BriefRepository(BaseRepository[CampaignBriefResponse]):
             return True
 
     async def get_campaign_participant(self, campaign_id: str, creator_id: str) -> Optional[CampaignParticipantResponse]:
+        creator_ids = self._resolve_creator_ids(creator_id)
+        placeholders = ",".join("?" for _ in creator_ids)
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
-                """
+                f"""
                 SELECT p.*, cp.full_name as creator_name, cp.handle as creator_handle, cp.avatar_url as creator_avatar_url
                 FROM campaign_participants p
                 LEFT JOIN creator_profiles cp ON p.creator_id = cp.id OR p.creator_id = cp.user_id
-                WHERE p.campaign_id = ? AND p.creator_id = ?
+                WHERE p.campaign_id = ? AND p.creator_id IN ({placeholders})
+                ORDER BY p.joined_at DESC LIMIT 1
                 """,
-                (str(campaign_id), str(creator_id))
+                (str(campaign_id), *creator_ids)
             )
             row = cursor.fetchone()
             return _row_to_participant(row) if row else None
@@ -818,20 +990,22 @@ class BriefRepository(BaseRepository[CampaignBriefResponse]):
             return [_row_to_submission(r) for r in rows]
 
     async def list_creator_submissions(self, creator_id: str) -> List[ClipSubmissionResponse]:
+        creator_ids = self._resolve_creator_ids(creator_id)
+        placeholders = ",".join("?" for _ in creator_ids)
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
-                """
+                f"""
                 SELECT s.*, cp.full_name as creator_name, cp.handle as creator_handle, cp.avatar_url as creator_avatar_url,
                        cb.title as campaign_title, bp.company_name as brand_name
                 FROM clip_submissions s
                 LEFT JOIN creator_profiles cp ON s.creator_id = cp.id OR s.creator_id = cp.user_id
                 LEFT JOIN campaign_briefs cb ON s.campaign_id = cb.id
                 LEFT JOIN brand_profiles bp ON s.brand_id = bp.id OR s.brand_id = bp.user_id
-                WHERE s.creator_id = ?
+                WHERE s.creator_id IN ({placeholders})
                 ORDER BY s.submitted_at DESC
                 """,
-                (str(creator_id),)
+                tuple(creator_ids)
             )
             rows = cursor.fetchall()
             return [_row_to_submission(r) for r in rows]

@@ -38,10 +38,14 @@ class BriefService(BaseService):
         self.repo = repo or brief_repository
 
     def _is_brand_owner(self, brief_brand_id: str, current_user_id: str) -> bool:
-        """Determines if current_user_id owns brief_brand_id (handling both user_id and brand_profile.id)."""
+        """Determines if current_user_id owns brief_brand_id (handling user_id, brand_profile.id, and demo aliases)."""
         if not brief_brand_id or not current_user_id:
             return False
         if str(brief_brand_id) == str(current_user_id):
+            return True
+        # Demo Lumina Skincare parity alias check
+        lumina_aliases = {"usr_lumina_skincare", "00000000-0000-0000-0000-000000000002", "00000000-0000-0000-0000-000000000010"}
+        if str(brief_brand_id) in lumina_aliases and str(current_user_id) in lumina_aliases:
             return True
         from app.core.db import get_db_connection
         with get_db_connection() as conn:
@@ -49,6 +53,25 @@ class BriefService(BaseService):
             cursor.execute(
                 "SELECT id FROM brand_profiles WHERE (id = ? OR user_id = ?) AND (user_id = ? OR id = ?)",
                 (str(brief_brand_id), str(brief_brand_id), str(current_user_id), str(current_user_id))
+            )
+            return cursor.fetchone() is not None
+
+    def _is_creator_owner(self, creator_id: str, current_user_id: str) -> bool:
+        """Determines if current_user_id owns creator_id (handling user_id, creator_profile.id, and demo aliases)."""
+        if not creator_id or not current_user_id:
+            return False
+        if str(creator_id) == str(current_user_id):
+            return True
+        # Demo Elena Rostova parity alias check
+        elena_aliases = {"usr_elena_rostova", "00000000-0000-0000-0000-000000000001", "00000000-0000-0000-0000-000000000021"}
+        if str(creator_id) in elena_aliases and str(current_user_id) in elena_aliases:
+            return True
+        from app.core.db import get_db_connection
+        with get_db_connection() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "SELECT id FROM creator_profiles WHERE (id = ? OR user_id = ?) AND (user_id = ? OR id = ?)",
+                (str(creator_id), str(creator_id), str(current_user_id), str(current_user_id))
             )
             return cursor.fetchone() is not None
 
@@ -151,6 +174,10 @@ class BriefService(BaseService):
         if "title" in update_dict and update_dict["title"]:
             update_dict["title"] = update_dict["title"].strip()
 
+        # Preserve existing publication timestamp if campaign was already published
+        if existing.published_at and "published_at" not in update_dict:
+            update_dict["published_at"] = existing.published_at.isoformat() if hasattr(existing.published_at, "isoformat") else str(existing.published_at)
+
         updated = await self.repo.update(brief_id, update_dict)
         if not updated:
             raise NotFoundException("Campaign Brief", brief_id)
@@ -171,9 +198,13 @@ class BriefService(BaseService):
             errors_str = "; ".join(val_result.blocking_errors)
             raise ValidationException(f"Cannot publish brief due to missing requirements: {errors_str}")
 
+        now = datetime.now(timezone.utc)
+        pub_at = existing.published_at or now
+
         updated = await self.repo.update(brief_id, {
             "status": BriefStatus.PUBLISHED,
             "is_public": True,
+            "published_at": pub_at.isoformat() if hasattr(pub_at, "isoformat") else str(pub_at),
         })
         return updated  # type: ignore
 
@@ -430,7 +461,7 @@ class BriefService(BaseService):
         # Creators can ONLY see their own participation record
         return [
             p for p in all_parts
-            if p.creator_id == current_user_id or str(p.creator_id) == str(current_user_id)
+            if self._is_creator_owner(p.creator_id, current_user_id)
         ]
 
     async def submit_clip(
@@ -470,7 +501,7 @@ class BriefService(BaseService):
             if not self._is_brand_owner(brief.brand_id, current_user_id):
                 raise ForbiddenException("Only the campaign brand owner can view all submissions for this campaign")
             return all_subs
-        return [s for s in all_subs if str(s.creator_id) == str(current_user_id)]
+        return [s for s in all_subs if self._is_creator_owner(s.creator_id, current_user_id)]
 
     async def list_creator_submissions(self, creator_id: str) -> List[ClipSubmissionResponse]:
         return await self.repo.list_creator_submissions(creator_id)

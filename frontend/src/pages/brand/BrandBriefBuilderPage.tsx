@@ -102,6 +102,18 @@ const COMPENSATION_MODELS = [
   { id: "HYBRID", label: "Hybrid (Cash + Gifting)", desc: "Product package plus creative fee" },
 ]
 
+// Helper to safely parse dates without throwing RangeError: Invalid time value
+const toSafeIsoString = (val?: string): string | undefined => {
+  if (!val || typeof val !== "string" || !val.trim()) return undefined
+  try {
+    const d = new Date(val.trim())
+    if (isNaN(d.getTime())) return undefined
+    return d.toISOString()
+  } catch {
+    return undefined
+  }
+}
+
 // The 16 canonical sections of the AI Brief
 const BRIEF_SECTION_METADATA: { id: string; title: string; hint: string }[] = [
   { id: "campaign_overview", title: "1. Campaign Overview", hint: "Executive vision and strategic scope" },
@@ -398,8 +410,8 @@ export const BrandBriefBuilderPage: React.FC = () => {
       },
       sections: briefSections,
       budget_cents: totalBudgetUSD * 100,
-      start_date: startDate ? new Date(startDate).toISOString() : undefined,
-      deadline: contentDeliveryDeadline ? new Date(contentDeliveryDeadline).toISOString() : undefined,
+      start_date: toSafeIsoString(startDate),
+      deadline: toSafeIsoString(contentDeliveryDeadline),
       required_tools: ["Runway Gen-3", "Midjourney v6.1"],
       ai_metadata: aiMetadata,
       cover_image_url: coverImageUrl || undefined,
@@ -937,10 +949,15 @@ export const BrandBriefBuilderPage: React.FC = () => {
                   <span className="font-medium text-slate-600">Saved</span>
                 </>
               ) : (
-                <>
+                <button
+                  type="button"
+                  onClick={handleSaveDraft}
+                  className="flex items-center space-x-1 text-amber-700 hover:text-amber-800 transition-colors"
+                  title="Click to retry saving draft"
+                >
                   <AlertCircle className="h-3.5 w-3.5 text-amber-600" />
-                  <span className="font-medium text-slate-600">Unable to Save</span>
-                </>
+                  <span className="font-semibold text-slate-700">Unable to Save (Retry)</span>
+                </button>
               )}
             </div>
 

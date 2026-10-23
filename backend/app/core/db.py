@@ -140,6 +140,7 @@ def init_db():
                 ai_metadata TEXT DEFAULT '{}',
                 is_public INTEGER DEFAULT 1,
                 status TEXT NOT NULL DEFAULT 'DRAFT',
+                published_at TEXT,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             )
@@ -352,6 +353,9 @@ def init_db():
         if "participants_count" not in columns:
             cursor.execute("ALTER TABLE campaign_briefs ADD COLUMN participants_count INTEGER DEFAULT 0")
             logger.info("Migrated campaign_briefs table: added participants_count column")
+        if "published_at" not in columns:
+            cursor.execute("ALTER TABLE campaign_briefs ADD COLUMN published_at TEXT")
+            logger.info("Migrated campaign_briefs table: added published_at column")
 
         # Migrate legacy video demo items from SVG placeholders to MP4
         cursor.execute(

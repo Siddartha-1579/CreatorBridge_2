@@ -53,6 +53,8 @@ class AuthService(BaseService):
                         "is_verified": bool(r["is_verified"]),
                         "email_verified": bool(r["email_verified"]),
                         "is_onboarded": bool(r["is_onboarded"]),
+                        "created_at": r["created_at"] if "created_at" in r.keys() else None,
+                        "updated_at": r["updated_at"] if "updated_at" in r.keys() else None,
                     }
         except Exception as e:
             self.logger.warning(f"Could not load users from persistent SQLite: {e}")
@@ -63,10 +65,25 @@ class AuthService(BaseService):
             with get_db_connection() as conn:
                 cursor = conn.cursor()
                 cursor.execute(
+                    "SELECT created_at FROM users WHERE id = ? OR email = ?",
+                    (user_dict["id"], user_dict["email"]),
+                )
+                existing = cursor.fetchone()
+                created_at_str = existing["created_at"] if existing and existing["created_at"] else user_dict.get("created_at") or now_str
+                cursor.execute(
                     """
-                    INSERT OR REPLACE INTO users (
+                    INSERT INTO users (
                         id, email, full_name, role, password, is_verified, email_verified, is_onboarded, created_at, updated_at
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(id) DO UPDATE SET
+                        email=excluded.email,
+                        full_name=excluded.full_name,
+                        role=excluded.role,
+                        password=excluded.password,
+                        is_verified=excluded.is_verified,
+                        email_verified=excluded.email_verified,
+                        is_onboarded=excluded.is_onboarded,
+                        updated_at=excluded.updated_at
                     """,
                     (
                         user_dict["id"],
@@ -77,7 +94,7 @@ class AuthService(BaseService):
                         1 if user_dict.get("is_verified") else 0,
                         1 if user_dict.get("email_verified") else 0,
                         1 if user_dict.get("is_onboarded") else 0,
-                        now_str,
+                        created_at_str,
                         now_str,
                     ),
                 )
@@ -164,6 +181,7 @@ class AuthService(BaseService):
 
         # 4. Construct user entity
         user_id = "usr_" + normalized_email.split("@")[0].replace(".", "_")
+        now = datetime.now(timezone.utc)
         user = UserResponse(
             id=user_id,
             email=normalized_email,
@@ -172,6 +190,8 @@ class AuthService(BaseService):
             status="ACTIVE",
             is_verified=False,
             email_verified=False,
+            created_at=now,
+            updated_at=now,
         )
 
         # Store in user registry
@@ -184,6 +204,8 @@ class AuthService(BaseService):
             "is_verified": False,
             "email_verified": False,
             "is_onboarded": False,
+            "created_at": now.isoformat(),
+            "updated_at": now.isoformat(),
         }
         self._persist_user(self._user_store[normalized_email])
 
@@ -246,6 +268,8 @@ class AuthService(BaseService):
                             "is_verified": bool(row["is_verified"]),
                             "email_verified": bool(row["email_verified"]),
                             "is_onboarded": bool(row["is_onboarded"]),
+                            "created_at": row["created_at"] if "created_at" in row.keys() else None,
+                            "updated_at": row["updated_at"] if "updated_at" in row.keys() else None,
                         }
                         self._user_store[normalized_email] = record
             except Exception as e:
@@ -313,6 +337,24 @@ class AuthService(BaseService):
                 )
                 raise ValidationException("This account is registered as a Brand/Agency. Please sign in through the Brand Portal.")
 
+        created_at_dt = None
+        if record.get("created_at"):
+            try:
+                created_at_dt = datetime.fromisoformat(record["created_at"])
+                if created_at_dt.tzinfo is None:
+                    created_at_dt = created_at_dt.replace(tzinfo=timezone.utc)
+            except Exception:
+                created_at_dt = None
+
+        updated_at_dt = None
+        if record.get("updated_at"):
+            try:
+                updated_at_dt = datetime.fromisoformat(record["updated_at"])
+                if updated_at_dt.tzinfo is None:
+                    updated_at_dt = updated_at_dt.replace(tzinfo=timezone.utc)
+            except Exception:
+                updated_at_dt = None
+
         user = UserResponse(
             id=record["id"],
             email=record["email"],
@@ -321,6 +363,8 @@ class AuthService(BaseService):
             status="ACTIVE",
             is_verified=record.get("is_verified", False),
             email_verified=record.get("email_verified", False),
+            created_at=created_at_dt,
+            updated_at=updated_at_dt,
         )
 
         token = self._generate_token(user)

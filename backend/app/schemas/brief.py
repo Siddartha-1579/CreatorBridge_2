@@ -136,6 +136,7 @@ class CampaignBriefBase(BaseModel):
     participants_count: Optional[int] = 0
     start_date: Optional[datetime] = None
     deadline: Optional[datetime] = None
+    published_at: Optional[datetime] = None
     required_tools: List[str] = Field(default_factory=list)
     ai_metadata: BriefAIMetadata = Field(default_factory=BriefAIMetadata)
     cover_image_url: Optional[str] = None
@@ -179,6 +180,7 @@ class CampaignBriefUpdate(BaseModel):
     participants_count: Optional[int] = None
     start_date: Optional[datetime] = None
     deadline: Optional[datetime] = None
+    published_at: Optional[datetime] = None
     required_tools: Optional[List[str]] = None
     ai_metadata: Optional[BriefAIMetadata] = None
     cover_image_url: Optional[str] = None
@@ -190,6 +192,12 @@ class CampaignBriefResponse(BaseDomainModel, CampaignBriefBase):
     """Response model for a saved or published campaign brief."""
     brand_id: str
     status: BriefStatus = BriefStatus.DRAFT
+    published_at: Optional[datetime] = None
+    brand_created_at: Optional[datetime] = None
+    brand_name: Optional[str] = None
+    brand_logo_url: Optional[str] = None
+    brand_location: Optional[str] = None
+    brand_website: Optional[str] = None
 
 
 class AIBriefGenerationRequest(BaseModel):
