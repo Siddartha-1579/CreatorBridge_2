@@ -205,3 +205,28 @@ def test_chatbot_route_registration_paths(client):
     assert "post" in paths["/api/v1/chatbot/message"]
     assert "/api/v1/chatbot/suggestions" in paths
     assert "get" in paths["/api/v1/chatbot/suggestions"]
+
+
+def test_out_of_scope_game_generation(client):
+    """Verify general-purpose game and coding requests are strictly out of scope."""
+    response = client.post(
+        "/api/v1/chatbot/message",
+        json={"message": "Write me a general-purpose Python game."},
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["in_scope"] is False
+    assert "cannot assist with general programming" in data["answer"].lower() or "outside the scope" in data["answer"].lower()
+
+
+def test_fallback_deduplication(client):
+    """Verify deterministic fallback response does not duplicate FAQ answer strings."""
+    with patch("app.services.chatbot_service.OpenAITextProvider.generate_text", side_effect=Exception("OpenAI offline")):
+        response = client.post(
+            "/api/v1/chatbot/message",
+            json={"message": "How do I create and publish a creator portfolio?"},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["in_scope"] is True
+        assert data["answer"].count("Sign in to the Creator Portal") == 1

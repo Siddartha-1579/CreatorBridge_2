@@ -28,8 +28,11 @@ KB_PATH = Path(__file__).resolve().parent.parent / "knowledge" / "creatorbridge_
 # Unrelated off-topic keywords and patterns
 OFF_TOPIC_PATTERNS = [
     # General coding / programming requests
-    r"\b(write|generate|debug|explain)\s+(python|javascript|typescript|c\+\+|java|rust|go|php|sql|ruby|html|css)\s+(code|script|function|program|algorithm|class)\b",
+    r"\b(write|create|make|generate|build|code|debug|explain|implement|run)\b.*?\b(python|javascript|typescript|c\+\+|c#|java|rust|golang|go|php|sql|ruby|html|css|react|vue|angular|bash|powershell)\b",
+    r"\b(python|javascript|typescript|c\+\+|c#|java|rust|go|php|sql|ruby|html|css)\s+(code|script|function|program|algorithm|class|game|app)\b",
     r"\b(quicksort|binary\s*search|fibonacci|linked\s*list|leetcode|bubble\s*sort|dynamic\s*programming)\b",
+    r"\b(write|create|make|generate|build|code|program|play)\b.*?\b(game|snake\s*game|tic\s*tac\s*toe|calculator|bot)\b",
+    r"\b(tell|write|recite)\b.*?\b(joke|poem|story|essay|song|riddle)\b",
     # Math and homework
     r"\b(solve|calculate|equation|integral|derivative|algebra|calculus|homework|math\s+problem)\b",
     r"\b\d+\s*[\+\-\*\/]\s*\d+\s*=",
@@ -39,6 +42,17 @@ OFF_TOPIC_PATTERNS = [
     # Medical / legal advice
     r"\b(diagnose|symptoms\s+of|cure\s+for|legal\s+advice|sue\s+someone)\b",
 ]
+
+# Stop words to eliminate generic token overlaps
+STOP_WORDS = {
+    "a", "an", "the", "and", "or", "in", "on", "at", "to", "for", "with",
+    "is", "are", "was", "were", "be", "been", "being", "have", "has", "had",
+    "do", "does", "did", "can", "could", "should", "would", "will", "shall",
+    "i", "you", "he", "she", "it", "we", "they", "me", "him", "her", "us", "them",
+    "my", "your", "his", "their", "our", "this", "that", "these", "those",
+    "what", "which", "who", "whom", "how", "when", "where", "why",
+    "about", "from", "by", "of", "some", "any", "all", "each", "every",
+}
 
 # Primary CreatorBridge domain keywords for positive scope match
 CB_DOMAIN_KEYWORDS = {
@@ -141,9 +155,9 @@ class ChatbotService:
         if has_domain_token or has_phrase_match:
             return True, None
 
-        # 4. Check if knowledge base has any retrieval relevance
+        # 4. Check if knowledge base has any retrieval relevance (require substantial match)
         retrieved = self._retrieve_knowledge(query, top_k=1)
-        if retrieved and retrieved[0][1] >= 1.0:
+        if retrieved and retrieved[0][1] >= 3.0:
             return True, None
 
         return False, (
@@ -156,7 +170,8 @@ class ChatbotService:
         """
         Retrieves top relevant knowledge modules and FAQs using keyword and token overlap.
         """
-        q_tokens = set(re.findall(r"\b[a-z0-9_\-]+\b", query.lower()))
+        q_raw_tokens = set(re.findall(r"\b[a-z0-9_\-]+\b", query.lower()))
+        q_tokens = {t for t in q_raw_tokens if t not in STOP_WORDS and len(t) > 1}
         if not q_tokens:
             return []
 
@@ -166,8 +181,8 @@ class ChatbotService:
         for mod in self.knowledge.get("modules", []):
             score = 0.0
             mod_keywords = set(k.lower() for k in mod.get("keywords", []))
-            mod_title_tokens = set(re.findall(r"\b[a-z0-9_\-]+\b", mod.get("title", "").lower()))
-            mod_summary_tokens = set(re.findall(r"\b[a-z0-9_\-]+\b", mod.get("summary", "").lower()))
+            mod_title_tokens = {t for t in re.findall(r"\b[a-z0-9_\-]+\b", mod.get("title", "").lower()) if t not in STOP_WORDS}
+            mod_summary_tokens = {t for t in re.findall(r"\b[a-z0-9_\-]+\b", mod.get("summary", "").lower()) if t not in STOP_WORDS}
 
             # Keyword match is heavily weighted
             common_kw = q_tokens & mod_keywords
@@ -193,8 +208,8 @@ class ChatbotService:
         # 2. Score FAQs
         for faq in self.knowledge.get("faqs", []):
             score = 0.0
-            q_faq_tokens = set(re.findall(r"\b[a-z0-9_\-]+\b", faq.get("question", "").lower()))
-            ans_faq_tokens = set(re.findall(r"\b[a-z0-9_\-]+\b", faq.get("answer", "").lower()))
+            q_faq_tokens = {t for t in re.findall(r"\b[a-z0-9_\-]+\b", faq.get("question", "").lower()) if t not in STOP_WORDS}
+            ans_faq_tokens = {t for t in re.findall(r"\b[a-z0-9_\-]+\b", faq.get("answer", "").lower()) if t not in STOP_WORDS}
 
             common_q = q_tokens & q_faq_tokens
             score += len(common_q) * 2.5
@@ -207,7 +222,7 @@ class ChatbotService:
                     "category": "faq",
                     "title": faq["question"],
                     "summary": faq["answer"],
-                    "details": [faq["answer"]],
+                    "details": [],
                 }, score))
 
         scored_items.sort(key=lambda x: x[1], reverse=True)
@@ -340,9 +355,15 @@ class ChatbotService:
 
         # 4. Deterministic FAQ / Module Fallback
         top_item = retrieved[0][0]
-        fallback_answer = f"{top_item.get('summary')}\n\n"
-        if top_item.get("details"):
-            fallback_answer += "\n".join(f"• {d}" for d in top_item["details"][:3])
+        summary = (top_item.get("summary") or "").strip()
+        details = [
+            d.strip() for d in top_item.get("details", [])
+            if d.strip() and d.strip() != summary
+        ]
+        if details:
+            fallback_answer = f"{summary}\n\n" + "\n".join(f"• {d}" for d in details[:3])
+        else:
+            fallback_answer = summary
 
         return ChatbotMessageResponse(
             answer=fallback_answer.strip(),
