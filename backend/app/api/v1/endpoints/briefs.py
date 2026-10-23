@@ -75,7 +75,7 @@ async def list_my_briefs(
 @router.get("/{brief_id}", response_model=ApiResponse[CampaignBriefResponse], summary="Get campaign brief details")
 async def get_brief(
     brief_id: UUID = Path(...),
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user),
+    current_user: Optional[AuthenticatedUser] = Depends(get_optional_user),
 ) -> ApiResponse[CampaignBriefResponse]:
     """Retrieves campaign brief details, verifying ownership if the brief is in draft state."""
     user_id = current_user.id if current_user else None

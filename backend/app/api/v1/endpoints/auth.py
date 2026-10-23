@@ -2,7 +2,7 @@
 
 from typing import Optional, Dict
 from fastapi import APIRouter, Depends, Request
-from app.core.security import get_current_user, AuthenticatedUser
+from app.core.security import get_current_user, get_optional_user, AuthenticatedUser
 from app.core.rate_limit import auth_rate_limiter
 from app.schemas.common import ApiResponse
 from app.schemas.auth import (
@@ -119,7 +119,7 @@ async def verify_turnstile(
 @router.post("/logout", response_model=ApiResponse[Dict[str, str]], summary="User logout")
 async def logout(
     request: Request,
-    current_user: Optional[AuthenticatedUser] = Depends(get_current_user),
+    current_user: Optional[AuthenticatedUser] = Depends(get_optional_user),
 ) -> ApiResponse[Dict[str, str]]:
     """Terminates session and records security audit trail."""
     ip = _get_client_ip(request)

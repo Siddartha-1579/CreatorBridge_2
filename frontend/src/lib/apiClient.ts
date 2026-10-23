@@ -14,21 +14,74 @@ export class ApiError extends Error {
   }
 }
 
-interface RequestOptions extends RequestInit {
+export interface RequestOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>
 }
 
+export type UnauthorizedListener = (info: { endpoint: string; message: string }) => void
+
 class ApiClient {
   private baseUrl: string
+  private unauthorizedListeners: Set<UnauthorizedListener> = new Set()
+  private isNotifyingUnauthorized = false
 
-  constructor(baseUrl: string = import.meta.env.VITE_API_URL || import.meta.env.VITE_API_BASE_URL || "/api/v1") {
-    let clean = baseUrl.replace(/\/$/, "")
+  constructor(baseUrl?: string) {
+    const defaultUrl =
+      (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL) ||
+      (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_BASE_URL) ||
+      "/api/v1"
+    let clean = (baseUrl || defaultUrl).replace(/\/$/, "")
     // If the base URL is an absolute URL (e.g. https://api.onrender.com) and doesn't contain /api/,
     // automatically append /api/v1 so backend router paths line up.
     if (/^https?:\/\//i.test(clean) && !clean.includes("/api")) {
       clean = `${clean}/api/v1`
     }
     this.baseUrl = clean
+  }
+
+  public onUnauthorized(listener: UnauthorizedListener): () => void {
+    this.unauthorizedListeners.add(listener)
+    return () => {
+      this.unauthorizedListeners.delete(listener)
+    }
+  }
+
+  public notifyUnauthorized(endpoint: string, message: string): void {
+    if (this.isNotifyingUnauthorized) return
+    this.isNotifyingUnauthorized = true
+
+    try {
+      localStorage.removeItem("creatorbridge_auth_token")
+      localStorage.removeItem("creatorbridge_user")
+      localStorage.removeItem("hacxlerate_auth_token")
+      localStorage.removeItem("hacxlerate_user")
+    } catch {
+      // Ignore localStorage access failures
+    }
+
+    this.unauthorizedListeners.forEach((listener) => {
+      try {
+        listener({ endpoint, message })
+      } catch (e) {
+        console.error("Error in onUnauthorized listener:", e)
+      }
+    })
+
+    if (typeof window !== "undefined") {
+      try {
+        window.dispatchEvent(
+          new CustomEvent("creatorbridge:auth-expired", {
+            detail: { endpoint, message },
+          })
+        )
+      } catch {
+        // Ignore custom event dispatch failures
+      }
+    }
+
+    setTimeout(() => {
+      this.isNotifyingUnauthorized = false
+    }, 500)
   }
 
   private getAuthToken(): string | null {
@@ -108,30 +161,37 @@ class ApiClient {
       const errorData = responseData as ApiErrorResponse | null
       const errorCode = errorData?.error?.code || `HTTP_${response.status}`
 
+      // Check if this was an authenticated request where the session token expired or became invalid
+      const isAuthAction = endpoint.includes("auth/login") || endpoint.includes("auth/register")
+      if (response.status === 401 && token && !isAuthAction) {
+        this.notifyUnauthorized(endpoint, errorData?.error?.message || "Invalid or expired authentication token")
+      }
+
       let defaultMessage = "Request failed"
       if (response.status === 401) {
-        defaultMessage = "Invalid credentials. Please verify your email and password."
+        defaultMessage = isAuthAction
+          ? "Invalid email or password. Please verify your credentials."
+          : "Your session has expired or is invalid. Please sign in again."
       } else if (response.status === 403) {
-        defaultMessage = "Access denied: your account role does not have permission for this portal."
+        defaultMessage = "Access denied: you do not have permission to view or manage this resource."
       } else if (response.status === 404) {
         const isStaticHostNotFound =
-          responseText.includes("The page could not be found") ||
-          responseText.includes("NOT_FOUND") ||
-          url.includes("vercel.app") ||
-          url.startsWith("/api")
+          responseText.includes("The page could not be found") &&
+          (url.includes("vercel.app") || !this.baseUrl.startsWith("http"))
         if (isStaticHostNotFound) {
           defaultMessage =
-            "Backend API is unreachable (HTTP 404: The page could not be found). The frontend is hosted on Vercel, but API requests cannot be handled by the static frontend host. Please configure VITE_API_URL in your Vercel project environment variables with your deployed FastAPI backend URL."
+            "Backend API is unreachable (HTTP 404: The page could not be found). Please configure VITE_API_URL in your deployment environment variables."
         } else {
-          defaultMessage = "API endpoint not found (HTTP 404). Please ensure the backend server route exists."
+          defaultMessage = "The requested campaign or resource could not be found (HTTP 404)."
         }
       } else if (response.status === 405) {
-        defaultMessage =
-          "Backend API is not reachable on this host (HTTP 405 Method Not Allowed). Please ensure the FastAPI backend is running and VITE_API_URL is configured in Vercel."
+        defaultMessage = "Method not allowed for this endpoint (HTTP 405)."
       } else if (response.status === 422) {
         defaultMessage = "Validation error: please check your input and try again."
+      } else if (response.status === 429) {
+        defaultMessage = "Too many requests. Please wait a moment before trying again."
       } else if (response.status >= 500) {
-        defaultMessage = `Server error (HTTP ${response.status}). Please try again shortly.`
+        defaultMessage = `Server error (HTTP ${response.status}). The service is temporarily unavailable. Please try again shortly.`
       }
 
       const errorMessage =

@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/apiClient"
+import { apiClient, ApiError } from "@/lib/apiClient"
 import type {
   LoginCredentials,
   RegisterData,
@@ -91,12 +91,34 @@ export const authService = {
     })
   },
 
+  clearSession(): void {
+    try {
+      localStorage.removeItem("creatorbridge_auth_token")
+      localStorage.removeItem("creatorbridge_user")
+      localStorage.removeItem("hacxlerate_auth_token")
+      localStorage.removeItem("hacxlerate_user")
+    } catch {
+      // Ignore localStorage access failures
+    }
+  },
+
   async getCurrentUser(): Promise<User | null> {
+    const token =
+      localStorage.getItem("creatorbridge_auth_token") ||
+      localStorage.getItem("hacxlerate_auth_token")
+    if (!token) {
+      return null
+    }
+
     try {
       const raw = await apiClient.get<any>("auth/me")
       if (!raw) return null
       return normalizeUser(raw)
-    } catch {
+    } catch (err: unknown) {
+      // If 401 Unauthorized, the stored token is definitively expired or invalid
+      if (err instanceof ApiError && err.statusCode === 401) {
+        this.clearSession()
+      }
       return null
     }
   },
@@ -107,10 +129,7 @@ export const authService = {
     } catch {
       // ignore network errors on logout
     } finally {
-      localStorage.removeItem("creatorbridge_auth_token")
-      localStorage.removeItem("creatorbridge_user")
-      localStorage.removeItem("hacxlerate_auth_token")
-      localStorage.removeItem("hacxlerate_user")
+      this.clearSession()
     }
   },
 

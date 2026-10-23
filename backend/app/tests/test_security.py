@@ -245,3 +245,85 @@ def test_authenticated_me_endpoint_returns_normalized_profile(client: TestClient
     assert me_data["role"] == "BRAND"
     assert me_data["email"] == "lumina@demo.creatorbridge.com"
 
+
+
+def test_published_campaign_brief_publicly_viewable_without_token(client: TestClient):
+    """Verifies published campaign brief is accessible to anonymous users without 401."""
+    brief_id = "00000000-0000-0000-0000-000000000004"
+    res = client.get(f"/api/v1/briefs/{brief_id}")
+    assert res.status_code == 200
+    data = res.json()["data"]
+    assert str(data["id"]) == brief_id
+    assert data["title"]
+
+
+def test_published_campaign_brief_viewable_with_expired_or_invalid_token(client: TestClient):
+    """Verifies that sending an expired or invalid token to public brief does not trigger 401."""
+    brief_id = "00000000-0000-0000-0000-000000000004"
+    res = client.get(
+        f"/api/v1/briefs/{brief_id}",
+        headers={"Authorization": "Bearer expired-or-invalid-token-value"}
+    )
+    assert res.status_code == 200
+    assert str(res.json()["data"]["id"]) == brief_id
+
+
+def test_nonexistent_campaign_returns_404_not_401(client: TestClient):
+    """Verifies a missing campaign returns genuine 404, not an authentication error."""
+    missing_id = "00000000-0000-0000-0000-999999999999"
+    res = client.get(f"/api/v1/briefs/{missing_id}")
+    assert res.status_code == 404
+    err = res.json()["error"]
+    assert err["code"] == "NOT_FOUND"
+    assert "not found" in err["message"].lower()
+
+
+def test_logout_succeeds_even_with_expired_token(client: TestClient):
+    """Verifies /auth/logout handles invalid or expired token gracefully without 401."""
+    res = client.post(
+        "/api/v1/auth/logout",
+        headers={"Authorization": "Bearer expired-token-123"}
+    )
+    assert res.status_code == 200
+    assert res.json()["data"]["status"] == "logged_out"
+
+
+def test_protected_endpoint_rejects_missing_and_invalid_token_with_401(client: TestClient):
+    """Verifies strictly protected endpoints require a valid token and return 401."""
+    # 1. Missing Authorization header
+    res_missing = client.get("/api/v1/auth/me")
+    assert res_missing.status_code == 401
+    assert res_missing.json()["error"]["code"] == "UNAUTHORIZED"
+
+    # 2. Invalid / expired Bearer token
+    res_invalid = client.get(
+        "/api/v1/auth/me",
+        headers={"Authorization": "Bearer totally-invalid-token"}
+    )
+    assert res_invalid.status_code == 401
+    assert res_invalid.json()["error"]["code"] == "UNAUTHORIZED"
+
+
+def test_role_mismatch_returns_403_not_401(client: TestClient):
+    """Verifies valid token accessing prohibited role endpoint returns 403 Forbidden, not 401."""
+    # Elena is a CREATOR
+    login_res = client.post(
+        "/api/v1/auth/login",
+        json={"email": "elena@demo.creatorbridge.com", "password": "demo123456"},
+    )
+    creator_token = login_res.json()["data"]["access_token"]
+
+    # Try to access a BRAND-only endpoint: POST /api/v1/briefs
+    res = client.post(
+        "/api/v1/briefs",
+        json={
+            "title": "Hacked Brand Brief",
+            "campaign_idea": "Malicious attempt",
+            "primary_objective": "Test",
+            "target_audience": "None",
+            "budget_cents": 100000,
+        },
+        headers={"Authorization": f"Bearer {creator_token}"},
+    )
+    assert res.status_code == 403
+    assert res.json()["error"]["code"] == "FORBIDDEN"

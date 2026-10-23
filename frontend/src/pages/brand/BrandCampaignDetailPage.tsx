@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react"
 import { useParams, Link, useNavigate } from "react-router-dom"
 import { briefsService } from "@/services/briefs.service"
+import { ApiError } from "@/lib/apiClient"
+import { ErrorState } from "@/components/common/ErrorState"
 import type { CampaignBrief, CampaignAnalytics, ClipSubmission } from "@/types"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -39,12 +41,16 @@ export const BrandCampaignDetailPage: React.FC = () => {
   const [submissions, setSubmissions] = useState<ClipSubmission[]>([])
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [errorInfo, setErrorInfo] = useState<{
+    statusCode?: number
+    errorCode?: string
+    message: string
+  } | null>(null)
 
   const loadData = async () => {
     if (!campaignId) return
     setLoading(true)
-    setError(null)
+    setErrorInfo(null)
     try {
       const [briefData, subsData] = await Promise.all([
         briefsService.getBrief(campaignId),
@@ -61,7 +67,11 @@ export const BrandCampaignDetailPage: React.FC = () => {
       }
     } catch (err: any) {
       console.error("Failed to load campaign details:", err)
-      setError(err?.message || "Could not load campaign.")
+      setErrorInfo({
+        statusCode: err?.statusCode || (err instanceof ApiError ? err.statusCode : undefined),
+        errorCode: err?.code || (err instanceof ApiError ? err.code : undefined),
+        message: err?.message || "Could not load campaign.",
+      })
     } finally {
       setLoading(false)
     }
@@ -111,16 +121,19 @@ export const BrandCampaignDetailPage: React.FC = () => {
     )
   }
 
-  if (error || !campaign) {
+  if (errorInfo || !campaign) {
     return (
-      <div className="p-8 text-center bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 text-xs max-w-xl mx-auto">
-        <AlertCircle className="w-6 h-6 mx-auto mb-2 text-rose-500" />
-        <p>{error || "Campaign not found."}</p>
-        <Link to="/brand/campaigns">
-          <Button variant="outline" size="sm" className="mt-3 text-xs">
-            Back to Campaigns
-          </Button>
-        </Link>
+      <div className="max-w-3xl mx-auto py-12 px-4">
+        <ErrorState
+          title={errorInfo?.statusCode === 404 ? "Campaign Not Found" : undefined}
+          message={errorInfo?.message}
+          statusCode={errorInfo?.statusCode}
+          errorCode={errorInfo?.errorCode}
+          onRetry={loadData}
+          backTo="/brand/campaigns"
+          backLabel="Back to Campaigns"
+          portal="brand"
+        />
       </div>
     )
   }

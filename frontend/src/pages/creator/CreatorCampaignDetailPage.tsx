@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react"
 import { useParams, Link, useNavigate } from "react-router-dom"
 import { briefsService } from "@/services/briefs.service"
+import { ApiError } from "@/lib/apiClient"
+import { ErrorState } from "@/components/common/ErrorState"
 import type { CampaignBrief, CampaignParticipant, ClipSubmission, ClipSubmissionCreate } from "@/types"
 import { ImageWithFallback } from "@/components/common/ImageWithFallback"
 import {
@@ -28,7 +30,11 @@ export const CreatorCampaignDetailPage: React.FC = () => {
   const navigate = useNavigate()
   const [campaign, setCampaign] = useState<CampaignBrief | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [errorInfo, setErrorInfo] = useState<{
+    statusCode?: number
+    errorCode?: string
+    message: string
+  } | null>(null)
 
   // Participation & Submissions state
   const [participation, setParticipation] = useState<CampaignParticipant | null>(null)
@@ -51,7 +57,7 @@ export const CreatorCampaignDetailPage: React.FC = () => {
   const loadData = async () => {
     if (!campaignId) return
     setLoading(true)
-    setError(null)
+    setErrorInfo(null)
     try {
       const brief = await briefsService.getBrief(campaignId)
       setCampaign(brief)
@@ -75,7 +81,11 @@ export const CreatorCampaignDetailPage: React.FC = () => {
       }
     } catch (err: any) {
       console.error("Failed to load campaign details:", err)
-      setError(err?.message || "Campaign could not be loaded.")
+      setErrorInfo({
+        statusCode: err?.statusCode || (err instanceof ApiError ? err.statusCode : undefined),
+        errorCode: err?.code || (err instanceof ApiError ? err.code : undefined),
+        message: err?.message || "Campaign could not be loaded.",
+      })
     } finally {
       setLoading(false)
     }
@@ -158,21 +168,19 @@ export const CreatorCampaignDetailPage: React.FC = () => {
     )
   }
 
-  if (error || !campaign) {
+  if (errorInfo || !campaign) {
     return (
-      <div className="max-w-3xl mx-auto py-12 px-4 text-center">
-        <div className="p-8 rounded-3xl bg-white border border-slate-200 shadow-sm space-y-4">
-          <AlertCircle className="w-12 h-12 text-rose-500 mx-auto" />
-          <h2 className="text-xl font-bold text-slate-900">Campaign Not Available</h2>
-          <p className="text-sm text-slate-500">{error || "This campaign does not exist or has been archived."}</p>
-          <Link
-            to="/creator/campaigns"
-            className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-purple-600 text-white font-semibold text-sm hover:bg-purple-700 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to Campaigns Marketplace
-          </Link>
-        </div>
+      <div className="max-w-3xl mx-auto py-12 px-4">
+        <ErrorState
+          title={errorInfo?.statusCode === 404 ? "Campaign Not Found" : undefined}
+          message={errorInfo?.message}
+          statusCode={errorInfo?.statusCode}
+          errorCode={errorInfo?.errorCode}
+          onRetry={loadData}
+          backTo="/creator/campaigns"
+          backLabel="Back to Campaigns Marketplace"
+          portal="creator"
+        />
       </div>
     )
   }

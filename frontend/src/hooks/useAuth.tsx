@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react"
 import type { User, LoginCredentials, RegisterData, AuthSession } from "@/types"
 import { authService } from "@/services/auth.service"
+import { apiClient } from "@/lib/apiClient"
 
 interface AuthContextType {
   user: User | null
@@ -23,16 +24,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState<boolean>(true)
 
   useEffect(() => {
+    // Listen for unauthorized 401 events emitted by apiClient
+    const unsubscribe = apiClient.onUnauthorized(() => {
+      authService.clearSession()
+      setUser(null)
+    })
+    return () => unsubscribe()
+  }, [])
+
+  useEffect(() => {
     // Check local storage session on initial mount
     const saved = authService.getSavedUser()
-    if (saved) {
+    const token =
+      localStorage.getItem("creatorbridge_auth_token") ||
+      localStorage.getItem("hacxlerate_auth_token")
+
+    if (saved && token) {
       setUser(saved)
+    } else {
+      setUser(null)
+      setIsLoading(false)
+      return
     }
+
     // Verify authoritative session with backend
     authService
       .getCurrentUser()
       .then((current) => {
-        if (current) setUser(current)
+        if (current) {
+          setUser(current)
+        } else {
+          // If getCurrentUser returned null, check whether session was cleared (e.g. 401 Unauthorized)
+          const hasToken =
+            localStorage.getItem("creatorbridge_auth_token") ||
+            localStorage.getItem("hacxlerate_auth_token")
+          if (!hasToken) {
+            setUser(null)
+          }
+        }
+      })
+      .catch(() => {
+        // Network or 5xx error: Keep cached saved user for resilience without logging out
       })
       .finally(() => {
         setIsLoading(false)
