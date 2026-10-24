@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react"
 import { Link, NavLink, useNavigate, useLocation } from "react-router-dom"
 import { useAuth } from "@/hooks/useAuth"
 import { CreatorBridgeLogo } from "@/components/common/CreatorBridgeLogo"
-import { ThemeToggle } from "@/components/common/ThemeToggle"
+import { ThemeSelector } from "@/components/common/ThemeSelector"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { useOutsideClick } from "@/hooks/useOutsideClick"
@@ -107,7 +107,7 @@ export const Navbar: React.FC = () => {
   const notificationsUrl = isBrandHub ? "/brand/community" : "/creator/community"
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-[#F4E7FF] dark:border-[#2D2447] bg-[#FFFDFD]/95 dark:bg-[#0F0D15]/95 backdrop-blur-md shadow-2xs transition-colors duration-200">
+    <header className="sticky top-0 z-50 w-full border-b border-[var(--color-border)] bg-[var(--color-surface)]/95 backdrop-blur-md shadow-2xs transition-colors duration-200">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 sm:px-6 gap-2 sm:gap-4">
         {/* =================================================================== */}
         {/* ZONE 1 (LEFT): Official Logo + Hub Badge                            */}
@@ -215,8 +215,8 @@ export const Navbar: React.FC = () => {
             </Link>
           )}
 
-          {/* Theme Toggle Button */}
-          <ThemeToggle />
+          {/* Theme Selector (All 6 Bespoke Marble Themes) */}
+          <ThemeSelector showLabel={true} />
 
           {/* Authenticated User Controls */}
           {isAuthenticated && user ? (
@@ -327,10 +327,9 @@ export const Navbar: React.FC = () => {
           </nav>
 
           {/* Secondary Actions & Theme Controls */}
-          <div className="pt-3 border-t border-[#F4E7FF] dark:border-[#2D2447] flex flex-col gap-2">
-            <div className="flex items-center justify-between px-2 py-1 bg-[#F4E7FF]/30 dark:bg-[#181524] rounded-xl border border-[#D8B8FF]/40 dark:border-[#2D2447]">
-              <span className="text-xs font-medium text-[#4B4652] dark:text-[#C7C3D4]">Theme Appearance</span>
-              <ThemeToggle showLabel />
+          <div className="pt-3 border-t border-[var(--color-border)] flex flex-col gap-2">
+            <div className="p-3 bg-[var(--color-surface-muted)]/50 rounded-2xl border border-[var(--color-border)]">
+              <ThemeSelector isMobileDrawer />
             </div>
 
             <Link to="/discover" onClick={() => setMobileMenuOpen(false)}>

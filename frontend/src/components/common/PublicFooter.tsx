@@ -14,7 +14,7 @@ export const PublicFooter: React.FC = () => {
   }
 
   return (
-    <footer className="border-t border-[#F4E7FF] dark:border-[#2D2447] bg-[#FFFDFD] dark:bg-[#0F0D15] py-12 md:py-16 text-[#4B4652] dark:text-[#C7C3D4] transition-colors duration-200">
+    <footer className="border-t border-[var(--color-border,#F4E7FF)] bg-[var(--color-surface,#FFFDFD)] py-12 md:py-16 text-[var(--color-text-muted,#4B4652)] transition-colors duration-200">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           {/* Col 1: Brand Info */}

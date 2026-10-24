@@ -10,131 +10,550 @@ html {
   html {
     scroll-behavior: auto;
   }
+  *, *::before, *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
 }
 
-:root {
+/* =========================================================================
+   GLOBAL THEME CUSTOMIZATION SYSTEM — THE 6 BESPOKE MARBLE PALETTES
+   ========================================================================= */
+
+/* Default & Theme 1 — Glossy Ruby Red & White Marble */
+:root,
+:root[data-theme="ruby-marble"] {
   color-scheme: light;
+  --color-primary: #8B0015;
+  --color-primary-hover: #6D0010;
+  --color-primary-foreground: #FFFFFF;
+  --color-background: #FAF9F6;
+  --color-dark-accent: #4A0010;
+  --color-highlight: #C9A46A;
+  --color-surface: #FFFFFF;
+  --color-surface-elevated: #FAF9F6;
+  --color-surface-muted: #F4EEE8;
+  --color-text: #1D0B10;
+  --color-text-muted: #5E454B;
+  --color-border: #EADCDF;
+  --color-border-hover: #C9A46A;
+  --color-focus-ring: #8B0015;
+  --color-accent: #C9A46A;
+  --color-success: #15803D;
+  --color-warning: #B45309;
+  --color-error: #DC2626;
+
+  /* Legacy Backward Compatibility Tokens */
   --cb-white: #FFFFFF;
-  --cb-off-white: #FFFDFD;
-  --cb-lavender-soft: #F4E7FF;
-  --cb-lavender: #D8B8FF;
-  --cb-purple: #9A6ADF;
-  --cb-purple-hover: #8655cb;
-  --cb-peach: #FFD7A8;
-  --cb-peach-soft: #FFF4E5;
-  --cb-text-primary: #111111;
-  --cb-text-secondary: #4B4652;
-  --cb-bg: #FFFDFD;
+  --cb-off-white: #FAF9F6;
+  --cb-lavender-soft: #F4EEE8;
+  --cb-lavender: #EADCDF;
+  --cb-purple: #8B0015;
+  --cb-purple-hover: #6D0010;
+  --cb-peach: #C9A46A;
+  --cb-peach-soft: #F4EEE8;
+  --cb-text-primary: #1D0B10;
+  --cb-text-secondary: #5E454B;
+  --cb-bg: #FAF9F6;
   --cb-surface: #FFFFFF;
-  --cb-border: #F4E7FF;
+  --cb-border: #EADCDF;
 }
 
-.dark {
+.dark,
+.dark[data-theme="ruby-marble"] {
   color-scheme: dark;
-  --cb-white: #181524;
-  --cb-off-white: #0F0D15;
-  --cb-lavender-soft: #231C35;
-  --cb-lavender: #3E325D;
-  --cb-purple: #B78AF7;
-  --cb-purple-hover: #C8A3FA;
-  --cb-peach: #523E28;
-  --cb-peach-soft: #2B2117;
-  --cb-text-primary: #F5F3F8;
-  --cb-text-secondary: #C7C3D4;
-  --cb-bg: #0F0D15;
-  --cb-surface: #181524;
-  --cb-border: #2D2447;
+  --color-primary: #B82236;
+  --color-primary-hover: #D23348;
+  --color-primary-foreground: #FFFFFF;
+  --color-background: #140508;
+  --color-dark-accent: #4A0010;
+  --color-highlight: #E2BF88;
+  --color-surface: #20090F;
+  --color-surface-elevated: #2D0E16;
+  --color-surface-muted: #3A141D;
+  --color-text: #FBF5F6;
+  --color-text-muted: #D2B8BE;
+  --color-border: #4A1823;
+  --color-border-hover: #E2BF88;
+  --color-focus-ring: #B82236;
+  --color-accent: #E2BF88;
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+
+  --cb-white: #20090F;
+  --cb-off-white: #140508;
+  --cb-lavender-soft: #3A141D;
+  --cb-lavender: #4A1823;
+  --cb-purple: #B82236;
+  --cb-purple-hover: #D23348;
+  --cb-peach: #E2BF88;
+  --cb-peach-soft: #3A141D;
+  --cb-text-primary: #FBF5F6;
+  --cb-text-secondary: #D2B8BE;
+  --cb-bg: #140508;
+  --cb-surface: #20090F;
+  --cb-border: #4A1823;
 }
+
+/* Theme 2 — Glossy Crimson & Pearl Marble */
+:root[data-theme="crimson-pearl"] {
+  color-scheme: light;
+  --color-primary: #B51226;
+  --color-primary-hover: #930D1E;
+  --color-primary-foreground: #FFFFFF;
+  --color-background: #FFFDF8;
+  --color-dark-accent: #650018;
+  --color-highlight: #B76E79;
+  --color-surface: #FFFFFF;
+  --color-surface-elevated: #FFFDF8;
+  --color-surface-muted: #F7F2EC;
+  --color-text: #1F0A0F;
+  --color-text-muted: #61454D;
+  --color-border: #ECDDDF;
+  --color-border-hover: #B76E79;
+  --color-focus-ring: #B51226;
+  --color-accent: #B76E79;
+  --color-success: #15803D;
+  --color-warning: #B45309;
+  --color-error: #DC2626;
+
+  --cb-white: #FFFFFF;
+  --cb-off-white: #FFFDF8;
+  --cb-lavender-soft: #F7F2EC;
+  --cb-lavender: #ECDDDF;
+  --cb-purple: #B51226;
+  --cb-purple-hover: #930D1E;
+  --cb-peach: #B76E79;
+  --cb-peach-soft: #F7F2EC;
+  --cb-text-primary: #1F0A0F;
+  --cb-text-secondary: #61454D;
+  --cb-bg: #FFFDF8;
+  --cb-surface: #FFFFFF;
+  --cb-border: #ECDDDF;
+}
+
+.dark[data-theme="crimson-pearl"] {
+  color-scheme: dark;
+  --color-primary: #D5263D;
+  --color-primary-hover: #E93B53;
+  --color-primary-foreground: #FFFFFF;
+  --color-background: #150509;
+  --color-dark-accent: #650018;
+  --color-highlight: #D48F9A;
+  --color-surface: #210A10;
+  --color-surface-elevated: #2E1018;
+  --color-surface-muted: #3D1621;
+  --color-text: #FCF6F7;
+  --color-text-muted: #D3B9BF;
+  --color-border: #4F1B26;
+  --color-border-hover: #D48F9A;
+  --color-focus-ring: #D5263D;
+  --color-accent: #D48F9A;
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+
+  --cb-white: #210A10;
+  --cb-off-white: #150509;
+  --cb-lavender-soft: #3D1621;
+  --cb-lavender: #4F1B26;
+  --cb-purple: #D5263D;
+  --cb-purple-hover: #E93B53;
+  --cb-peach: #D48F9A;
+  --cb-peach-soft: #3D1621;
+  --cb-text-primary: #FCF6F7;
+  --cb-text-secondary: #D3B9BF;
+  --cb-bg: #150509;
+  --cb-surface: #210A10;
+  --cb-border: #4F1B26;
+}
+
+/* Theme 3 — Glossy Scarlet & Ivory Marble */
+:root[data-theme="scarlet-ivory"] {
+  color-scheme: light;
+  --color-primary: #C1121F;
+  --color-primary-hover: #9C0C17;
+  --color-primary-foreground: #FFFFFF;
+  --color-background: #FFFFF0;
+  --color-dark-accent: #5C0011;
+  --color-highlight: #C5A059;
+  --color-surface: #FFFFFF;
+  --color-surface-elevated: #FFFFF0;
+  --color-surface-muted: #F7F5E4;
+  --color-text: #1E0B0F;
+  --color-text-muted: #60474C;
+  --color-border: #EBE5D3;
+  --color-border-hover: #C5A059;
+  --color-focus-ring: #C1121F;
+  --color-accent: #C5A059;
+  --color-success: #15803D;
+  --color-warning: #B45309;
+  --color-error: #DC2626;
+
+  --cb-white: #FFFFFF;
+  --cb-off-white: #FFFFF0;
+  --cb-lavender-soft: #F7F5E4;
+  --cb-lavender: #EBE5D3;
+  --cb-purple: #C1121F;
+  --cb-purple-hover: #9C0C17;
+  --cb-peach: #C5A059;
+  --cb-peach-soft: #F7F5E4;
+  --cb-text-primary: #1E0B0F;
+  --cb-text-secondary: #60474C;
+  --cb-bg: #FFFFF0;
+  --cb-surface: #FFFFFF;
+  --cb-border: #EBE5D3;
+}
+
+.dark[data-theme="scarlet-ivory"] {
+  color-scheme: dark;
+  --color-primary: #DD2331;
+  --color-primary-hover: #F23846;
+  --color-primary-foreground: #FFFFFF;
+  --color-background: #16060A;
+  --color-dark-accent: #5C0011;
+  --color-highlight: #DFBA74;
+  --color-surface: #230C12;
+  --color-surface-elevated: #31121A;
+  --color-surface-muted: #3F1822;
+  --color-text: #FAF8F1;
+  --color-text-muted: #D5C9B3;
+  --color-border: #4F2128;
+  --color-border-hover: #DFBA74;
+  --color-focus-ring: #DD2331;
+  --color-accent: #DFBA74;
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+
+  --cb-white: #230C12;
+  --cb-off-white: #16060A;
+  --cb-lavender-soft: #3F1822;
+  --cb-lavender: #4F2128;
+  --cb-purple: #DD2331;
+  --cb-purple-hover: #F23846;
+  --cb-peach: #DFBA74;
+  --cb-peach-soft: #3F1822;
+  --cb-text-primary: #FAF8F1;
+  --cb-text-secondary: #D5C9B3;
+  --cb-bg: #16060A;
+  --cb-surface: #230C12;
+  --cb-border: #4F2128;
+}
+
+/* Theme 4 — Glossy Wine Red & Silver Marble */
+:root[data-theme="wine-silver"] {
+  color-scheme: light;
+  --color-primary: #722F37;
+  --color-primary-hover: #5A232A;
+  --color-primary-foreground: #FFFFFF;
+  --color-background: #F8FAFC;
+  --color-dark-accent: #3B0A18;
+  --color-highlight: #C0C0C0;
+  --color-surface: #FFFFFF;
+  --color-surface-elevated: #F8FAFC;
+  --color-surface-muted: #EDF2F7;
+  --color-text: #181417;
+  --color-text-muted: #53484C;
+  --color-border: #E2E5EA;
+  --color-border-hover: #C0C0C0;
+  --color-focus-ring: #722F37;
+  --color-accent: #C0C0C0;
+  --color-success: #15803D;
+  --color-warning: #B45309;
+  --color-error: #DC2626;
+
+  --cb-white: #FFFFFF;
+  --cb-off-white: #F8FAFC;
+  --cb-lavender-soft: #EDF2F7;
+  --cb-lavender: #E2E5EA;
+  --cb-purple: #722F37;
+  --cb-purple-hover: #5A232A;
+  --cb-peach: #C0C0C0;
+  --cb-peach-soft: #EDF2F7;
+  --cb-text-primary: #181417;
+  --cb-text-secondary: #53484C;
+  --cb-bg: #F8FAFC;
+  --cb-surface: #FFFFFF;
+  --cb-border: #E2E5EA;
+}
+
+.dark[data-theme="wine-silver"] {
+  color-scheme: dark;
+  --color-primary: #98444E;
+  --color-primary-hover: #AF5560;
+  --color-primary-foreground: #FFFFFF;
+  --color-background: #0F0B0E;
+  --color-dark-accent: #3B0A18;
+  --color-highlight: #D8D8D8;
+  --color-surface: #1B1319;
+  --color-surface-elevated: #251C24;
+  --color-surface-muted: #312630;
+  --color-text: #F7F8FA;
+  --color-text-muted: #C7CBD2;
+  --color-border: #3D2C3A;
+  --color-border-hover: #D8D8D8;
+  --color-focus-ring: #98444E;
+  --color-accent: #D8D8D8;
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+
+  --cb-white: #1B1319;
+  --cb-off-white: #0F0B0E;
+  --cb-lavender-soft: #312630;
+  --cb-lavender: #3D2C3A;
+  --cb-purple: #98444E;
+  --cb-purple-hover: #AF5560;
+  --cb-peach: #D8D8D8;
+  --cb-peach-soft: #312630;
+  --cb-text-primary: #F7F8FA;
+  --cb-text-secondary: #C7CBD2;
+  --cb-bg: #0F0B0E;
+  --cb-surface: #1B1319;
+  --cb-border: #3D2C3A;
+}
+
+/* Theme 5 — Glossy Cherry Red & Cream Marble */
+:root[data-theme="cherry-cream"] {
+  color-scheme: light;
+  --color-primary: #A4132C;
+  --color-primary-hover: #840D21;
+  --color-primary-foreground: #FFFFFF;
+  --color-background: #FFF8EE;
+  --color-dark-accent: #4A0E18;
+  --color-highlight: #B87333;
+  --color-surface: #FFFFFF;
+  --color-surface-elevated: #FFF8EE;
+  --color-surface-muted: #F7EDE0;
+  --color-text: #210C11;
+  --color-text-muted: #63474C;
+  --color-border: #E9DACD;
+  --color-border-hover: #B87333;
+  --color-focus-ring: #A4132C;
+  --color-accent: #B87333;
+  --color-success: #15803D;
+  --color-warning: #B45309;
+  --color-error: #DC2626;
+
+  --cb-white: #FFFFFF;
+  --cb-off-white: #FFF8EE;
+  --cb-lavender-soft: #F7EDE0;
+  --cb-lavender: #E9DACD;
+  --cb-purple: #A4132C;
+  --cb-purple-hover: #840D21;
+  --cb-peach: #B87333;
+  --cb-peach-soft: #F7EDE0;
+  --cb-text-primary: #210C11;
+  --cb-text-secondary: #63474C;
+  --cb-bg: #FFF8EE;
+  --cb-surface: #FFFFFF;
+  --cb-border: #E9DACD;
+}
+
+.dark[data-theme="cherry-cream"] {
+  color-scheme: dark;
+  --color-primary: #C62542;
+  --color-primary-hover: #DE3957;
+  --color-primary-foreground: #FFFFFF;
+  --color-background: #16070B;
+  --color-dark-accent: #4A0E18;
+  --color-highlight: #D48D4D;
+  --color-surface: #240E14;
+  --color-surface-elevated: #33151D;
+  --color-surface-muted: #421C27;
+  --color-text: #FCF8F4;
+  --color-text-muted: #D7C5BC;
+  --color-border: #51242E;
+  --color-border-hover: #D48D4D;
+  --color-focus-ring: #C62542;
+  --color-accent: #D48D4D;
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+
+  --cb-white: #240E14;
+  --cb-off-white: #16070B;
+  --cb-lavender-soft: #421C27;
+  --cb-lavender: #51242E;
+  --cb-purple: #C62542;
+  --cb-purple-hover: #DE3957;
+  --cb-peach: #D48D4D;
+  --cb-peach-soft: #421C27;
+  --cb-text-primary: #FCF8F4;
+  --cb-text-secondary: #D7C5BC;
+  --cb-bg: #16070B;
+  --cb-surface: #240E14;
+  --cb-border: #51242E;
+}
+
+/* Theme 6 — Glossy Scarlet Ruby & Rose Marble */
+:root[data-theme="scarlet-ruby-rose"] {
+  color-scheme: light;
+  --color-primary: #9E1028;
+  --color-primary-hover: #7D0A1E;
+  --color-primary-foreground: #FFFFFF;
+  --color-background: #FFFEFA;
+  --color-dark-accent: #500014;
+  --color-highlight: #D4A1A8;
+  --color-surface: #FFFFFF;
+  --color-surface-elevated: #FFFEFA;
+  --color-surface-muted: #F8F1EE;
+  --color-text: #1D0B10;
+  --color-text-muted: #60464B;
+  --color-border: #E9DDDB;
+  --color-border-hover: #D4A1A8;
+  --color-focus-ring: #9E1028;
+  --color-accent: #D4A1A8;
+  --color-success: #15803D;
+  --color-warning: #B45309;
+  --color-error: #DC2626;
+
+  --cb-white: #FFFFFF;
+  --cb-off-white: #FFFEFA;
+  --cb-lavender-soft: #F8F1EE;
+  --cb-lavender: #E9DDDB;
+  --cb-purple: #9E1028;
+  --cb-purple-hover: #7D0A1E;
+  --cb-peach: #D4A1A8;
+  --cb-peach-soft: #F8F1EE;
+  --cb-text-primary: #1D0B10;
+  --cb-text-secondary: #60464B;
+  --cb-bg: #FFFEFA;
+  --cb-surface: #FFFFFF;
+  --cb-border: #E9DDDB;
+}
+
+.dark[data-theme="scarlet-ruby-rose"] {
+  color-scheme: dark;
+  --color-primary: #BE1D37;
+  --color-primary-hover: #D7304C;
+  --color-primary-foreground: #FFFFFF;
+  --color-background: #15050A;
+  --color-dark-accent: #500014;
+  --color-highlight: #E6B7BE;
+  --color-surface: #220912;
+  --color-surface-elevated: #300E1A;
+  --color-surface-muted: #3F1423;
+  --color-text: #FDF8F9;
+  --color-text-muted: #DABBC1;
+  --color-border: #4D1B28;
+  --color-border-hover: #E6B7BE;
+  --color-focus-ring: #BE1D37;
+  --color-accent: #E6B7BE;
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+
+  --cb-white: #220912;
+  --cb-off-white: #15050A;
+  --cb-lavender-soft: #3F1423;
+  --cb-lavender: #4D1B28;
+  --cb-purple: #BE1D37;
+  --cb-purple-hover: #D7304C;
+  --cb-peach: #E6B7BE;
+  --cb-peach-soft: #3F1423;
+  --cb-text-primary: #FDF8F9;
+  --cb-text-secondary: #DABBC1;
+  --cb-bg: #15050A;
+  --cb-surface: #220912;
+  --cb-border: #4D1B28;
+}
+
+/* =========================================================================
+   TAILWIND THEME MAPPING — DYNAMIC ADAPTATION FOR ALL COMPONENTS
+   ========================================================================= */
 
 @theme {
-  --color-cb-white: #FFFFFF;
-  --color-cb-off-white: #FFFDFD;
-  --color-cb-lavender-soft: #F4E7FF;
-  --color-cb-lavender: #D8B8FF;
-  --color-cb-purple: #9A6ADF;
-  --color-cb-purple-hover: #8655cb;
-  --color-cb-peach: #FFD7A8;
-  --color-cb-peach-soft: #FFF4E5;
-  --color-cb-text-primary: #111111;
-  --color-cb-text-secondary: #4B4652;
+  --color-primary: var(--color-primary);
+  --color-primary-hover: var(--color-primary-hover);
+  --color-primary-foreground: var(--color-primary-foreground);
+  --color-background: var(--color-background);
+  --color-surface: var(--color-surface);
+  --color-surface-elevated: var(--color-surface-elevated);
+  --color-surface-muted: var(--color-surface-muted);
+  --color-text: var(--color-text);
+  --color-text-muted: var(--color-text-muted);
+  --color-border: var(--color-border);
+  --color-accent: var(--color-accent);
+  --color-highlight: var(--color-highlight);
+  --color-dark-accent: var(--color-dark-accent);
+  --color-focus-ring: var(--color-focus-ring);
+  --color-success: var(--color-success);
+  --color-warning: var(--color-warning);
+  --color-error: var(--color-error);
+
+  /* Map standard purple utility classes to the active theme */
+  --color-purple-600: var(--color-primary);
+  --color-purple-700: var(--color-primary-hover);
+  --color-purple-500: var(--color-primary);
+  --color-purple-800: var(--color-dark-accent);
+  --color-purple-900: var(--color-dark-accent);
+  --color-purple-950: var(--color-dark-accent);
+  --color-purple-50: var(--color-surface-muted);
+  --color-purple-100: var(--color-border);
+  --color-purple-200: var(--color-border);
+
+  /* Map legacy cb-* tokens to the active theme */
+  --color-cb-white: var(--color-surface);
+  --color-cb-off-white: var(--color-background);
+  --color-cb-lavender-soft: var(--color-surface-muted);
+  --color-cb-lavender: var(--color-border);
+  --color-cb-purple: var(--color-primary);
+  --color-cb-purple-hover: var(--color-primary-hover);
+  --color-cb-peach: var(--color-highlight);
+  --color-cb-peach-soft: var(--color-surface-muted);
+  --color-cb-text-primary: var(--color-text);
+  --color-cb-text-secondary: var(--color-text-muted);
 }
+
+/* =========================================================================
+   BASE STYLING & SMOOTH PALETTE TRANSITIONS
+   ========================================================================= */
 
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  background-color: #FFFDFD;
-  color: #111111;
+  background-color: var(--color-background, #FAF9F6);
+  color: var(--color-text, #1D0B10);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-.dark body {
-  background-color: #0F0D15;
-  color: #F5F3F8;
-}
-
-/* CreatorBridge Light Brand Gradients & Subtle Accents */
-.bg-cb-off-white {
-  background-color: #FFFDFD;
-}
-
-.bg-cb-lavender-soft {
-  background-color: #F4E7FF;
-}
-
-.bg-cb-lavender {
-  background-color: #D8B8FF;
-}
-
-.bg-cb-purple {
-  background-color: #9A6ADF;
-}
-
-.bg-cb-peach {
-  background-color: #FFD7A8;
-}
-
-.text-cb-primary {
-  color: #111111;
-}
-
-.text-cb-secondary {
-  color: #4B4652;
-}
-
-.text-cb-purple {
-  color: #9A6ADF;
-}
-
-.border-cb-lavender {
-  border-color: #D8B8FF;
-}
-
-.border-cb-lavender-soft {
-  border-color: #F4E7FF;
-}
-
-.border-cb-peach {
-  border-color: #FFD7A8;
-}
-
-/* Subtle Lavender + Peach Ambient Glows (No dark or neon cyan) */
-.cb-glow-subtle {
-  box-shadow: 0 10px 40px -15px rgba(154, 106, 223, 0.12);
-}
-
-.cb-glow-card {
-  box-shadow: 0 4px 24px -2px rgba(154, 106, 223, 0.08), 0 2px 6px -1px rgba(0, 0, 0, 0.03);
-}
-
-.cb-glow-button {
-  box-shadow: 0 4px 14px 0 rgba(154, 106, 223, 0.35);
+  transition: background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 #root {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: var(--color-background, #FAF9F6);
+  color: var(--color-text, #1D0B10);
+  transition: background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Dynamic Ambient Glows */
+.cb-glow-subtle {
+  box-shadow: 0 10px 40px -15px var(--color-primary)20;
+}
+
+.cb-glow-card {
+  box-shadow: 0 4px 24px -2px var(--color-primary)15, 0 2px 6px -1px rgba(0, 0, 0, 0.03);
+}
+
+.cb-glow-button {
+  box-shadow: 0 4px 14px 0 var(--color-primary)35;
+}
+
+/* Marble surface shimmer effect */
+.cb-marble-surface {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  transition: all 0.2s ease;
+}
+
+.cb-marble-surface:hover {
+  border-color: var(--color-border-hover);
+  box-shadow: 0 6px 20px -4px var(--color-primary)12;
+}

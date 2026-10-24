@@ -55,7 +55,7 @@ export const DeliveryCheckReportModal: React.FC<DeliveryCheckReportModalProps> =
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl max-w-2xl w-full p-6 space-y-5 shadow-2xl border border-slate-100 max-h-[90vh] overflow-y-auto">
+      <div className="bg-[var(--color-surface,#FFFFFF)] rounded-3xl max-w-2xl w-full p-6 space-y-5 shadow-2xl border border-[var(--color-border,#EADCDF)] text-[var(--color-text,#1D0B10)] max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-start justify-between pb-3 border-b border-slate-100">
           <div>
