@@ -12,6 +12,7 @@ from app.repositories import (
     portfolio_repository,
     PortfolioRepository,
 )
+from app.services.achievement_service import achievement_service
 from app.schemas.match import (
     MatchCriteria,
     CreatorMatchResult,
@@ -243,6 +244,7 @@ class MatchingService(BaseService):
                 f"certified in {', '.join(list(c_tools)[:2]) or 'AI workflows'}, and verified portfolio delivery."
             )
 
+            achievement = achievement_service.ranking_bonus(str(creator.id), criteria.brief_id)
             results.append(
                 CreatorMatchResult(
                     creator_id=str(creator.id),
@@ -251,6 +253,10 @@ class MatchingService(BaseService):
                     creator_level=creator.level.value if hasattr(creator.level, "value") else str(creator.level),
                     reputation_score=creator.reputation_score or 4.8,
                     overall_match_score=overall_score,
+                    achievement_points=achievement["lifetime_points"],
+                    achievement_reputation_bonus=achievement["long_term_reputation_bonus"],
+                    temporary_priority_bonus=achievement["temporary_priority_bonus"],
+                    priority_score=round(min(100.0, overall_score + achievement["long_term_reputation_bonus"] + achievement["temporary_priority_bonus"]), 1),
                     factors=factors,
                     summary_explanation=summary_exp,
                     top_strengths=strengths,
@@ -261,8 +267,8 @@ class MatchingService(BaseService):
                 )
             )
 
-        # Deterministic sorting descending by overall match score
-        results.sort(key=lambda r: r.overall_match_score, reverse=True)
+        # Match fit remains visible; capped achievement bonuses only affect ordering transparently.
+        results.sort(key=lambda r: (getattr(r, "priority_score", r.overall_match_score), r.overall_match_score), reverse=True)
         return results[: criteria.limit]
 
     async def get_matches_for_brief_id(self, brief_id: str) -> List[CreatorMatchResult]:
