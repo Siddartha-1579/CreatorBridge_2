@@ -166,7 +166,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
         </div>
 
         {/* Active Palette Preview Indicator */}
-        <div className="flex items-center -space-x-1 shrink-0">
+        <div className="hidden sm:flex items-center -space-x-1">
           <span
             className="w-2.5 h-2.5 rounded-full border border-white dark:border-black/50 shadow-2xs"
             style={{ backgroundColor: activeTheme.palette.primary }}
@@ -178,7 +178,7 @@ export const ThemeSelector: React.FC<ThemeSelectorProps> = ({
         </div>
 
         {showLabel && (
-          <span className="text-xs font-bold text-[var(--color-text)] tracking-tight">
+          <span className="hidden md:inline-block text-xs font-semibold text-[var(--color-text)]">
             Theme
           </span>
         )}

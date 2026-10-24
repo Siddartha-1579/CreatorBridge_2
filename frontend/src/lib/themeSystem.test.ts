@@ -31,10 +31,10 @@ function getContrastRatio(hex1: string, hex2: string): number {
 }
 
 describe("Global Theme Customization System - Core Registry & Exact Palettes", () => {
-  it("registers all seven themes (six bespoke marble themes + preserved classic purple)", () => {
-    assert.equal(THEME_LIST.length, 7)
+  it("registers exactly six distinct themes with numbers 1 through 6", () => {
+    assert.equal(THEME_LIST.length, 6)
     const numbers = THEME_LIST.map((t) => t.number).sort((a, b) => a - b)
-    assert.deepEqual(numbers, [1, 2, 3, 4, 5, 6, 7])
+    assert.deepEqual(numbers, [1, 2, 3, 4, 5, 6])
   })
 
   it("verifies Theme 1: Glossy Ruby Red & White Marble exact hex values", () => {
@@ -120,26 +120,11 @@ describe("Global Theme Customization System - Core Registry & Exact Palettes", (
     assert.equal(t.colorNames.darkAccent, "Dark Maroon")
     assert.equal(t.colorNames.highlight, "Soft Rose Gold")
   })
-
-  it("verifies Theme 7: Classic Electric Violet & Lavender Marble exact hex values", () => {
-    const t = THEMES["classic-purple"]
-    assert.ok(t, "Theme 7 must exist")
-    assert.equal(t.name, "Classic Electric Violet & Lavender Marble")
-    assert.equal(t.palette.primary.toUpperCase(), "#9A6ADF")
-    assert.equal(t.palette.background.toUpperCase(), "#FFFDFD")
-    assert.equal(t.palette.darkAccent.toUpperCase(), "#3E325D")
-    assert.equal(t.palette.highlight.toUpperCase(), "#FFD7A8")
-    assert.equal(t.colorNames.primary, "Electric Violet")
-    assert.equal(t.colorNames.background, "Lavender White")
-    assert.equal(t.colorNames.darkAccent, "Deep Twilight")
-    assert.equal(t.colorNames.highlight, "Peach Gold")
-  })
 })
 
 describe("Global Theme Customization System - Accessibility & Contrast Validation", () => {
-  it("ensures white text on primary buttons meets WCAG AA contrast (>= 4.5:1) for all 6 marble themes", () => {
-    const marbleThemes = THEME_LIST.filter((t) => t.id !== "classic-purple")
-    for (const theme of marbleThemes) {
+  it("ensures white text on primary buttons meets WCAG AA contrast (>= 4.5:1) for all 6 themes", () => {
+    for (const theme of THEME_LIST) {
       const contrast = getContrastRatio("#FFFFFF", theme.palette.primary)
       assert.ok(
         contrast >= 4.5,

@@ -22,7 +22,7 @@
           }
 
           // 6-Theme Palette Customization
-          var validThemes = ['ruby-marble', 'crimson-pearl', 'scarlet-ivory', 'wine-silver', 'cherry-cream', 'scarlet-ruby-rose', 'classic-purple'];
+          var validThemes = ['ruby-marble', 'crimson-pearl', 'scarlet-ivory', 'wine-silver', 'cherry-cream', 'scarlet-ruby-rose'];
           var storedTheme = localStorage.getItem('creatorbridge_global_theme_id');
           var themeId = validThemes.indexOf(storedTheme) !== -1 ? storedTheme : 'ruby-marble';
           document.documentElement.setAttribute('data-theme', themeId);
