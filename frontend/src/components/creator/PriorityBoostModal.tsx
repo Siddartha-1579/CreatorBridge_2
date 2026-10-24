@@ -63,6 +63,8 @@ export const PriorityBoostModal: React.FC<PriorityBoostModalProps> = ({
 
   const remainingBalance = Math.max(0, availablePoints - points)
   const bonus = calculateBonus(points)
+  const durationHours = points < 25 ? 1 : points < 50 ? 6 : points < 100 ? 12 : 24
+  const durationLabel = durationHours === 1 ? "1 hour" : durationHours === 24 ? "1 day" : `${durationHours} hours`
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-xs animate-in fade-in duration-200">
@@ -94,7 +96,7 @@ export const PriorityBoostModal: React.FC<PriorityBoostModalProps> = ({
             </div>
             <h4 className="text-base font-bold text-[#111111] dark:text-zinc-100">Priority Boost Activated!</h4>
             <p className="text-xs text-[#4B4652] dark:text-zinc-400">
-              Your +{bonus} ranking priority bonus is now active for the next 24 hours.
+              Your +{bonus} ranking priority bonus is now active for {durationLabel}.
             </p>
           </div>
         ) : (
@@ -114,7 +116,7 @@ export const PriorityBoostModal: React.FC<PriorityBoostModalProps> = ({
             {/* Point Selection Chips */}
             <div className="space-y-2">
               <label className="text-xs font-semibold text-[#111111] dark:text-zinc-200 block">
-                Select Points to Spend (10 – 100 pts)
+                Select Points to Spend (10–100 pts; duration depends on points spent)
               </label>
               <div className="grid grid-cols-4 gap-2">
                 {[10, 25, 50, 100].map((preset) => {
@@ -162,7 +164,7 @@ export const PriorityBoostModal: React.FC<PriorityBoostModalProps> = ({
                 </span>
                 <span className="text-[11px] text-[#4B4652] dark:text-zinc-400 flex items-center gap-1">
                   <Clock className="h-3 w-3" />
-                  Duration: 24 hours from activation
+                  Duration: {durationLabel} based on points spent
                 </span>
               </div>
               <div className="text-right">
