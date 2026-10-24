@@ -377,6 +377,76 @@ def init_db():
         )
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_priority_boost_lookup ON creator_priority_boosts(creator_id, brief_id, status, expires_at)")
 
+        # 16. user_policy_acceptances (immutable audit trail of platform policy agreements)
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS user_policy_acceptances (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL,
+                policy_version TEXT NOT NULL,
+                policy_reference TEXT NOT NULL,
+                ip_address TEXT,
+                user_agent TEXT,
+                accepted_at TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_user_policy_acceptances_user ON user_policy_acceptances(user_id, policy_version)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_user_policy_acceptances_lookup ON user_policy_acceptances(user_id, accepted_at)")
+
+        # Ensure users table has policy acceptance columns
+        cursor.execute("PRAGMA table_info(users)")
+        user_columns = [row[1] for row in cursor.fetchall()]
+        if "accepted_policy_version" not in user_columns:
+            cursor.execute("ALTER TABLE users ADD COLUMN accepted_policy_version TEXT")
+            logger.info("Migrated users table: added accepted_policy_version column")
+        if "policy_accepted_at" not in user_columns:
+            cursor.execute("ALTER TABLE users ADD COLUMN policy_accepted_at TEXT")
+            logger.info("Migrated users table: added policy_accepted_at column")
+
+        # Seed initial policy acceptances for demo accounts so they remain fully functional
+        now_iso = datetime.now(timezone.utc).isoformat()
+        demo_accounts = [
+            "00000000-0000-0000-0000-000000000001",
+            "00000000-0000-0000-0000-000000000002",
+            "00000000-0000-0000-0000-000000000003",
+            "00000000-0000-0000-0000-000000000004",
+            "usr_lumina_skincare",
+            "usr_terra_outdoor",
+            "usr_elena_rostova",
+            "usr_marcus_vance",
+            "usr_aaliyah_chen",
+            "usr_sarah_chen",
+            "usr_brand_alpha",
+            "usr_brand_beta",
+            "usr_creator_no_balance_999",
+            "dev-user-001",
+            "brand-test-alpha",
+        ]
+        for acc_id in demo_accounts:
+            cursor.execute(
+                """
+                INSERT OR IGNORE INTO user_policy_acceptances
+                (id, user_id, policy_version, policy_reference, ip_address, user_agent, accepted_at, created_at)
+                VALUES (?, ?, '2026.1', 'cb-platform-policies-2026.1', '127.0.0.1', 'System/Seed', ?, ?)
+                """,
+                (f"seed-pol-{acc_id[:20]}", acc_id, now_iso, now_iso),
+            )
+
+        # Ensure all existing seeded platform accounts have accepted policy marked
+        cursor.execute("UPDATE users SET accepted_policy_version = '2026.1' WHERE accepted_policy_version IS NULL AND id NOT LIKE 'unaccepted%' AND id NOT LIKE 'bypass%'")
+        cursor.execute(
+            """
+            INSERT OR IGNORE INTO user_policy_acceptances
+            (id, user_id, policy_version, policy_reference, ip_address, user_agent, accepted_at, created_at)
+            SELECT 'seed-pol-' || id, id, '2026.1', 'cb-platform-policies-2026.1', '127.0.0.1', 'System/Seed', ?, ?
+            FROM users
+            WHERE id NOT LIKE 'unaccepted%' AND id NOT LIKE 'bypass%'
+            """,
+            (now_iso, now_iso),
+        )
+
         # Migrations: ensure columns exist in campaign_briefs
         cursor.execute("PRAGMA table_info(campaign_briefs)")
         columns = [row[1] for row in cursor.fetchall()]

@@ -5,6 +5,8 @@ import { useAuth } from "@/hooks/useAuth"
 import { authService } from "@/services/auth.service"
 import { TurnstileWidget } from "@/components/common/TurnstileWidget"
 import { CreatorBridgeLogo } from "@/components/common/CreatorBridgeLogo"
+import { PolicyAgreementCheckbox } from "@/components/policy/PolicyAgreementCheckbox"
+import { PlatformPoliciesModal } from "@/components/policy/PlatformPoliciesModal"
 
 export const CreatorAuthPage: React.FC = () => {
   const navigate = useNavigate()
@@ -27,6 +29,9 @@ export const CreatorAuthPage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState<string>("")
+  const [policyAccepted, setPolicyAccepted] = useState(false)
+  const [showPolicyModal, setShowPolicyModal] = useState(false)
+  const [policyError, setPolicyError] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -47,6 +52,11 @@ export const CreatorAuthPage: React.FC = () => {
         setError("Passwords do not match.")
         return
       }
+      if (!policyAccepted) {
+        setPolicyError(true)
+        setError("You must read and agree to the CreatorBridge Platform Policies to complete registration.")
+        return
+      }
     }
 
     setIsLoading(true)
@@ -59,6 +69,8 @@ export const CreatorAuthPage: React.FC = () => {
           fullName,
           role: "CREATOR",
           turnstileToken: turnstileToken || undefined,
+          policyAccepted: true,
+          policyVersion: "2026.1",
         })
         navigate(session.redirectPath || "/creator/onboarding")
       } else {
@@ -313,10 +325,26 @@ export const CreatorAuthPage: React.FC = () => {
               onExpire={() => setTurnstileToken("")}
             />
 
+            {/* Mandatory Platform Policies Agreement Checkbox */}
+            {mode === "register" && (
+              <PolicyAgreementCheckbox
+                id="creator-policy-agreement"
+                checked={policyAccepted}
+                onChange={(checked) => {
+                  setPolicyAccepted(checked)
+                  if (checked) setPolicyError(false)
+                }}
+                onOpenPolicies={() => setShowPolicyModal(true)}
+                hasError={policyError}
+                errorMessage="You must agree to the CreatorBridge Platform Policies to complete registration."
+                policyVersion="2026.1"
+              />
+            )}
+
             <button
               type="submit"
-              disabled={isLoading}
-              className="w-full py-3.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-medium text-sm shadow-md shadow-purple-600/20 disabled:opacity-50 transition-all flex items-center justify-center space-x-2"
+              disabled={isLoading || (mode === "register" && !policyAccepted)}
+              className="w-full py-3.5 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-medium text-sm shadow-md shadow-purple-600/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2"
             >
               {isLoading ? (
                 <span>Authenticating...</span>
@@ -330,6 +358,17 @@ export const CreatorAuthPage: React.FC = () => {
               )}
             </button>
           </form>
+
+          {/* Modal for viewing complete platform policies without losing progress */}
+          <PlatformPoliciesModal
+            isOpen={showPolicyModal}
+            onClose={() => setShowPolicyModal(false)}
+            onAcceptAndClose={() => {
+              setPolicyAccepted(true)
+              setPolicyError(false)
+              setShowPolicyModal(false)
+            }}
+          />
 
 
         </div>

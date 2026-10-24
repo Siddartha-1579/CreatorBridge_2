@@ -19,11 +19,13 @@ from app.api.v1.endpoints import (
     achievements,
     ai_intelligence,
     chatbot,
+    policies,
 )
 
 api_v1_router = APIRouter()
 
 api_v1_router.include_router(health.router, tags=["Health"])
+api_v1_router.include_router(policies.router, prefix="/policies", tags=["Platform Policies"])
 api_v1_router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 api_v1_router.include_router(onboarding.router, prefix="/onboarding", tags=["Creator Onboarding"])
 api_v1_router.include_router(surveys.router, prefix="/surveys", tags=["Adaptive Surveys"])
@@ -41,5 +43,3 @@ api_v1_router.include_router(generation.router, prefix="/generation", tags=["AI 
 api_v1_router.include_router(ai.router, prefix="/ai", tags=["AI Infrastructure"])
 api_v1_router.include_router(ai_intelligence.router, prefix="/ai", tags=["AI Intelligence"])
 api_v1_router.include_router(chatbot.router, prefix="/chatbot", tags=["Support Chatbot"])
-
-

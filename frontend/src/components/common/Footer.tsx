@@ -13,6 +13,9 @@ export const Footer: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-4 text-[11px]">
+          <Link to="/policies" className="hover:text-[#9A6ADF] transition-colors underline-offset-2 hover:underline">
+            Platform Policies
+          </Link>
           <span className="inline-flex items-center gap-1 text-[#9A6ADF]">
             <ShieldCheck className="h-3.5 w-3.5" />
             Commercial Generative Standards

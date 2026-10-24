@@ -3,7 +3,7 @@
 from typing import List, Optional
 from enum import Enum
 from pydantic import BaseModel, ConfigDict, computed_field
-from fastapi import Depends, Header
+from fastapi import Depends, Header, Request
 from app.core.config import settings
 from app.core.errors import UnauthorizedException, ForbiddenException
 from app.core.logging import get_logger
@@ -27,6 +27,7 @@ class AuthenticatedUser(BaseModel):
     role: UserRole
     is_verified: bool = False
     full_name: Optional[str] = None
+    has_accepted_policy: bool = True
 
     @computed_field
     @property
@@ -40,6 +41,7 @@ class AuthenticatedUser(BaseModel):
 
 
 async def get_current_user(
+    request: Request,
     authorization: Optional[str] = Header(None, alias="Authorization"),
     x_user_role: Optional[str] = Header(None, alias="X-User-Role"),
     x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
@@ -48,6 +50,7 @@ async def get_current_user(
     Extracts and authenticates the user from the Authorization Bearer token.
     Separates authentication ('who you are') from authorization ('what you can do').
     In development mode, allows development header simulation for testability.
+    Enforces mandatory platform policy acceptance on protected platform resources.
     """
     if not authorization and not (settings.app_debug and x_user_id):
         raise UnauthorizedException("Authorization header is missing")
@@ -59,6 +62,8 @@ async def get_current_user(
             raise UnauthorizedException("Invalid authorization scheme. Expected 'Bearer <token>'")
         token = parts[1]
 
+    user: Optional[AuthenticatedUser] = None
+
     # In development mode, allow simulated mock user if mock token or mock headers provided
     if settings.app_debug and (token.startswith("dev-") or x_user_id):
         role_str = (x_user_role or "CREATOR").upper()
@@ -68,42 +73,57 @@ async def get_current_user(
             role = UserRole.CREATOR
 
         user_id = x_user_id or (token.replace("dev-", "") if token.startswith("dev-") else "dev-user-001")
-        return AuthenticatedUser(
+        user = AuthenticatedUser(
             id=user_id,
             email=f"{user_id}@marketplace.local",
             role=role,
             is_verified=True,
             full_name=user_id.replace("usr_", "").replace("_", " ").title(),
         )
+    else:
+        # In production, Supabase JWT verification is performed
+        # (Token decoding with Supabase JWT Secret or auth verification)
+        try:
+            import jwt
+            payload = jwt.decode(
+                token,
+                settings.supabase_jwt_secret,
+                algorithms=["HS256"],
+                audience="authenticated",
+            )
+            user_id = payload.get("sub")
+            email = payload.get("email", "")
+            role_str = payload.get("app_metadata", {}).get("role", "CREATOR").upper()
+            role = UserRole(role_str) if role_str in UserRole._value2member_map_ else UserRole.CREATOR
 
-    # In production, Supabase JWT verification is performed
-    # (Token decoding with Supabase JWT Secret or auth verification)
-    try:
-        import jwt
-        payload = jwt.decode(
-            token,
-            settings.supabase_jwt_secret,
-            algorithms=["HS256"],
-            audience="authenticated",
-        )
-        user_id = payload.get("sub")
-        email = payload.get("email", "")
-        role_str = payload.get("app_metadata", {}).get("role", "CREATOR").upper()
-        role = UserRole(role_str) if role_str in UserRole._value2member_map_ else UserRole.CREATOR
+            user = AuthenticatedUser(
+                id=user_id,
+                email=email,
+                role=role,
+                is_verified=payload.get("user_metadata", {}).get("is_verified", False),
+                full_name=payload.get("user_metadata", {}).get("full_name"),
+            )
+        except Exception as e:
+            logger.warning(f"Failed to authenticate token: {str(e)}")
+            raise UnauthorizedException("Invalid or expired authentication token")
 
-        return AuthenticatedUser(
-            id=user_id,
-            email=email,
-            role=role,
-            is_verified=payload.get("user_metadata", {}).get("is_verified", False),
-            full_name=payload.get("user_metadata", {}).get("full_name"),
-        )
-    except Exception as e:
-        logger.warning(f"Failed to authenticate token: {str(e)}")
-        raise UnauthorizedException("Invalid or expired authentication token")
+    # Enforce mandatory policy acceptance on protected endpoints
+    if user and request is not None:
+        path = request.url.path
+        is_policy_route = path.startswith("/api/v1/policies") or path.startswith("/policies")
+        is_auth_exempt = path in ["/api/v1/auth/me", "/api/v1/auth/logout"]
+        if not is_policy_route and not is_auth_exempt:
+            from app.services.policy_service import policy_service
+            if not policy_service.has_accepted_current_policy(user.id):
+                raise ForbiddenException(
+                    "POLICY_ACCEPTANCE_REQUIRED: You must accept the latest CreatorBridge Platform Policies before accessing protected platform features."
+                )
+
+    return user
 
 
 async def get_optional_user(
+    request: Request,
     authorization: Optional[str] = Header(None, alias="Authorization"),
     x_user_role: Optional[str] = Header(None, alias="X-User-Role"),
     x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
@@ -112,7 +132,7 @@ async def get_optional_user(
     if not authorization and not (settings.app_debug and x_user_id):
         return None
     try:
-        return await get_current_user(authorization, x_user_role, x_user_id)
+        return await get_current_user(request, authorization, x_user_role, x_user_id)
     except Exception:
         return None
 

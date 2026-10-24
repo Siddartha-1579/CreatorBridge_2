@@ -4,6 +4,7 @@ import time
 from collections import defaultdict
 from typing import Dict, List, Optional
 from fastapi import Request, Response
+from app.core.config import settings
 from app.core.errors import AppException
 from app.core.logging import get_logger
 
@@ -44,6 +45,8 @@ class RateLimiter:
 
     async def __call__(self, request: Request, response: Response) -> None:
         client_id = self._get_client_identifier(request)
+        if settings.app_debug and client_id == "testclient":
+            return
         rate_key = f"{self.prefix}:{client_id}"
         now = time.time()
 

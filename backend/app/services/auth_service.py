@@ -150,13 +150,7 @@ class AuthService(BaseService):
         """
         self.logger.info(f"Initiating registration for {request.email} [role={request.role}]")
 
-        # 1. Cloudflare Turnstile human challenge verification
-        if request.turnstile_token:
-            await turnstile_service.verify_token(request.turnstile_token, remote_ip=ip_address)
-        elif not settings.app_debug:
-            raise ValidationException("Human verification token is required to complete registration")
-
-        # 2. Enforce allowed self-registration roles (ADMIN cannot self-register)
+        # 1. Enforce allowed self-registration roles (ADMIN cannot self-register)
         if request.role == UserRole.ADMIN:
             await audit_service.log_event(
                 action="AUTH_PRIVILEGE_ESCALATION_ATTEMPT",
@@ -166,6 +160,25 @@ class AuthService(BaseService):
                 metadata={"email": request.email, "attempted_role": "ADMIN"},
             )
             raise ValidationException("Admin roles cannot be self-registered")
+
+        # 2. Enforce mandatory platform policy acceptance
+        if not request.policy_accepted:
+            await audit_service.log_event(
+                action="AUTH_REGISTER_FAILED_POLICY_NOT_ACCEPTED",
+                status="BLOCKED",
+                ip_address=ip_address,
+                user_agent=user_agent,
+                metadata={"email": request.email},
+            )
+            raise ValidationException(
+                "Mandatory policy acceptance is required. You must read and agree to the CreatorBridge Platform Policies to register."
+            )
+
+        # 3. Cloudflare Turnstile human challenge verification
+        if request.turnstile_token:
+            await turnstile_service.verify_token(request.turnstile_token, remote_ip=ip_address)
+        elif not settings.app_debug:
+            raise ValidationException("Human verification token is required to complete registration")
 
         # 3. Check for existing user conflict
         normalized_email = request.email.lower().strip()
@@ -208,6 +221,15 @@ class AuthService(BaseService):
             "updated_at": now.isoformat(),
         }
         self._persist_user(self._user_store[normalized_email])
+
+        # Record immutable policy acceptance in ledger
+        from app.services.policy_service import policy_service
+        policy_service.record_policy_acceptance(
+            user_id=user.id,
+            policy_version=request.policy_version or policy_service.CURRENT_POLICY_VERSION,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
 
         token = self._generate_token(user)
         redirect_path = self._determine_redirect_path(user.role, is_onboarded=False)
@@ -355,6 +377,9 @@ class AuthService(BaseService):
             except Exception:
                 updated_at_dt = None
 
+        from app.services.policy_service import policy_service
+        is_policy_accepted = policy_service.has_accepted_current_policy(record["id"])
+
         user = UserResponse(
             id=record["id"],
             email=record["email"],
@@ -363,6 +388,8 @@ class AuthService(BaseService):
             status="ACTIVE",
             is_verified=record.get("is_verified", False),
             email_verified=record.get("email_verified", False),
+            policy_accepted=is_policy_accepted,
+            accepted_policy_version=policy_service.CURRENT_POLICY_VERSION if is_policy_accepted else None,
             created_at=created_at_dt,
             updated_at=updated_at_dt,
         )

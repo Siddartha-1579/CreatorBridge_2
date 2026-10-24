@@ -73,6 +73,14 @@ export const PublicFooter: React.FC = () => {
                   Trust & Verification Standards
                 </button>
               </li>
+              <li>
+                <Link
+                  to="/policies"
+                  className="hover:text-[#9A6ADF] transition-colors inline-flex items-center gap-1"
+                >
+                  Platform Policies & Legal
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -140,7 +148,13 @@ export const PublicFooter: React.FC = () => {
         <div className="pt-8 border-t border-[#F4E7FF] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#4B4652]">
           <p>© 2026 CreatorBridge. All rights reserved. Where Brands Meet Creativity.</p>
           <p className="text-xs text-[#4B4652]">
-            Intelligent AI Creator Marketplace
+            <span className="flex items-center gap-2">
+              <Link to="/policies" className="hover:text-[#9A6ADF] transition-colors underline-offset-2 hover:underline">
+                Platform Policies
+              </Link>
+              <span>•</span>
+              <span>Intelligent AI Creator Marketplace</span>
+            </span>
           </p>
         </div>
       </div>

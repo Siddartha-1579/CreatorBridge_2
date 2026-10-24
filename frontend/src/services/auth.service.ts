@@ -19,6 +19,8 @@ export function normalizeUser(raw: any): User {
     status: raw.status || "ACTIVE",
     avatarUrl: raw.avatarUrl || raw.avatar_url,
     emailVerified: Boolean(raw.emailVerified ?? raw.email_verified ?? false),
+    policyAccepted: Boolean(raw.policyAccepted ?? raw.policy_accepted ?? false),
+    acceptedPolicyVersion: raw.acceptedPolicyVersion || raw.accepted_policy_version || undefined,
   }
 }
 
@@ -65,6 +67,8 @@ export const authService = {
       full_name: data.fullName,
       role: data.role,
       turnstile_token: data.turnstileToken,
+      policy_accepted: data.policyAccepted ?? false,
+      policy_version: data.policyVersion ?? "2026.1",
     })
     const session = normalizeAuthSession(raw)
     if (session?.accessToken) {

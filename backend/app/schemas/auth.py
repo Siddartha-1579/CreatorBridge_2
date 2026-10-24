@@ -7,7 +7,7 @@ from app.core.security import UserRole
 
 
 class RegisterRequest(BaseModel):
-    """Registration request schema with password complexity and Turnstile validation."""
+    """Registration request schema with password complexity, Turnstile, and mandatory policy acceptance."""
     model_config = ConfigDict(populate_by_name=True)
 
     email: EmailStr
@@ -16,6 +16,8 @@ class RegisterRequest(BaseModel):
     full_name: str = Field(min_length=2, max_length=100, alias="fullName")
     role: UserRole = UserRole.CREATOR
     turnstile_token: Optional[str] = Field(default=None, alias="turnstileToken", description="Cloudflare Turnstile token")
+    policy_accepted: bool = Field(default=False, alias="policyAccepted", description="Mandatory agreement to CreatorBridge Platform Policies")
+    policy_version: Optional[str] = Field(default=None, alias="policyVersion", description="Accepted policy version reference")
 
     @field_validator("confirm_password")
     @classmethod
@@ -64,6 +66,8 @@ class UserResponse(BaseModel):
     is_verified: bool = False
     email_verified: bool = False
     avatar_url: Optional[str] = None
+    policy_accepted: bool = True
+    accepted_policy_version: Optional[str] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
@@ -86,6 +90,11 @@ class UserResponse(BaseModel):
     @property
     def avatarUrl(self) -> Optional[str]:
         return self.avatar_url
+
+    @computed_field
+    @property
+    def policyAccepted(self) -> bool:
+        return self.policy_accepted
 
 
 class TokenResponse(BaseModel):

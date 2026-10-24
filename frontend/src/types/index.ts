@@ -24,3 +24,4 @@ export type {
 export * from "./trust"
 export * from "./intelligence"
 export * from "./achievement"
+export * from "./policy"

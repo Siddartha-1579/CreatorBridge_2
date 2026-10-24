@@ -13,6 +13,7 @@ import { NotFoundPage } from "@/pages/NotFoundPage"
 
 // Public Discover & Profiles
 import { PublicCreatorProfilePage } from "@/pages/public/PublicCreatorProfilePage"
+import { PlatformPoliciesPage } from "@/pages/public/PlatformPoliciesPage"
 
 // Dedicated Security & Auth Pages
 import { AuthLandingPage } from "@/pages/auth/AuthLandingPage"
@@ -96,6 +97,7 @@ export const App: React.FC = () => {
             <Route path="/" element={<HomePage />} />
             <Route path="/discover" element={<BrandDiscoverPage isPublicView={true} />} />
             <Route path="/creators/:creatorId" element={<PublicCreatorProfilePage />} />
+            <Route path="/policies" element={<PlatformPoliciesPage />} />
             <Route path="/404" element={<NotFoundPage />} />
           </Route>
 

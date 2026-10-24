@@ -9,6 +9,8 @@ export interface User {
   status?: string
   avatarUrl?: string
   emailVerified?: boolean
+  policyAccepted?: boolean
+  acceptedPolicyVersion?: string
 }
 
 export interface LoginCredentials {
@@ -25,6 +27,8 @@ export interface RegisterData {
   fullName: string
   role: UserRole
   turnstileToken?: string
+  policyAccepted?: boolean
+  policyVersion?: string
 }
 
 export interface PasswordResetRequest {
