@@ -130,7 +130,7 @@ class TrustScoreResponse(BaseModel):
 
 class PublicTrustProfileResponse(BaseModel):
     account_id: str
-    score: int
+    score: Optional[int] = None
     status_label: str
     verified_badges: List[VerifiedBadge] = Field(default_factory=list)
     active_incidents_count: int
