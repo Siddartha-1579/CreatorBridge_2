@@ -6,6 +6,7 @@ from datetime import datetime
 from uuid import UUID
 from pydantic import BaseModel, Field
 from app.models.base import BaseDomainModel
+from app.schemas.delivery_check import DeliveryCheckReport
 
 
 class EngagementStatus(str, Enum):
@@ -94,6 +95,8 @@ class DeliverableSubmissionCreate(BaseModel):
     thumbnail_url: Optional[str] = None
     file_format: Optional[str] = "video/mp4"
     submission_notes: Optional[str] = None
+    deliverable_item_id: Optional[str] = None
+    file_bytes_base64: Optional[str] = None
 
 
 class DeliverableReviewRequest(BaseModel):
@@ -127,6 +130,8 @@ class EngagementDeliverableSubmissionResponse(BaseModel):
     review_notes: Optional[str] = None
     reviewed_by: Optional[str] = None
     reviewed_at: Optional[datetime] = None
+    delivery_check_status: Optional[str] = "PENDING"
+    delivery_check_report: Optional[DeliveryCheckReport] = None
     created_at: datetime
     updated_at: datetime
 

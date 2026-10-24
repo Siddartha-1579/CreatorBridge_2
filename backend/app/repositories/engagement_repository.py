@@ -5,6 +5,7 @@ from typing import List, Optional, Dict, Any
 from uuid import UUID, uuid4
 from datetime import datetime, timezone
 from app.repositories.base import BaseRepository
+from app.schemas.delivery_check import DeliveryCheckReport
 from app.schemas.engagement import (
     EngagementResponse,
     EngagementDetailResponse,
@@ -70,6 +71,15 @@ def _row_to_engagement(row: Any) -> EngagementResponse:
 
 
 def _row_to_submission(row: Any) -> EngagementDeliverableSubmissionResponse:
+    keys = row.keys()
+    check_report = None
+    if "delivery_check_report" in keys and row["delivery_check_report"]:
+        try:
+            report_dict = json.loads(row["delivery_check_report"])
+            check_report = DeliveryCheckReport(**report_dict)
+        except Exception:
+            pass
+
     return EngagementDeliverableSubmissionResponse(
         id=UUID(row["id"]),
         engagement_id=UUID(row["engagement_id"]),
@@ -84,6 +94,8 @@ def _row_to_submission(row: Any) -> EngagementDeliverableSubmissionResponse:
         review_notes=row["review_notes"],
         reviewed_by=row["reviewed_by"],
         reviewed_at=_parse_dt(row["reviewed_at"]),
+        delivery_check_status=row["delivery_check_status"] if "delivery_check_status" in keys and row["delivery_check_status"] else "PENDING",
+        delivery_check_report=check_report,
         created_at=_parse_dt(row["created_at"]) or datetime.now(timezone.utc),
         updated_at=_parse_dt(row["updated_at"]) or datetime.now(timezone.utc),
     )
@@ -331,6 +343,7 @@ class EngagementRepository(BaseRepository[EngagementResponse]):
     # Submissions
     # -------------------------------------------------------------------------
     async def create_submission(self, entity: EngagementDeliverableSubmissionResponse) -> EngagementDeliverableSubmissionResponse:
+        report_json = entity.delivery_check_report.model_dump_json() if entity.delivery_check_report else None
         with get_db_connection() as conn:
             cursor = conn.cursor()
             cursor.execute(
@@ -339,8 +352,9 @@ class EngagementRepository(BaseRepository[EngagementResponse]):
                     id, engagement_id, creator_id, version_number, title,
                     media_url, thumbnail_url, file_format, submission_notes,
                     review_decision, review_notes, reviewed_by, reviewed_at,
+                    delivery_check_status, delivery_check_report,
                     created_at, updated_at
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     str(entity.id),
@@ -356,6 +370,8 @@ class EngagementRepository(BaseRepository[EngagementResponse]):
                     entity.review_notes,
                     entity.reviewed_by,
                     entity.reviewed_at.isoformat() if entity.reviewed_at else None,
+                    entity.delivery_check_status or "PENDING",
+                    report_json,
                     entity.created_at.isoformat(),
                     entity.updated_at.isoformat(),
                 ),
@@ -391,6 +407,10 @@ class EngagementRepository(BaseRepository[EngagementResponse]):
                 set_clauses.append(f"{k} = ?")
                 if isinstance(v, datetime):
                     params.append(v.isoformat())
+                elif hasattr(v, "model_dump_json"):
+                    params.append(v.model_dump_json())
+                elif isinstance(v, (dict, list)):
+                    params.append(json.dumps(v))
                 else:
                     params.append(v)
             params.append(str(submission_id))

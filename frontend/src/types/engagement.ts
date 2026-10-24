@@ -1,3 +1,5 @@
+import { DeliveryCheckReport } from './deliveryCheck'
+
 export type EngagementStatus =
   | "SHORTLISTED"
   | "INVITED"
@@ -63,6 +65,8 @@ export interface DeliverableSubmissionCreate {
   thumbnail_url?: string
   file_format?: string
   submission_notes?: string
+  deliverable_item_id?: string
+  file_bytes_base64?: string
 }
 
 export interface DeliverableReviewRequest {
@@ -91,6 +95,8 @@ export interface EngagementDeliverableSubmission {
   review_notes?: string
   reviewed_by?: string
   reviewed_at?: string
+  delivery_check_status?: string
+  delivery_check_report?: DeliveryCheckReport
   created_at: string
   updated_at: string
 }

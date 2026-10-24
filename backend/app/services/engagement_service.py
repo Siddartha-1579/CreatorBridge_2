@@ -15,6 +15,8 @@ from app.repositories import (
 )
 from app.services.brief_service import brief_service
 from app.services.achievement_service import achievement_service
+from app.services.delivery_check_service import delivery_check_service
+from app.schemas.delivery_check import DeliveryCheckStatus, DeliveryCheckReport
 from app.schemas.engagement import (
     EngagementResponse,
     EngagementDetailResponse,
@@ -91,7 +93,7 @@ class EngagementService(BaseService):
     ) -> EngagementResponse:
         """Adds a creator to a brief shortlist. Prevents duplicates and verifies brand ownership."""
         try:
-            b_uuid = UUID(brief_id)
+            b_uuid = brief_id if isinstance(brief_id, UUID) else UUID(str(brief_id))
         except ValueError:
             raise ValidationException(f"Invalid brief ID format: '{brief_id}'")
 
@@ -188,7 +190,7 @@ class EngagementService(BaseService):
     async def list_shortlist_for_brief(self, brand_user_id: str, brief_id: str) -> List[ShortlistCreatorItem]:
         """Lists all shortlisted creators for an authorized campaign brief with joined profile context."""
         try:
-            b_uuid = UUID(brief_id)
+            b_uuid = brief_id if isinstance(brief_id, UUID) else UUID(str(brief_id))
         except ValueError:
             raise ValidationException(f"Invalid brief ID format: '{brief_id}'")
 
@@ -257,7 +259,7 @@ class EngagementService(BaseService):
     ) -> EngagementResponse:
         """Sends a formal engagement invitation with proposed scope terms to a creator."""
         try:
-            b_uuid = UUID(brief_id)
+            b_uuid = brief_id if isinstance(brief_id, UUID) else UUID(str(brief_id))
         except ValueError:
             raise ValidationException(f"Invalid brief ID format: '{brief_id}'")
 
@@ -540,9 +542,17 @@ class EngagementService(BaseService):
     # STAGE E — DELIVERY AND REVIEW
     # -------------------------------------------------------------------------
     async def submit_deliverable(
-        self, creator_user_id: str, engagement_id: UUID, data: DeliverableSubmissionCreate
+        self,
+        creator_user_id: str,
+        engagement_id: UUID,
+        data: DeliverableSubmissionCreate,
+        file_content: Optional[bytes] = None,
     ) -> EngagementDeliverableSubmissionResponse:
-        """Allows creator to submit final deliverables. Increments version and moves status to SUBMITTED."""
+        """Allows creator to submit final deliverables with automated delivery check validation.
+        
+        If delivery checks pass: review_decision='PENDING', engagement status='SUBMITTED'.
+        If delivery checks fail: review_decision='FAILED_VALIDATION', engagement stays in production for creator correction.
+        """
         engagement = await self.repo.get_by_id(engagement_id)
         if not engagement:
             raise NotFoundException("Engagement", engagement_id)
@@ -558,6 +568,43 @@ class EngagementService(BaseService):
         existing_submissions = await self.repo.list_submissions(engagement_id)
         next_version = len(existing_submissions) + 1
 
+        # Fetch campaign brief to validate requirements
+        brief = None
+        try:
+            brief = await self.brief_repo.get_by_id(engagement.brief_id)
+        except Exception as e:
+            logger.warning(f"Could not load brief {engagement.brief_id} for deliverable check: {e}")
+
+        # Decode base64 or fetch bytes if provided
+        raw_bytes = file_content
+        if raw_bytes is None and getattr(data, "file_bytes_base64", None):
+            try:
+                import base64
+                raw_bytes = base64.b64decode(data.file_bytes_base64)
+            except Exception as e:
+                logger.warning(f"Failed to decode base64 file content: {e}")
+        elif raw_bytes is None and data.media_url and data.media_url.startswith("data:"):
+            try:
+                import base64
+                header, encoded = data.media_url.split(",", 1)
+                raw_bytes = base64.b64decode(encoded)
+            except Exception as e:
+                logger.warning(f"Failed to decode data URI: {e}")
+
+        # Execute automated Delivery Check
+        report = delivery_check_service.validate_deliverable(
+            brief_data=brief,
+            file_content=raw_bytes,
+            media_url=data.media_url,
+            filename=data.title,
+            declared_format=data.file_format,
+            deliverable_item_id=getattr(data, "deliverable_item_id", None),
+        )
+
+        is_passed = report.overall_status == DeliveryCheckStatus.PASSED
+        review_decision = "PENDING" if is_passed else "FAILED_VALIDATION"
+        check_status = report.overall_status.value
+
         now = datetime.now(timezone.utc)
         submission = EngagementDeliverableSubmissionResponse(
             id=uuid4(),
@@ -569,32 +616,103 @@ class EngagementService(BaseService):
             thumbnail_url=data.thumbnail_url,
             file_format=data.file_format or "video/mp4",
             submission_notes=data.submission_notes,
-            review_decision="PENDING",
+            review_decision=review_decision,
+            delivery_check_status=check_status,
+            delivery_check_report=report,
             created_at=now,
             updated_at=now,
         )
 
         saved = await self.repo.create_submission(submission)
 
-        # Transition engagement to SUBMITTED
-        await self.repo.update(
-            engagement_id,
-            {
-                "status": EngagementStatus.SUBMITTED.value,
-                "production_status": ProductionProgressStatus.IN_PROGRESS.value,
-            },
+        if is_passed:
+            # Transition engagement to SUBMITTED for brand review
+            await self.repo.update(
+                engagement_id,
+                {
+                    "status": EngagementStatus.SUBMITTED.value,
+                    "production_status": ProductionProgressStatus.IN_PROGRESS.value,
+                },
+            )
+            await self._record_timeline(
+                engagement_id,
+                creator_user_id,
+                "CREATOR",
+                "DELIVERABLE_SUBMITTED",
+                engagement.status.value,
+                EngagementStatus.SUBMITTED.value,
+                f"Version {next_version}: '{data.title}' — Delivery Check: PASSED ({report.passed_count} checks verified)",
+            )
+        else:
+            # Delivery checks failed: keep in production/correction-required state
+            failed_rules = [c.label for c in report.checks if c.status.value == "FAILED"]
+            await self.repo.update(
+                engagement_id,
+                {
+                    "production_status": ProductionProgressStatus.IN_PROGRESS.value,
+                },
+            )
+            await self._record_timeline(
+                engagement_id,
+                creator_user_id,
+                "CREATOR",
+                "DELIVERABLE_VALIDATION_FAILED",
+                engagement.status.value,
+                engagement.status.value,
+                f"Version {next_version}: '{data.title}' — Delivery Check: FAILED ({', '.join(failed_rules)}). Creator correction required.",
+            )
+        return saved
+
+    async def submit_deliverable_file(
+        self,
+        creator_user_id: str,
+        engagement_id: UUID,
+        title: str,
+        filename: str,
+        content: bytes,
+        content_type: str,
+        deliverable_item_id: Optional[str] = None,
+        submission_notes: Optional[str] = None,
+    ) -> EngagementDeliverableSubmissionResponse:
+        """Processes binary file upload for deliverable submission, validates against brief, and saves asset."""
+        engagement = await self.repo.get_by_id(engagement_id)
+        if not engagement:
+            raise NotFoundException("Engagement", engagement_id)
+
+        if not brief_service._is_creator_owner(engagement.creator_id, creator_user_id):
+            raise ForbiddenException("You do not have permission to submit deliverables for this engagement.")
+
+        if engagement.status not in [EngagementStatus.CONFIRMED, EngagementStatus.IN_PRODUCTION, EngagementStatus.CHANGES_REQUESTED]:
+            raise ConflictException(f"Cannot submit deliverables: engagement is not confirmed (status: {engagement.status.value}).")
+
+        # Save media asset to storage if configured, or create local public media path
+        clean_name = filename.replace("\\", "/").rsplit("/", 1)[-1]
+        unique_name = f"{uuid4()}_{clean_name.replace(' ', '_')}"
+        storage_path = f"engagements/{engagement_id}/deliverables/{unique_name}"
+
+        media_url = f"/uploads/deliverables/{unique_name}"
+        try:
+            from app.integrations.storage import storage_provider
+            if storage_provider and storage_provider.is_configured():
+                await storage_provider.upload_file("deliverables", storage_path, content, content_type)
+                media_url = await storage_provider.get_public_url("deliverables", storage_path)
+        except Exception as e:
+            logger.info(f"Using local deliverable asset URL ({e})")
+
+        data = DeliverableSubmissionCreate(
+            title=title,
+            media_url=media_url,
+            file_format=content_type,
+            submission_notes=submission_notes,
+            deliverable_item_id=deliverable_item_id,
         )
 
-        await self._record_timeline(
-            engagement_id,
-            creator_user_id,
-            "CREATOR",
-            "DELIVERABLE_SUBMITTED",
-            engagement.status.value,
-            EngagementStatus.SUBMITTED.value,
-            f"Version {next_version}: '{data.title}'",
+        return await self.submit_deliverable(
+            creator_user_id=creator_user_id,
+            engagement_id=engagement_id,
+            data=data,
+            file_content=content,
         )
-        return saved
 
     async def review_submission(
         self,
@@ -615,12 +733,24 @@ class EngagementService(BaseService):
         if not brief_service._is_brand_owner(engagement.brand_id, brand_user_id):
             raise ForbiddenException("You do not have permission to review deliverables for this engagement.")
 
-        if engagement.status != EngagementStatus.SUBMITTED:
-            raise ConflictException(f"Cannot review deliverable: engagement is in {engagement.status.value} status, not SUBMITTED.")
-
         submission = await self.repo.get_submission_by_id(submission_id)
         if not submission or submission.engagement_id != engagement_id:
             raise NotFoundException("Deliverable Submission", submission_id)
+
+        # Gate brand review: Deliverable MUST have passed automated delivery checks
+        if submission.delivery_check_status == "FAILED" or submission.review_decision == "FAILED_VALIDATION":
+            raise ConflictException(
+                f"Cannot review deliverable: Submission v{submission.version_number} failed automated delivery validation. "
+                f"The creator must upload a corrected version before brand review."
+            )
+
+        if engagement.status != EngagementStatus.SUBMITTED:
+            raise ConflictException(f"Cannot review deliverable: engagement is in {engagement.status.value} status, not SUBMITTED.")
+
+        if submission.review_decision != "PENDING":
+            raise ConflictException(
+                f"Cannot review deliverable: Submission v{submission.version_number} is already in '{submission.review_decision}' status."
+            )
 
         clean_dec = decision.strip().upper()
         if clean_dec not in ["ACCEPT", "REQUEST_CHANGES"]:

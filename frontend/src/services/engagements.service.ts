@@ -13,6 +13,7 @@ import type {
   EngagementCancellationRequest,
   EngagementDeliverableSubmission,
   EngagementProgressUpdate,
+  DeliveryCheckReport,
 } from "@/types"
 
 export const engagementsService = {
@@ -91,6 +92,47 @@ export const engagementsService = {
     data: DeliverableSubmissionCreate
   ): Promise<EngagementDeliverableSubmission> {
     const res = await apiClient.post<EngagementDeliverableSubmission>(`engagements/${engagementId}/submit`, data)
+    return res
+  },
+
+  /**
+   * Uploads deliverable file via multipart form and validates against brief.
+   */
+  async submitDeliverableFile(
+    engagementId: string,
+    file: File,
+    title: string,
+    options?: { deliverableItemId?: string; fileFormat?: string; submissionNotes?: string }
+  ): Promise<EngagementDeliverableSubmission> {
+    const formData = new FormData()
+    formData.append("file", file)
+    formData.append("title", title)
+    if (options?.deliverableItemId) {
+      formData.append("deliverable_item_id", options.deliverableItemId)
+    }
+    if (options?.fileFormat) {
+      formData.append("file_format", options.fileFormat)
+    }
+    if (options?.submissionNotes) {
+      formData.append("submission_notes", options.submissionNotes)
+    }
+    const res = await apiClient.post<EngagementDeliverableSubmission>(
+      `engagements/${engagementId}/submit-file`,
+      formData
+    )
+    return res
+  },
+
+  /**
+   * Retrieves Delivery Check validation report for a specific submission.
+   */
+  async getSubmissionDeliveryCheck(
+    engagementId: string,
+    submissionId: string
+  ): Promise<DeliveryCheckReport | null> {
+    const res = await apiClient.get<DeliveryCheckReport | null>(
+      `engagements/${engagementId}/submissions/${submissionId}/delivery-check`
+    )
     return res
   },
 

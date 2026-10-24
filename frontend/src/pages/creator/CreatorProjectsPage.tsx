@@ -3,6 +3,7 @@ import { Link } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { projectsService } from "@/services/projects.service"
 import { engagementsService } from "@/services/engagements.service"
+import { DeliveryCheckReportModal } from "@/components/delivery/DeliveryCheckReportModal"
 import type {
   ProjectWorkspace,
   ProjectDeliverable,
@@ -10,6 +11,7 @@ import type {
   Engagement,
   EngagementDetail,
   EngagementDeliverableSubmission,
+  DeliveryCheckReport,
 } from "@/types"
 import { ENGAGEMENT_STATUS_META, PRODUCTION_STATUS_META } from "@/lib/engagementStateMachine"
 import { Card } from "@/components/ui/card"
@@ -36,6 +38,8 @@ import {
   ChevronRight,
   ChevronDown,
   Video,
+  RotateCcw,
+  FileText,
 } from "lucide-react"
 
 export const CreatorProjectsPage: React.FC = () => {
@@ -68,6 +72,10 @@ export const CreatorProjectsPage: React.FC = () => {
   const [engSubUrl, setEngSubUrl] = useState("")
   const [engSubFormat, setEngSubFormat] = useState("video/mp4")
   const [engSubNotes, setEngSubNotes] = useState("")
+  const [engSubFile, setEngSubFile] = useState<File | null>(null)
+  const [engSubDeliverableItemId, setEngSubDeliverableItemId] = useState("")
+  const [activeDeliveryReport, setActiveDeliveryReport] = useState<DeliveryCheckReport | null>(null)
+  const [isDeliveryReportOpen, setIsDeliveryReportOpen] = useState(false)
   const [progressStatus, setProgressStatus] = useState<"IN_PROGRESS" | "BLOCKED">("IN_PROGRESS")
   const [progressNote, setProgressNote] = useState("")
   const [blockerNote, setBlockerNote] = useState("")
@@ -153,20 +161,44 @@ export const CreatorProjectsPage: React.FC = () => {
 
   const handleEngagementDeliverableSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!submittingEngagementId || !engSubTitle.trim() || !engSubUrl.trim()) return
+    if (!submittingEngagementId || !engSubTitle.trim() || (!engSubUrl.trim() && !engSubFile)) return
     setIsUpdating(true)
     try {
-      await engagementsService.submitDeliverable(submittingEngagementId, {
-        title: engSubTitle.trim(),
-        media_url: engSubUrl.trim(),
-        file_format: engSubFormat,
-        submission_notes: engSubNotes.trim() || undefined,
-      })
+      let submission: EngagementDeliverableSubmission
+      if (engSubFile) {
+        submission = await engagementsService.submitDeliverableFile(
+          submittingEngagementId,
+          engSubFile,
+          engSubTitle.trim(),
+          {
+            deliverableItemId: engSubDeliverableItemId || undefined,
+            fileFormat: engSubFormat,
+            submissionNotes: engSubNotes.trim() || undefined,
+          }
+        )
+      } else {
+        submission = await engagementsService.submitDeliverable(submittingEngagementId, {
+          title: engSubTitle.trim(),
+          media_url: engSubUrl.trim(),
+          file_format: engSubFormat,
+          deliverable_item_id: engSubDeliverableItemId || undefined,
+          submission_notes: engSubNotes.trim() || undefined,
+        })
+      }
+
       setEngagementSubmissionModalOpen(false)
       setSubmittingEngagementId(null)
       setEngSubTitle("")
       setEngSubUrl("")
+      setEngSubFile(null)
+      setEngSubDeliverableItemId("")
       setEngSubNotes("")
+
+      if (submission?.delivery_check_report) {
+        setActiveDeliveryReport(submission.delivery_check_report)
+        setIsDeliveryReportOpen(true)
+      }
+
       if (selectedEngagementDetail && selectedEngagementDetail.id === submittingEngagementId) {
         const refreshed = await engagementsService.getEngagementDetail(submittingEngagementId)
         setSelectedEngagementDetail(refreshed)
@@ -1075,7 +1107,47 @@ export const CreatorProjectsPage: React.FC = () => {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">
-                  Media Asset / Storage URL *
+                  Upload Deliverable File (Instant Server-Side Binary Inspection)
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="file"
+                    accept="video/mp4,video/quicktime,image/png,image/jpeg,image/webp,application/zip"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0] || null
+                      setEngSubFile(file)
+                      if (file && !engSubTitle) {
+                        setEngSubTitle(file.name.replace(/\.[^/.]+$/, ""))
+                      }
+                    }}
+                    className="w-full text-xs text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 border border-slate-200 rounded-xl p-1.5"
+                  />
+                  {engSubFile && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setEngSubFile(null)}
+                      className="text-xs text-slate-400 hover:text-rose-600 px-2"
+                    >
+                      Clear
+                    </Button>
+                  )}
+                </div>
+                {engSubFile ? (
+                  <p className="text-[11px] text-emerald-600 mt-1 font-medium">
+                    ✓ Selected: {engSubFile.name} ({(engSubFile.size / 1024 / 1024).toFixed(2)} MB)
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-slate-400 mt-0.5">
+                    Upload your raw deliverable for binary verification (resolution, aspect ratio, duration, codecs).
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Or Media Asset / Storage URL {!engSubFile && "*"}
                 </label>
                 <input
                   type="url"
@@ -1085,6 +1157,34 @@ export const CreatorProjectsPage: React.FC = () => {
                   className="w-full text-xs p-2.5 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-purple-500"
                 />
               </div>
+
+              {selectedEngagementDetail?.confirmed_terms?.deliverables && selectedEngagementDetail.confirmed_terms.deliverables.length > 0 && (
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    Matching Brief Deliverable Requirement
+                  </label>
+                  <select
+                    value={engSubDeliverableItemId}
+                    onChange={(e) => setEngSubDeliverableItemId(e.target.value)}
+                    className="w-full text-xs p-2 border border-slate-200 rounded-xl"
+                  >
+                    <option value="">Auto-match against brief requirements</option>
+                    {selectedEngagementDetail.confirmed_terms.deliverables.map((rawItem: any, idx) => {
+                      const item = rawItem as Record<string, any>
+                      const valId = String(item.id || `item_${idx}`)
+                      const dTitle = String(item.title || item.type || `Deliverable #${idx + 1}`)
+                      const dFmt = String(item.format || "any")
+                      const dRatio = String(item.aspect_ratio || "any")
+                      const dRes = String(item.resolution || "any")
+                      return (
+                        <option key={valId} value={valId}>
+                          Deliverable #{idx + 1}: {dTitle} ({dFmt}, {dRatio}, {dRes})
+                        </option>
+                      )
+                    })}
+                  </select>
+                </div>
+              )}
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -1131,7 +1231,7 @@ export const CreatorProjectsPage: React.FC = () => {
               <Button
                 size="sm"
                 onClick={handleEngagementDeliverableSubmit}
-                disabled={isUpdating || !engSubTitle.trim() || !engSubUrl.trim()}
+                disabled={isUpdating || !engSubTitle.trim() || (!engSubUrl.trim() && !engSubFile)}
                 className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold gap-1"
               >
                 <UploadCloud className="w-3.5 h-3.5" />
@@ -1245,6 +1345,66 @@ export const CreatorProjectsPage: React.FC = () => {
                           <p>{sub.review_notes}</p>
                         </div>
                       )}
+
+                      {/* Delivery Check Status & Summary */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                        <div className="flex items-center gap-1.5">
+                          {sub.delivery_check_status === "PASSED" ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                              Delivery Check: Passed
+                            </span>
+                          ) : sub.delivery_check_status === "FAILED" ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                              <AlertCircle className="w-3 h-3 text-rose-600" />
+                              Delivery Check: Correction Required
+                            </span>
+                          ) : sub.delivery_check_status === "UNABLE_TO_VERIFY" ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                              <AlertCircle className="w-3 h-3 text-amber-600" />
+                              Delivery Check: Unverified
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
+                              <Clock className="w-3 h-3 text-slate-500" />
+                              Delivery Check: {sub.delivery_check_status || "Pending"}
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {sub.delivery_check_report && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setActiveDeliveryReport(sub.delivery_check_report!)
+                                setIsDeliveryReportOpen(true)
+                              }}
+                              className="text-[11px] font-semibold text-purple-600 hover:text-purple-800 underline flex items-center gap-1"
+                            >
+                              <Eye className="w-3 h-3" />
+                              View Validation Report
+                            </button>
+                          )}
+                          {sub.delivery_check_status === "FAILED" && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSubmittingEngagementId(selectedEngagementDetail.id)
+                                setEngSubTitle(`Deliverable Cut v${(selectedEngagementDetail.submissions?.length || 0) + 1} (Fix)`)
+                                setEngSubUrl("")
+                                setEngSubFile(null)
+                                setEngSubNotes(`Correction for validation issues in v${sub.version_number}`)
+                                setEngagementSubmissionModalOpen(true)
+                              }}
+                              className="text-[11px] font-bold text-white bg-purple-600 hover:bg-purple-700 px-2.5 py-1 rounded-lg flex items-center gap-1 transition-colors"
+                            >
+                              <RotateCcw className="w-3 h-3" />
+                              Upload Correction
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1362,6 +1522,16 @@ export const CreatorProjectsPage: React.FC = () => {
           </div>
         </div>
       )}
+      {/* FEATURE: DELIVERY CHECK REPORT MODAL */}
+      <DeliveryCheckReportModal
+        report={activeDeliveryReport}
+        isOpen={isDeliveryReportOpen}
+        onClose={() => setIsDeliveryReportOpen(false)}
+        onRetry={() => {
+          setIsDeliveryReportOpen(false)
+          setEngagementSubmissionModalOpen(true)
+        }}
+      />
     </div>
   )
 }

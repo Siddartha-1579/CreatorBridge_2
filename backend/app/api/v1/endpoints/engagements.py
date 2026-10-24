@@ -2,7 +2,8 @@
 
 from typing import List, Optional
 from uuid import UUID
-from fastapi import APIRouter, Depends, Query, Path, Body
+from fastapi import APIRouter, Depends, Query, Path, Body, File, UploadFile, Form
+from app.schemas.delivery_check import DeliveryCheckReport
 from app.core.security import get_current_user, AuthenticatedUser, require_role, UserRole
 from app.schemas.common import ApiResponse
 from app.schemas.engagement import (
@@ -176,7 +177,55 @@ async def submit_deliverable(
         engagement_id=engagement_id,
         data=data,
     )
-    return ApiResponse(success=True, data=submission, message=f"Deliverable submission v{submission.version_number} received.")
+    status_label = "passed" if submission.delivery_check_status == "PASSED" else "requires creator correction"
+    return ApiResponse(
+        success=True,
+        data=submission,
+        message=f"Deliverable submission v{submission.version_number} received — delivery check {status_label}."
+    )
+
+
+@router.post("/{engagement_id}/submit-file", response_model=ApiResponse[EngagementDeliverableSubmissionResponse], summary="Upload deliverable file with automated delivery checks")
+async def submit_deliverable_file(
+    engagement_id: UUID = Path(...),
+    file: UploadFile = File(...),
+    title: str = Form(...),
+    submission_notes: Optional[str] = Form(None),
+    deliverable_item_id: Optional[str] = Form(None),
+    current_user: AuthenticatedUser = Depends(get_current_user),
+) -> ApiResponse[EngagementDeliverableSubmissionResponse]:
+    """Uploads deliverable media binary file and executes automated Delivery Check validation against campaign brief specifications."""
+    content = await file.read()
+    submission = await engagement_service.submit_deliverable_file(
+        creator_user_id=current_user.id,
+        engagement_id=engagement_id,
+        title=title,
+        filename=file.filename or "deliverable.mp4",
+        content=content,
+        content_type=file.content_type or "video/mp4",
+        deliverable_item_id=deliverable_item_id,
+        submission_notes=submission_notes,
+    )
+    status_label = "passed" if submission.delivery_check_status == "PASSED" else "requires creator correction"
+    return ApiResponse(
+        success=True,
+        data=submission,
+        message=f"Deliverable v{submission.version_number} processed — delivery check {status_label}."
+    )
+
+
+@router.get("/{engagement_id}/submissions/{submission_id}/delivery-check", response_model=ApiResponse[Optional[DeliveryCheckReport]], summary="Get delivery check report")
+async def get_submission_delivery_check(
+    engagement_id: UUID = Path(...),
+    submission_id: UUID = Path(...),
+    current_user: AuthenticatedUser = Depends(get_current_user),
+) -> ApiResponse[Optional[DeliveryCheckReport]]:
+    """Retrieves the full Delivery Check report for a specific deliverable submission."""
+    submission = await engagement_service.repo.get_submission_by_id(submission_id)
+    if not submission or submission.engagement_id != engagement_id:
+        from app.core.errors import NotFoundException
+        raise NotFoundException("Deliverable Submission", submission_id)
+    return ApiResponse(success=True, data=submission.delivery_check_report)
 
 
 @router.post("/{engagement_id}/submissions/{submission_id}/review", response_model=ApiResponse[EngagementResponse], summary="Review deliverable submission")

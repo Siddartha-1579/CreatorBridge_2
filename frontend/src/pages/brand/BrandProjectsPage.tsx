@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useAuth } from "@/hooks/useAuth"
 import { projectsService } from "@/services/projects.service"
 import { engagementsService } from "@/services/engagements.service"
+import { DeliveryCheckReportModal } from "@/components/delivery/DeliveryCheckReportModal"
 import type {
   ProjectWorkspace,
   ProjectMilestone,
@@ -13,6 +14,7 @@ import type {
   Engagement,
   EngagementDetail,
   EngagementDeliverableSubmission,
+  DeliveryCheckReport,
 } from "@/types"
 import { ENGAGEMENT_STATUS_META, PRODUCTION_STATUS_META } from "@/lib/engagementStateMachine"
 import { Card } from "@/components/ui/card"
@@ -61,6 +63,8 @@ export const BrandProjectsPage: React.FC = () => {
   const [selectedEngagementDetail, setSelectedEngagementDetail] = useState<EngagementDetail | null>(null)
   const [isEngagementDetailOpen, setIsEngagementDetailOpen] = useState(false)
   const [reviewModalOpen, setReviewModalOpen] = useState(false)
+  const [activeDeliveryReport, setActiveDeliveryReport] = useState<DeliveryCheckReport | null>(null)
+  const [isDeliveryReportOpen, setIsDeliveryReportOpen] = useState(false)
   const [reviewDecision, setReviewDecision] = useState<"ACCEPT" | "REQUEST_CHANGES">("ACCEPT")
   const [reviewNotes, setReviewNotes] = useState("")
   const [qualityScore, setQualityScore] = useState(90)
@@ -964,6 +968,43 @@ export const BrandProjectsPage: React.FC = () => {
                 )}
               </div>
 
+              {activeReviewSubmission.delivery_check_report && (
+                <div className="p-3 bg-purple-50/70 border border-purple-200 rounded-xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-purple-950 text-xs flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-purple-700" />
+                      Automated Delivery Check
+                    </span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      activeReviewSubmission.delivery_check_status === 'PASSED'
+                        ? 'bg-emerald-100 text-emerald-800'
+                        : activeReviewSubmission.delivery_check_status === 'FAILED'
+                        ? 'bg-rose-100 text-rose-800'
+                        : 'bg-amber-100 text-amber-800'
+                    }`}>
+                      {activeReviewSubmission.delivery_check_status}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[11px] text-purple-900">
+                    <div>Format: <strong>{activeReviewSubmission.delivery_check_report.media_metadata?.container_or_format || activeReviewSubmission.file_format}</strong></div>
+                    <div>Aspect Ratio: <strong>{activeReviewSubmission.delivery_check_report.media_metadata?.aspect_ratio_label || "N/A"}</strong></div>
+                    <div>Resolution: <strong>{(activeReviewSubmission.delivery_check_report.media_metadata?.width ? `${activeReviewSubmission.delivery_check_report.media_metadata.width}x${activeReviewSubmission.delivery_check_report.media_metadata.height}` : 'N/A') || "N/A"}</strong></div>
+                    <div>Duration: <strong>{activeReviewSubmission.delivery_check_report.media_metadata?.duration_seconds ? `${activeReviewSubmission.delivery_check_report.media_metadata.duration_seconds.toFixed(1)}s` : "N/A"}</strong></div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveDeliveryReport(activeReviewSubmission.delivery_check_report!)
+                      setIsDeliveryReportOpen(true)
+                    }}
+                    className="text-[11px] font-semibold text-purple-700 hover:text-purple-900 underline flex items-center gap-1"
+                  >
+                    <Eye className="w-3 h-3" />
+                    View Detailed Rule Checks ({activeReviewSubmission.delivery_check_report.passed_count}/{activeReviewSubmission.delivery_check_report.checks.length} Passed)
+                  </button>
+                </div>
+              )}
+
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">Review Decision</label>
                 <div className="grid grid-cols-2 gap-2">
@@ -1183,14 +1224,67 @@ export const BrandProjectsPage: React.FC = () => {
                         </div>
                       )}
 
-                      {sub.review_decision === "PENDING" && selectedEngagementDetail.status === "SUBMITTED" && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleOpenReviewModal(selectedEngagementDetail.id, sub)}
-                          className="text-xs bg-purple-600 hover:bg-purple-700 text-white font-bold w-full"
-                        >
-                          Review This Submission
-                        </Button>
+                      {/* Delivery Check Status */}
+                      <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                        <div className="flex items-center gap-1.5">
+                          {sub.delivery_check_status === "PASSED" ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                              Delivery Check: Passed
+                            </span>
+                          ) : sub.delivery_check_status === "FAILED" ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                              <AlertCircle className="w-3 h-3 text-rose-600" />
+                              Delivery Check: Failed (Correction Required)
+                            </span>
+                          ) : sub.delivery_check_status === "UNABLE_TO_VERIFY" ? (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                              <AlertCircle className="w-3 h-3 text-amber-600" />
+                              Delivery Check: Unverified
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 bg-slate-100 px-2 py-0.5 rounded-full">
+                              <Clock className="w-3 h-3 text-slate-500" />
+                              Delivery Check: {sub.delivery_check_status || "Pending"}
+                            </span>
+                          )}
+                        </div>
+
+                        {sub.delivery_check_report && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setActiveDeliveryReport(sub.delivery_check_report!)
+                              setIsDeliveryReportOpen(true)
+                            }}
+                            className="text-[11px] font-semibold text-purple-600 hover:text-purple-800 underline flex items-center gap-1"
+                          >
+                            <Eye className="w-3 h-3" />
+                            View Technical Report
+                          </button>
+                        )}
+                      </div>
+
+                      {sub.delivery_check_status === "FAILED" ? (
+                        <div className="p-2.5 bg-rose-50 border border-rose-200 rounded-lg text-rose-800 text-xs space-y-1">
+                          <div className="flex items-center gap-1.5 font-bold">
+                            <AlertCircle className="w-4 h-4 text-rose-600" />
+                            <span>Brand Review Gated</span>
+                          </div>
+                          <p className="text-[11px] text-rose-700">
+                            This submission failed automated brief validation checks. Awaiting creator correction before brand review can proceed.
+                          </p>
+                        </div>
+                      ) : (
+                        sub.review_decision === "PENDING" && selectedEngagementDetail.status === "SUBMITTED" && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleOpenReviewModal(selectedEngagementDetail.id, sub)}
+                            className="text-xs bg-purple-600 hover:bg-purple-700 text-white font-bold w-full"
+                          >
+                            Review This Submission
+                          </Button>
+                        )
                       )}
                     </div>
                   ))}
@@ -1309,6 +1403,12 @@ export const BrandProjectsPage: React.FC = () => {
           </div>
         </div>
       )}
+      {/* FEATURE: DELIVERY CHECK REPORT MODAL */}
+      <DeliveryCheckReportModal
+        report={activeDeliveryReport}
+        isOpen={isDeliveryReportOpen}
+        onClose={() => setIsDeliveryReportOpen(false)}
+      />
     </div>
   )
 }

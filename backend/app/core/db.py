@@ -446,12 +446,22 @@ def init_db():
                 review_notes TEXT,
                 reviewed_by TEXT,
                 reviewed_at TEXT,
+                delivery_check_status TEXT DEFAULT 'PENDING',
+                delivery_check_report TEXT,
                 created_at TEXT NOT NULL,
                 updated_at TEXT NOT NULL
             )
             """
         )
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_eng_submissions_eng ON engagement_deliverable_submissions(engagement_id)")
+        try:
+            cursor.execute("ALTER TABLE engagement_deliverable_submissions ADD COLUMN delivery_check_status TEXT DEFAULT 'PENDING'")
+        except Exception:
+            pass
+        try:
+            cursor.execute("ALTER TABLE engagement_deliverable_submissions ADD COLUMN delivery_check_report TEXT")
+        except Exception:
+            pass
 
         # 19. engagement_progress_updates (production status updates & blocker logs)
         cursor.execute(
