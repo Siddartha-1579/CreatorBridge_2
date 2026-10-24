@@ -12,11 +12,11 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       "inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500/50 disabled:opacity-50 disabled:pointer-events-none cursor-pointer"
 
     const variants = {
-      primary: "bg-[#9A6ADF] hover:bg-[#8655cb] text-white shadow-sm shadow-[#9A6ADF]/25",
-      secondary: "bg-white hover:bg-[#F4E7FF]/50 text-[#111111] border border-[#D8B8FF] shadow-xs",
-      outline: "border border-[#D8B8FF] hover:bg-[#F4E7FF]/40 text-[#111111]",
-      ghost: "hover:bg-[#F4E7FF]/50 text-[#4B4652] hover:text-[#111111]",
-      danger: "bg-red-600 hover:bg-red-700 text-white",
+      primary: "bg-[#9A6ADF] hover:bg-[#8655cb] text-white shadow-sm shadow-[#9A6ADF]/25 dark:bg-[#9A6ADF] dark:hover:bg-[#8655cb]",
+      secondary: "bg-white hover:bg-[#F4E7FF]/50 text-[#111111] border border-[#D8B8FF] shadow-xs dark:bg-[#181524] dark:hover:bg-[#231C35] dark:text-[#F5F3F8] dark:border-[#3E325D]",
+      outline: "border border-[#D8B8FF] hover:bg-[#F4E7FF]/40 text-[#111111] dark:border-[#3E325D] dark:hover:bg-[#231C35]/50 dark:text-[#F5F3F8]",
+      ghost: "hover:bg-[#F4E7FF]/50 text-[#4B4652] hover:text-[#111111] dark:hover:bg-[#231C35]/50 dark:text-[#C7C3D4] dark:hover:text-[#F5F3F8]",
+      danger: "bg-red-600 hover:bg-red-700 text-white dark:bg-red-700 dark:hover:bg-red-800",
     }
 
     const sizes = {

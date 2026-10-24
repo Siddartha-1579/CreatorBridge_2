@@ -27,12 +27,12 @@ export const CreatorBridgeLogo: React.FC<CreatorBridgeLogoProps> = ({
         src="/creatorbridge-logo-transparent.png"
         alt="CreatorBridge - Where Brands Meet Creativity"
         className={cn(
-          "w-auto object-contain transition-transform group-hover:scale-[1.02]",
+          "w-auto object-contain transition-transform group-hover:scale-[1.02] dark:brightness-110",
           heightClasses[size]
         )}
       />
       {badgeText && (
-        <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#F4E7FF] text-[#9A6ADF] border border-[#D8B8FF]">
+        <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#F4E7FF] dark:bg-[#231C35] text-[#9A6ADF] dark:text-[#B78AF7] border border-[#D8B8FF] dark:border-[#3E325D]">
           {badgeText}
         </span>
       )}

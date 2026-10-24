@@ -7,6 +7,21 @@
     <meta name="description" content="CreatorBridge — Where Brands Meet Creativity. Intelligent AI Creator Marketplace connecting brands with specialized generative talent." />
     <meta name="theme-color" content="#FFFDFD" />
     <title>CreatorBridge — Where Brands Meet Creativity</title>
+    <script>
+      (function() {
+        try {
+          var stored = localStorage.getItem('creatorbridge_theme');
+          var isDark = stored === 'dark' || ((!stored || stored === 'system') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (isDark) {
+            document.documentElement.classList.add('dark');
+            document.documentElement.style.colorScheme = 'dark';
+          } else {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.style.colorScheme = 'light';
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

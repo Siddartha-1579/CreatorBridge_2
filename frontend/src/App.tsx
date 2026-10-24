@@ -1,6 +1,7 @@
 import React from "react"
 import { BrowserRouter, Routes, Route, Navigate, useSearchParams } from "react-router-dom"
 import { AuthProvider, useAuth } from "@/hooks/useAuth"
+import { ThemeProvider } from "@/context/ThemeContext"
 
 // Layouts
 import { RootLayout } from "@/layouts/RootLayout"
@@ -89,7 +90,8 @@ const LoginRedirect: React.FC = () => {
 
 export const App: React.FC = () => {
   return (
-    <AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
       <BrowserRouter>
         <Routes>
           {/* Public Marketing / Home Route */}
@@ -160,7 +162,8 @@ export const App: React.FC = () => {
         </Routes>
         <ChatbotWidget />
       </BrowserRouter>
-    </AuthProvider>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }
 

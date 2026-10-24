@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { Marketplace3DCard } from "@/components/common/Marketplace3DCard"
 import { ScrollReveal } from "@/components/common/ScrollReveal"
@@ -6,6 +6,8 @@ import { LandingSpecializationCarousel } from "@/components/home/LandingSpeciali
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { statsService } from "@/services/stats.service"
+import type { PublicStats } from "@/types"
 import {
   Sparkles,
   ArrowRight,
@@ -35,6 +37,29 @@ import {
 export const HomePage: React.FC = () => {
   const [activeRoleTab, setActiveRoleTab] = useState<number>(0)
   const [howItWorksTab, setHowItWorksTab] = useState<"creator" | "brand">("creator")
+  const [stats, setStats] = useState<PublicStats | null>(null)
+  const [statsLoading, setStatsLoading] = useState<boolean>(true)
+
+  useEffect(() => {
+    let isMounted = true
+    statsService
+      .getPublicStats()
+      .then((data) => {
+        if (isMounted && data) {
+          setStats(data)
+        }
+      })
+      .catch((err) => {
+        // Honest error handling: log and retain null/empty state, never fabricate fake numbers
+        console.warn("Unable to fetch public platform statistics:", err)
+      })
+      .finally(() => {
+        if (isMounted) setStatsLoading(false)
+      })
+    return () => {
+      isMounted = false
+    }
+  }, [])
 
   const creatorCategories = [
     {
@@ -104,7 +129,7 @@ export const HomePage: React.FC = () => {
       <div className="absolute top-[1200px] right-0 w-[500px] h-[500px] bg-gradient-to-l from-[#F4E7FF]/50 to-transparent blur-3xl pointer-events-none -z-10" />
 
       {/* ============================================================ */}
-      {/* SECTION 01 — HERO */}
+      {/* SECTION 01 â€” HERO */}
       {/* ============================================================ */}
       <section id="hero" className="relative pt-16 pb-20 md:pt-24 md:pb-28">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-5xl">
@@ -113,7 +138,7 @@ export const HomePage: React.FC = () => {
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-[#D8B8FF] bg-[#F4E7FF]/70 text-[#9A6ADF] text-xs font-semibold shadow-xs mb-6">
               <Sparkles className="h-3.5 w-3.5 text-[#9A6ADF]" />
               <span>Where Brands Meet Creativity</span>
-              <span className="text-[#D8B8FF]">•</span>
+              <span className="text-[#D8B8FF]">â€¢</span>
               <span className="text-[#111111] font-bold">Intelligent Creator Marketplace</span>
             </div>
           </ScrollReveal>
@@ -163,24 +188,32 @@ export const HomePage: React.FC = () => {
               onClick={() => scrollToSection("problem")}
               className="text-xs text-[#4B4652] hover:text-[#9A6ADF] font-medium py-2 px-3 transition-colors cursor-pointer inline-flex items-center gap-1"
             >
-              Why CreatorBridge? ↓
+              Why CreatorBridge? â†“
             </button>
           </ScrollReveal>
 
           {/* Trust & Guarantee Markers Row */}
           <ScrollReveal direction="up" delayMs={350}>
-            <div className="pt-6 border-t border-[#F4E7FF] flex flex-wrap items-center justify-center gap-y-2 gap-x-8 text-xs text-[#4B4652] mb-12">
+            <div className="pt-6 border-t border-[#F4E7FF] dark:border-[#2D2447] flex flex-wrap items-center justify-center gap-y-2 gap-x-8 text-xs text-[#4B4652] dark:text-[#C7C3D4] mb-12">
               <div className="flex items-center gap-1.5 font-medium">
-                <ShieldCheck className="h-4 w-4 text-[#9A6ADF]" />
-                <span>98.4% Match Accuracy</span>
+                <ShieldCheck className="h-4 w-4 text-[#9A6ADF] dark:text-[#B78AF7]" />
+                <span>Explainable AI Affinity Scoring</span>
               </div>
               <div className="flex items-center gap-1.5 font-medium">
-                <CheckCircle2 className="h-4 w-4 text-[#9A6ADF]" />
+                <CheckCircle2 className="h-4 w-4 text-[#9A6ADF] dark:text-[#B78AF7]" />
                 <span>Commercial IP Escrow Protection</span>
               </div>
-              <div className="flex items-center gap-1.5 font-medium">
-                <Sparkles className="h-4 w-4 text-[#9A6ADF]" />
-                <span>1,200+ Verified AI Creators</span>
+              <div className="flex items-center gap-1.5 font-medium min-h-[20px]">
+                <Sparkles className="h-4 w-4 text-[#9A6ADF] dark:text-[#B78AF7]" />
+                {statsLoading ? (
+                  <span className="inline-block w-24 h-3.5 bg-[#F4E7FF] dark:bg-[#231C35] animate-pulse rounded" />
+                ) : (
+                  <span>
+                    {stats && stats.total_creators > 0
+                      ? `${stats.total_creators} Verified AI Creators`
+                      : "Verified AI Creators Network"}
+                  </span>
+                )}
               </div>
             </div>
           </ScrollReveal>
@@ -197,7 +230,7 @@ export const HomePage: React.FC = () => {
                   <span className="h-3 w-3 rounded-full bg-[#D8B8FF]" />
                   <span className="h-3 w-3 rounded-full bg-[#F4E7FF]" />
                   <span className="font-semibold text-[#111111] ml-2 hidden sm:inline">
-                    CreatorBridge Platform • Intelligent Command Center
+                    CreatorBridge Platform â€¢ Intelligent Command Center
                   </span>
                 </div>
                 <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#F4E7FF] text-[#9A6ADF] text-[11px] font-bold">
@@ -210,7 +243,7 @@ export const HomePage: React.FC = () => {
               <div className="mb-4 flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#FFFDFD] p-2.5 rounded-xl border border-[#F4E7FF]">
                 <div className="flex items-center gap-2 text-xs text-[#4B4652] w-full sm:w-auto">
                   <Sparkles className="h-3.5 w-3.5 text-[#9A6ADF]" />
-                  <span className="truncate">Active Brief: <strong>Aura Spatial Sound — Global Motion Launch</strong></span>
+                  <span className="truncate">Active Brief: <strong>Aura Spatial Sound â€” Global Motion Launch</strong></span>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
                   <span className="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-[#F4E7FF] text-[#9A6ADF]">
@@ -280,10 +313,10 @@ export const HomePage: React.FC = () => {
                         <div className="flex items-center gap-1.5">
                           <h4 className="font-bold text-sm text-[#111111]">Elena Rostova</h4>
                           <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#FFF4E5] text-[#b46b14]">
-                            ★ 4.98
+                            â˜… 4.98
                           </span>
                         </div>
-                        <p className="text-[11px] text-[#4B4652]">Master AI Video Director • 24 Campaigns</p>
+                        <p className="text-[11px] text-[#4B4652]">Master AI Video Director â€¢ 24 Campaigns</p>
                       </div>
                     </div>
                     <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#F4E7FF] text-[#9A6ADF] border border-[#D8B8FF]">
@@ -322,12 +355,12 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* ============================================================ */}
-      {/* SECTION 01B — APPLE CARDS CAROUSEL SPECIALIZATION SHOWCASE */}
+      {/* SECTION 01B â€” APPLE CARDS CAROUSEL SPECIALIZATION SHOWCASE */}
       {/* ============================================================ */}
       <LandingSpecializationCarousel />
 
       {/* ============================================================ */}
-      {/* SECTION 02 — THE PROBLEM */}
+      {/* SECTION 02 â€” THE PROBLEM */}
       {/* ============================================================ */}
       <section id="problem" className="py-20 md:py-28 bg-[#FFFDFD] border-y border-[#F4E7FF]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -440,7 +473,7 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* ============================================================ */}
-      {/* SECTION 03 — THE NEW AI CREATOR ECONOMY */}
+      {/* SECTION 03 â€” THE NEW AI CREATOR ECONOMY */}
       {/* ============================================================ */}
       <section id="economy" className="py-20 md:py-28 bg-[#FFFDFD]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -459,7 +492,7 @@ export const HomePage: React.FC = () => {
 
             <ScrollReveal direction="up" delayMs={200}>
               <p className="text-[#4B4652] text-sm sm:text-base leading-relaxed">
-                Generative AI is not eliminating human creativity—it is minting specialized creative directors who speak in diffusion models, camera trajectories, and latent space.
+                Generative AI is not eliminating human creativityâ€”it is minting specialized creative directors who speak in diffusion models, camera trajectories, and latent space.
               </p>
             </ScrollReveal>
           </div>
@@ -525,7 +558,7 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* ============================================================ */}
-      {/* SECTION 04 — FOR CREATORS */}
+      {/* SECTION 04 â€” FOR CREATORS */}
       {/* ============================================================ */}
       <section id="for-creators" className="py-20 md:py-28 bg-gradient-to-b from-[#F4E7FF]/40 via-[#FFFDFD] to-[#FFFDFD] border-t border-[#F4E7FF]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -632,7 +665,7 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* ============================================================ */}
-      {/* SECTION 05 — FOR BRANDS */}
+      {/* SECTION 05 â€” FOR BRANDS */}
       {/* ============================================================ */}
       <section id="for-brands" className="py-20 md:py-28 border-t border-[#F4E7FF] bg-[#FFFDFD]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -739,7 +772,7 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* ============================================================ */}
-      {/* SECTION 06 — HOW IT WORKS */}
+      {/* SECTION 06 â€” HOW IT WORKS */}
       {/* ============================================================ */}
       <section id="how-it-works" className="py-20 md:py-28 bg-[#FFFDFD] border-t border-[#F4E7FF]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -871,7 +904,7 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* ============================================================ */}
-      {/* SECTION 07 — AI-NATIVE WORKFLOW */}
+      {/* SECTION 07 â€” AI-NATIVE WORKFLOW */}
       {/* ============================================================ */}
       <section id="workflow" className="py-20 md:py-28 border-t border-[#F4E7FF] bg-[#FFFDFD]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -940,7 +973,7 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* ============================================================ */}
-      {/* SECTION 08 — TRUST + VERIFICATION STANDARDS & STATS */}
+      {/* SECTION 08 â€” TRUST + VERIFICATION STANDARDS & STATS */}
       {/* ============================================================ */}
       <section id="trust" className="py-20 md:py-28 bg-gradient-to-b from-[#F4E7FF]/30 via-[#FFFDFD] to-[#FFFDFD] border-t border-[#F4E7FF]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -1018,40 +1051,56 @@ export const HomePage: React.FC = () => {
             </ScrollReveal>
           </div>
 
-          {/* Key Trust & Performance Metrics Banner */}
+          {/* Key Trust & Performance Metrics Banner (Genuine DB Counts) */}
           <ScrollReveal direction="up" delayMs={350}>
-            <div className="max-w-5xl mx-auto rounded-2xl border border-[#D8B8FF] bg-white p-6 sm:p-8 shadow-sm">
+            <div className="max-w-5xl mx-auto rounded-2xl border border-[#D8B8FF] dark:border-[#2D2447] bg-white dark:bg-[#181524] p-6 sm:p-8 shadow-sm">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
                 <div className="space-y-1">
-                  <div className="text-3xl sm:text-4xl font-black text-[#9A6ADF] font-mono">
-                    98.4%
+                  <div className="text-3xl sm:text-4xl font-black text-[#9A6ADF] dark:text-[#B78AF7] font-mono min-h-[40px] flex items-center justify-center">
+                    {statsLoading ? (
+                      <span className="inline-block w-14 h-8 bg-[#F4E7FF] dark:bg-[#231C35] animate-pulse rounded" />
+                    ) : (
+                      stats?.total_creators ?? 0
+                    )}
                   </div>
-                  <div className="text-xs font-bold text-[#111111]">Match Accuracy</div>
-                  <p className="text-[11px] text-[#4B4652]">Explainable AI affinity scoring</p>
+                  <div className="text-xs font-bold text-[#111111] dark:text-[#F5F3F8]">Registered Creators</div>
+                  <p className="text-[11px] text-[#4B4652] dark:text-[#C7C3D4]">Verified generative talent</p>
                 </div>
 
                 <div className="space-y-1">
-                  <div className="text-3xl sm:text-4xl font-black text-[#111111] font-mono">
-                    1,200+
+                  <div className="text-3xl sm:text-4xl font-black text-[#111111] dark:text-[#F5F3F8] font-mono min-h-[40px] flex items-center justify-center">
+                    {statsLoading ? (
+                      <span className="inline-block w-14 h-8 bg-[#F4E7FF] dark:bg-[#231C35] animate-pulse rounded" />
+                    ) : (
+                      stats?.total_published_campaigns ?? 0
+                    )}
                   </div>
-                  <div className="text-xs font-bold text-[#111111]">Verified Creators</div>
-                  <p className="text-[11px] text-[#4B4652]">Certified multi-model workflows</p>
+                  <div className="text-xs font-bold text-[#111111] dark:text-[#F5F3F8]">Active Campaigns</div>
+                  <p className="text-[11px] text-[#4B4652] dark:text-[#C7C3D4]">Published brand briefs</p>
                 </div>
 
                 <div className="space-y-1">
-                  <div className="text-3xl sm:text-4xl font-black text-[#9A6ADF] font-mono">
-                    48h
+                  <div className="text-3xl sm:text-4xl font-black text-[#9A6ADF] dark:text-[#B78AF7] font-mono min-h-[40px] flex items-center justify-center">
+                    {statsLoading ? (
+                      <span className="inline-block w-14 h-8 bg-[#F4E7FF] dark:bg-[#231C35] animate-pulse rounded" />
+                    ) : (
+                      stats?.total_portfolio_items ?? 0
+                    )}
                   </div>
-                  <div className="text-xs font-bold text-[#111111]">Average Turnaround</div>
-                  <p className="text-[11px] text-[#4B4652]">Accelerated generative speed</p>
+                  <div className="text-xs font-bold text-[#111111] dark:text-[#F5F3F8]">Portfolio Assets</div>
+                  <p className="text-[11px] text-[#4B4652] dark:text-[#C7C3D4]">Verified creative showcases</p>
                 </div>
 
                 <div className="space-y-1">
-                  <div className="text-3xl sm:text-4xl font-black text-[#b46b14] font-mono">
-                    100%
+                  <div className="text-3xl sm:text-4xl font-black text-[#b46b14] dark:text-[#f0b561] font-mono min-h-[40px] flex items-center justify-center">
+                    {statsLoading ? (
+                      <span className="inline-block w-14 h-8 bg-[#F4E7FF] dark:bg-[#231C35] animate-pulse rounded" />
+                    ) : (
+                      stats?.total_users ?? 0
+                    )}
                   </div>
-                  <div className="text-xs font-bold text-[#111111]">Commercial IP Safety</div>
-                  <p className="text-[11px] text-[#4B4652]">Protected escrow & rights buyout</p>
+                  <div className="text-xs font-bold text-[#111111] dark:text-[#F5F3F8]">Platform Members</div>
+                  <p className="text-[11px] text-[#4B4652] dark:text-[#C7C3D4]">Registered brands & creators</p>
                 </div>
               </div>
             </div>
@@ -1059,16 +1108,16 @@ export const HomePage: React.FC = () => {
 
           {/* Verification Engine Active Notice */}
           <div className="mt-10 text-center">
-            <span className="inline-flex items-center gap-2 text-xs text-[#4B4652] bg-white px-4 py-2 rounded-full border border-[#F4E7FF]">
-              <span className="h-2 w-2 rounded-full bg-[#9A6ADF]" />
-              Platform Verification Engine Active • Phase 2 Verified Commercial Standards Enforced
+            <span className="inline-flex items-center gap-2 text-xs text-[#4B4652] dark:text-[#C7C3D4] bg-white dark:bg-[#181524] px-4 py-2 rounded-full border border-[#F4E7FF] dark:border-[#2D2447]">
+              <span className="h-2 w-2 rounded-full bg-[#9A6ADF] dark:bg-[#B78AF7]" />
+              Platform Database Synchronized â€¢ Live Production Metrics Displayed
             </span>
           </div>
         </div>
       </section>
 
       {/* ============================================================ */}
-      {/* SECTION 09 — FINAL CALL TO ACTION */}
+      {/* SECTION 09 â€” FINAL CALL TO ACTION */}
       {/* ============================================================ */}
       <section id="get-started" className="py-20 md:py-28 border-t border-[#F4E7FF] bg-[#FFFDFD]">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -1110,7 +1159,7 @@ export const HomePage: React.FC = () => {
             </div>
 
             <p className="text-xs text-purple-200/90 relative z-10">
-              Free to register • Verified marketplace escrow • Commercial copyright guaranteed
+              Free to register â€¢ Verified marketplace escrow â€¢ Commercial copyright guaranteed
             </p>
           </div>
         </div>

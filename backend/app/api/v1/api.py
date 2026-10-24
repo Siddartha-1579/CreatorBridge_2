@@ -20,11 +20,13 @@ from app.api.v1.endpoints import (
     ai_intelligence,
     chatbot,
     policies,
+    stats,
 )
 
 api_v1_router = APIRouter()
 
 api_v1_router.include_router(health.router, tags=["Health"])
+api_v1_router.include_router(stats.router, prefix="/stats", tags=["Public Statistics"])
 api_v1_router.include_router(policies.router, prefix="/policies", tags=["Platform Policies"])
 api_v1_router.include_router(auth.router, prefix="/auth", tags=["Authentication"])
 api_v1_router.include_router(onboarding.router, prefix="/onboarding", tags=["Creator Onboarding"])

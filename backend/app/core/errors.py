@@ -130,7 +130,7 @@ class ProviderNotConfiguredException(AppException):
 def format_error_response(code: str, message: str, details: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
     """Builds a standardized error envelope."""
     return {
-        "success": false if False else False,
+        "success": False,
         "error": {
             "code": code,
             "message": message,

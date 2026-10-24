@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 html {
   scroll-behavior: smooth;
 }
@@ -22,6 +24,26 @@ html {
   --cb-peach-soft: #FFF4E5;
   --cb-text-primary: #111111;
   --cb-text-secondary: #4B4652;
+  --cb-bg: #FFFDFD;
+  --cb-surface: #FFFFFF;
+  --cb-border: #F4E7FF;
+}
+
+.dark {
+  color-scheme: dark;
+  --cb-white: #181524;
+  --cb-off-white: #0F0D15;
+  --cb-lavender-soft: #231C35;
+  --cb-lavender: #3E325D;
+  --cb-purple: #B78AF7;
+  --cb-purple-hover: #C8A3FA;
+  --cb-peach: #523E28;
+  --cb-peach-soft: #2B2117;
+  --cb-text-primary: #F5F3F8;
+  --cb-text-secondary: #C7C3D4;
+  --cb-bg: #0F0D15;
+  --cb-surface: #181524;
+  --cb-border: #2D2447;
 }
 
 @theme {
@@ -45,6 +67,11 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+.dark body {
+  background-color: #0F0D15;
+  color: #F5F3F8;
 }
 
 /* CreatorBridge Light Brand Gradients & Subtle Accents */

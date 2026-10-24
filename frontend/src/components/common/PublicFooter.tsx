@@ -14,7 +14,7 @@ export const PublicFooter: React.FC = () => {
   }
 
   return (
-    <footer className="border-t border-[#F4E7FF] bg-[#FFFDFD] py-12 md:py-16 text-[#4B4652]">
+    <footer className="border-t border-[#F4E7FF] dark:border-[#2D2447] bg-[#FFFDFD] dark:bg-[#0F0D15] py-12 md:py-16 text-[#4B4652] dark:text-[#C7C3D4] transition-colors duration-200">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
           {/* Col 1: Brand Info */}
@@ -23,28 +23,28 @@ export const PublicFooter: React.FC = () => {
               <img
                 src="/creatorbridge-logo-transparent.png"
                 alt="CreatorBridge - Where Brands Meet Creativity"
-                className="h-9 w-auto object-contain"
+                className="h-9 w-auto object-contain dark:brightness-110"
               />
             </Link>
-            <p className="text-xs text-[#4B4652] leading-relaxed max-w-xs">
+            <p className="text-xs text-[#4B4652] dark:text-[#C7C3D4] leading-relaxed max-w-xs">
               Where Brands Meet Creativity. The intelligent marketplace connecting specialized generative artists with world-class commercial brands.
             </p>
-            <div className="flex items-center gap-1.5 text-xs text-[#9A6ADF] font-semibold">
-              <ShieldCheck className="h-4 w-4 text-[#9A6ADF]" />
+            <div className="flex items-center gap-1.5 text-xs text-[#9A6ADF] dark:text-[#B78AF7] font-semibold">
+              <ShieldCheck className="h-4 w-4 text-[#9A6ADF] dark:text-[#B78AF7]" />
               Verified Commercial Generative Standards
             </div>
           </div>
 
           {/* Col 2: Marketplace Navigation */}
           <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-wider text-[#111111]">
+            <p className="text-xs font-bold uppercase tracking-wider text-[#111111] dark:text-[#F5F3F8]">
               Platform
             </p>
             <ul className="space-y-2 text-xs">
               <li>
                 <button
                   onClick={() => scrollTo("problem")}
-                  className="hover:text-[#9A6ADF] transition-colors cursor-pointer"
+                  className="hover:text-[#9A6ADF] dark:hover:text-[#B78AF7] transition-colors cursor-pointer"
                 >
                   The Marketplace Gap
                 </button>
@@ -52,7 +52,7 @@ export const PublicFooter: React.FC = () => {
               <li>
                 <button
                   onClick={() => scrollTo("economy")}
-                  className="hover:text-[#9A6ADF] transition-colors cursor-pointer"
+                  className="hover:text-[#9A6ADF] dark:hover:text-[#B78AF7] transition-colors cursor-pointer"
                 >
                   AI Creative Economy
                 </button>
@@ -60,7 +60,7 @@ export const PublicFooter: React.FC = () => {
               <li>
                 <button
                   onClick={() => scrollTo("how-it-works")}
-                  className="hover:text-[#9A6ADF] transition-colors cursor-pointer"
+                  className="hover:text-[#9A6ADF] dark:hover:text-[#B78AF7] transition-colors cursor-pointer"
                 >
                   End-to-End Workflow
                 </button>
@@ -68,7 +68,7 @@ export const PublicFooter: React.FC = () => {
               <li>
                 <button
                   onClick={() => scrollTo("trust")}
-                  className="hover:text-[#9A6ADF] transition-colors cursor-pointer"
+                  className="hover:text-[#9A6ADF] dark:hover:text-[#B78AF7] transition-colors cursor-pointer"
                 >
                   Trust & Verification Standards
                 </button>
@@ -76,7 +76,7 @@ export const PublicFooter: React.FC = () => {
               <li>
                 <Link
                   to="/policies"
-                  className="hover:text-[#9A6ADF] transition-colors inline-flex items-center gap-1"
+                  className="hover:text-[#9A6ADF] dark:hover:text-[#B78AF7] transition-colors inline-flex items-center gap-1"
                 >
                   Platform Policies & Legal
                 </Link>
@@ -86,14 +86,14 @@ export const PublicFooter: React.FC = () => {
 
           {/* Col 3: Creator Portals */}
           <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-wider text-[#111111]">
+            <p className="text-xs font-bold uppercase tracking-wider text-[#111111] dark:text-[#F5F3F8]">
               Creator Hub
             </p>
             <ul className="space-y-2 text-xs">
               <li>
                 <Link
                   to="/creator/dashboard"
-                  className="inline-flex items-center gap-1 hover:text-[#9A6ADF] transition-colors"
+                  className="inline-flex items-center gap-1 hover:text-[#9A6ADF] dark:hover:text-[#B78AF7] transition-colors"
                 >
                   Creator Dashboard <ArrowUpRight className="h-3 w-3" />
                 </Link>
@@ -101,7 +101,7 @@ export const PublicFooter: React.FC = () => {
               <li>
                 <Link
                   to="/creator/campaigns"
-                  className="inline-flex items-center gap-1 hover:text-[#9A6ADF] transition-colors"
+                  className="inline-flex items-center gap-1 hover:text-[#9A6ADF] dark:hover:text-[#B78AF7] transition-colors"
                 >
                   Creator Campaigns <ArrowUpRight className="h-3 w-3" />
                 </Link>
@@ -109,7 +109,7 @@ export const PublicFooter: React.FC = () => {
               <li>
                 <Link
                   to="/creator/portfolio"
-                  className="inline-flex items-center gap-1 hover:text-[#9A6ADF] transition-colors"
+                  className="inline-flex items-center gap-1 hover:text-[#9A6ADF] dark:hover:text-[#B78AF7] transition-colors"
                 >
                   AI Portfolio Showcase <ArrowUpRight className="h-3 w-3" />
                 </Link>
@@ -117,7 +117,7 @@ export const PublicFooter: React.FC = () => {
               <li>
                 <Link
                   to="/discover"
-                  className="inline-flex items-center gap-1 hover:text-[#9A6ADF] transition-colors"
+                  className="inline-flex items-center gap-1 hover:text-[#9A6ADF] dark:hover:text-[#B78AF7] transition-colors"
                 >
                   Explore AI Creators <ArrowUpRight className="h-3 w-3" />
                 </Link>
@@ -127,17 +127,17 @@ export const PublicFooter: React.FC = () => {
 
           {/* Col 4: Platform Pillars */}
           <div className="space-y-3">
-            <p className="text-xs font-bold uppercase tracking-wider text-[#111111]">
+            <p className="text-xs font-bold uppercase tracking-wider text-[#111111] dark:text-[#F5F3F8]">
               Commercial Guarantee
             </p>
-            <p className="text-xs text-[#4B4652] leading-relaxed">
+            <p className="text-xs text-[#4B4652] dark:text-[#C7C3D4] leading-relaxed">
               Every commission on CreatorBridge includes commercial IP handover, milestone escrow safety, and explainable AI match scoring.
             </p>
             <div className="pt-1 flex flex-wrap gap-2">
-              <span className="inline-block px-2.5 py-1 rounded-full bg-[#F4E7FF] text-[#9A6ADF] text-[11px] font-semibold border border-[#D8B8FF]">
+              <span className="inline-block px-2.5 py-1 rounded-full bg-[#F4E7FF] dark:bg-[#231C35] text-[#9A6ADF] dark:text-[#B78AF7] text-[11px] font-semibold border border-[#D8B8FF] dark:border-[#3E325D]">
                 100% Commercial IP Protection
               </span>
-              <span className="inline-block px-2.5 py-1 rounded-full bg-[#FFF4E5] text-[#b46b14] text-[11px] font-semibold border border-[#FFD7A8]">
+              <span className="inline-block px-2.5 py-1 rounded-full bg-[#FFF4E5] dark:bg-[#342416] text-[#b46b14] dark:text-[#f0b561] text-[11px] font-semibold border border-[#FFD7A8] dark:border-[#523E28]">
                 Milestone Escrow
               </span>
             </div>
@@ -145,17 +145,15 @@ export const PublicFooter: React.FC = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-8 border-t border-[#F4E7FF] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#4B4652]">
+        <div className="pt-8 border-t border-[#F4E7FF] dark:border-[#2D2447] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#4B4652] dark:text-[#C7C3D4]">
           <p>© 2026 CreatorBridge. All rights reserved. Where Brands Meet Creativity.</p>
-          <p className="text-xs text-[#4B4652]">
-            <span className="flex items-center gap-2">
-              <Link to="/policies" className="hover:text-[#9A6ADF] transition-colors underline-offset-2 hover:underline">
-                Platform Policies
-              </Link>
-              <span>•</span>
-              <span>Intelligent AI Creator Marketplace</span>
-            </span>
-          </p>
+          <div className="flex items-center gap-2">
+            <Link to="/policies" className="hover:text-[#9A6ADF] dark:hover:text-[#B78AF7] transition-colors underline-offset-2 hover:underline">
+              Platform Policies
+            </Link>
+            <span>•</span>
+            <span>Intelligent AI Creator Marketplace</span>
+          </div>
         </div>
       </div>
     </footer>
