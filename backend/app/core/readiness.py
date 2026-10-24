@@ -57,18 +57,14 @@ class SystemReadinessReport(BaseModel):
 
 
 def _mask_secret(secret: Optional[str]) -> Optional[str]:
-    """Safely masks a secret string, revealing only the prefix and last 3 characters.
-    Never reveals the secret body."""
+    """Safely masks a secret string without revealing any characters from the secret.
+    Never exposes raw key prefixes, suffixes, or secret bodies to the client."""
     if not secret or len(secret.strip()) == 0:
         return None
     val = secret.strip()
     if val.startswith("mock-") or "1x000000" in val:
         return "mock-development-key"
-    if len(val) <= 8:
-        return "***"
-    prefix = val[:4]
-    suffix = val[-3:]
-    return f"{prefix}...{suffix}"
+    return "***"
 
 
 class SystemReadinessMonitor:
