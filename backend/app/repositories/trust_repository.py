@@ -38,14 +38,9 @@ class TrustRepository:
 
     async def get_or_create_score(self, account_id: str) -> TrustScoreResponse:
         incidents = self._incidents.get(account_id, [])
-        badges = self._badges.get(account_id, [
-            VerifiedBadge(
-                id="email_verified",
-                title="Email & Account Verified",
-                description="User verified email and security challenge.",
-                verified_at=datetime.now(timezone.utc).isoformat(),
-            )
-        ])
+        # Never fabricate a verification badge or timestamp. Only persisted/explicitly
+        # recorded badges are evidence; a new account has no public numerical trust score.
+        badges = self._badges.get(account_id, [])
         calc = compute_trust_score(incidents, verified_badges=badges)
 
         incident_models = [
@@ -71,8 +66,8 @@ class TrustRepository:
         active_count = len(score_res.active_incidents)
         return PublicTrustProfileResponse(
             account_id=account_id,
-            score=score_res.score,
-            status_label=score_res.status_label,
+            score=(score_res.score if (score_res.verified_badges or score_res.confirmed_incidents_count > 0) else None),
+            status_label=(score_res.status_label if (score_res.verified_badges or score_res.confirmed_incidents_count > 0) else "New — insufficient verified history"),
             verified_badges=score_res.verified_badges,
             active_incidents_count=active_count,
             last_recalculated_at=score_res.last_recalculated_at,
