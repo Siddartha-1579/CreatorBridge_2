@@ -23,6 +23,10 @@ class CreatorMatchResult(BaseModel):
     creator_avatar_url: Optional[str] = None
     reputation_score: float = 4.8
     overall_match_score: float = Field(ge=0.0, le=100.0)
+    achievement_points: int = Field(default=0, ge=0)
+    achievement_reputation_bonus: float = Field(default=0.0, ge=0.0, le=5.0)
+    temporary_priority_bonus: float = Field(default=0.0, ge=0.0, le=8.0)
+    priority_score: float = Field(default=0.0, ge=0.0, le=100.0)
     factors: List[MatchScoreFactor] = Field(default_factory=list)
     summary_explanation: str
     top_strengths: List[str] = Field(default_factory=list)
