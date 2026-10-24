@@ -14,6 +14,24 @@ from app.services.trust_engine import compute_trust_score
 from app.repositories.trust_repository import TrustRepository
 
 
+def _parse_boost_time(value: str) -> datetime:
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+
+
+def test_duration_tiers_are_deterministic():
+    from app.services.achievement_service import boost_duration_hours
+    assert boost_duration_hours(10) == 1
+    assert boost_duration_hours(24) == 1
+    assert boost_duration_hours(25) == 6
+    assert boost_duration_hours(49) == 6
+    assert boost_duration_hours(50) == 12
+    assert boost_duration_hours(99) == 12
+    assert boost_duration_hours(100) == 24
+    with pytest.raises(ValueError):
+        boost_duration_hours(101)
+
+
 def get_auth_headers(user_id: str, role: str) -> dict:
     return {
         "Authorization": f"Bearer dev-{user_id}",
@@ -221,8 +239,8 @@ def test_insufficient_balances_and_spending_limits():
     assert after_summary["lifetime_points"] == avail
 
 
-def test_boost_activation_expiry_and_campaign_scope():
-    """7. Boosts are active for 24h, expire automatically, and respect campaign brief scope."""
+def test_boost_duration_depends_on_points_and_campaign_scope():
+    """7. Server maps spend tiers to durations and boost scope is respected."""
     creator_id = f"test_creator_{uuid4().hex[:8]}"
 
     # Award points
@@ -238,8 +256,10 @@ def test_boost_activation_expiry_and_campaign_scope():
         accepted=True,
     )
 
-    # Spend 50 points for a global boost
-    achievement_service.spend_for_boost(creator_id, 50, None)
+    # Spend 50 points for a global boost: the server grants a 12-hour duration.
+    boost = achievement_service.spend_for_boost(creator_id, 50, None)
+    assert boost["duration_hours"] == 12
+    assert (_parse_boost_time(boost["expires_at"]) - _parse_boost_time(boost["starts_at"])).total_seconds() == 12 * 3600
 
     # Check ranking bonus: 50 pts out of 100 max = 4.0 temporary bonus
     bonus = achievement_service.ranking_bonus(creator_id, brief_id=None)
