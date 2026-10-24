@@ -5,6 +5,7 @@ export type ThemeId =
   | "wine-silver"
   | "cherry-cream"
   | "scarlet-ruby-rose"
+  | "classic-purple"
 
 export interface ThemePalette {
   /** Primary brand / button color */

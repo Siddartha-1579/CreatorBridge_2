@@ -461,6 +461,79 @@ html {
   --cb-border: #4D1B28;
 }
 
+/* Theme 7 — Classic Electric Violet & Lavender Marble (Original) */
+:root[data-theme="classic-purple"] {
+  color-scheme: light;
+  --color-primary: #9A6ADF;
+  --color-primary-hover: #8655CB;
+  --color-primary-foreground: #FFFFFF;
+  --color-background: #FFFDFD;
+  --color-dark-accent: #3E325D;
+  --color-highlight: #FFD7A8;
+  --color-surface: #FFFFFF;
+  --color-surface-elevated: #FFFDFD;
+  --color-surface-muted: #F4E7FF;
+  --color-text: #111111;
+  --color-text-muted: #4B4652;
+  --color-border: #D8B8FF;
+  --color-border-hover: #FFD7A8;
+  --color-focus-ring: #9A6ADF;
+  --color-accent: #FFD7A8;
+  --color-success: #15803D;
+  --color-warning: #B45309;
+  --color-error: #DC2626;
+
+  --cb-white: #FFFFFF;
+  --cb-off-white: #FFFDFD;
+  --cb-lavender-soft: #F4E7FF;
+  --cb-lavender: #D8B8FF;
+  --cb-purple: #9A6ADF;
+  --cb-purple-hover: #8655CB;
+  --cb-peach: #FFD7A8;
+  --cb-peach-soft: #F4E7FF;
+  --cb-text-primary: #111111;
+  --cb-text-secondary: #4B4652;
+  --cb-bg: #FFFDFD;
+  --cb-surface: #FFFFFF;
+  --cb-border: #D8B8FF;
+}
+
+.dark[data-theme="classic-purple"] {
+  color-scheme: dark;
+  --color-primary: #B78AF7;
+  --color-primary-hover: #C8A3FA;
+  --color-primary-foreground: #FFFFFF;
+  --color-background: #0F0D15;
+  --color-dark-accent: #3E325D;
+  --color-highlight: #FFD7A8;
+  --color-surface: #181524;
+  --color-surface-elevated: #231C35;
+  --color-surface-muted: #2D2447;
+  --color-text: #F5F3F8;
+  --color-text-muted: #C7C3D4;
+  --color-border: #3E325D;
+  --color-border-hover: #FFD7A8;
+  --color-focus-ring: #B78AF7;
+  --color-accent: #FFD7A8;
+  --color-success: #22C55E;
+  --color-warning: #F59E0B;
+  --color-error: #EF4444;
+
+  --cb-white: #181524;
+  --cb-off-white: #0F0D15;
+  --cb-lavender-soft: #2D2447;
+  --cb-lavender: #3E325D;
+  --cb-purple: #B78AF7;
+  --cb-purple-hover: #C8A3FA;
+  --cb-peach: #FFD7A8;
+  --cb-peach-soft: #2D2447;
+  --cb-text-primary: #F5F3F8;
+  --cb-text-secondary: #C7C3D4;
+  --cb-bg: #0F0D15;
+  --cb-surface: #181524;
+  --cb-border: #3E325D;
+}
+
 /* =========================================================================
    TAILWIND THEME MAPPING — DYNAMIC ADAPTATION FOR ALL COMPONENTS
    ========================================================================= */
