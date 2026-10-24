@@ -13,6 +13,13 @@ export interface CreatorMatchResult {
   creator_level?: string
   creator_avatar_url?: string
   reputation_score?: number
+  trust_score?: number | null
+  trust_status?: string | null
+  priority_placement?: boolean
+  priority_score?: number
+  achievement_points?: number
+  achievement_reputation_bonus?: number
+  temporary_priority_bonus?: number
   overall_match_score: number
   factors: MatchScoreFactor[]
   summary_explanation: string
