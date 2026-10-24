@@ -13,6 +13,7 @@ from app.repositories import (
     PortfolioRepository,
 )
 from app.services.achievement_service import achievement_service
+from app.repositories.trust_repository import trust_repository
 from app.schemas.match import (
     MatchCriteria,
     CreatorMatchResult,
@@ -245,13 +246,18 @@ class MatchingService(BaseService):
             )
 
             achievement = achievement_service.ranking_bonus(str(creator.id), criteria.brief_id)
+            # Trust is fetched from the dedicated trust engine, never derived from points or match fit.
+            trust_profile = await trust_repository.get_public_profile(str(creator.user_id))
             results.append(
                 CreatorMatchResult(
                     creator_id=str(creator.id),
                     creator_handle=creator.handle,
                     creator_name=creator.full_name,
                     creator_level=creator.level.value if hasattr(creator.level, "value") else str(creator.level),
-                    reputation_score=creator.reputation_score or 4.8,
+                    reputation_score=creator.reputation_score or 0.0,
+                    trust_score=trust_profile.score,
+                    trust_status=trust_profile.status_label,
+                    priority_placement=achievement["active_boost"],
                     overall_match_score=overall_score,
                     achievement_points=achievement["lifetime_points"],
                     achievement_reputation_bonus=achievement["long_term_reputation_bonus"],
@@ -267,8 +273,18 @@ class MatchingService(BaseService):
                 )
             )
 
-        # Match fit remains visible; capped achievement bonuses only affect ordering transparently.
-        results.sort(key=lambda r: (getattr(r, "priority_score", r.overall_match_score), r.overall_match_score), reverse=True)
+        # Eligibility/matching is computed first. Active paid-with-points placement is explicit;
+        # within each placement tier, trust is the primary organic ranking signal, then fit.
+        # Trust is never modified by points or boost spend.
+        results.sort(
+            key=lambda r: (
+                bool(getattr(r, "priority_placement", False)),
+                getattr(r, "trust_score", 0.0),
+                getattr(r, "priority_score", r.overall_match_score),
+                r.overall_match_score,
+            ),
+            reverse=True,
+        )
         return results[: criteria.limit]
 
     async def get_matches_for_brief_id(self, brief_id: str) -> List[CreatorMatchResult]:
