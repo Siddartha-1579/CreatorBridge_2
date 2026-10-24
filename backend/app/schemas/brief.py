@@ -385,6 +385,9 @@ class ClipSubmissionReview(BaseModel):
     feedback: Optional[str] = None
     verified_views: Optional[int] = None
     payout_cents: Optional[int] = None
+    quality_score: Optional[float] = Field(default=None, ge=0, le=100)
+    brief_compliance_score: Optional[float] = Field(default=None, ge=0, le=100)
+    collaboration_score: Optional[float] = Field(default=None, ge=0, le=100)
 
 
 class ClipSubmissionResponse(BaseDomainModel):

@@ -4,6 +4,7 @@ Points can be spent by the authenticated creator. Awards are intentionally not e
 as a creator-controlled endpoint; trusted completion/review workflows call the service.
 """
 from typing import Optional
+from uuid import UUID
 from pydantic import BaseModel, Field
 from fastapi import APIRouter, Depends, HTTPException
 from app.core.security import get_current_user, AuthenticatedUser, UserRole
@@ -28,7 +29,6 @@ async def get_my_achievements(
     creator = await creator_repository.get_by_user_id(str(current_user.id))
     if not creator:
         try:
-            from uuid import UUID
             creator = await creator_repository.get_by_id(UUID(str(current_user.id)))
         except Exception:
             creator = None
@@ -48,6 +48,11 @@ async def create_priority_boost(
     if current_user.role != UserRole.CREATOR:
         raise HTTPException(status_code=403, detail="Only creators can spend achievement points.")
     creator = await creator_repository.get_by_user_id(str(current_user.id))
+    if not creator:
+        try:
+            creator = await creator_repository.get_by_id(UUID(str(current_user.id)))
+        except Exception:
+            creator = None
     if not creator:
         raise HTTPException(status_code=404, detail="Creator profile not found.")
     try:

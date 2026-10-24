@@ -329,6 +329,54 @@ def init_db():
             """
         )
 
+        # 13. creator_achievement_accounts (persistent points and reputation)
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS creator_achievement_accounts (
+                creator_id TEXT PRIMARY KEY,
+                lifetime_points INTEGER NOT NULL DEFAULT 0 CHECK(lifetime_points >= 0),
+                available_points INTEGER NOT NULL DEFAULT 0 CHECK(available_points >= 0),
+                spent_points INTEGER NOT NULL DEFAULT 0 CHECK(spent_points >= 0),
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+
+        # 14. creator_achievement_events (immutable verified achievement evidence)
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS creator_achievement_events (
+                id TEXT PRIMARY KEY,
+                creator_id TEXT NOT NULL,
+                source_engagement_id TEXT NOT NULL UNIQUE,
+                achievement_score REAL NOT NULL,
+                points_awarded INTEGER NOT NULL CHECK(points_awarded >= 0),
+                evidence_json TEXT NOT NULL,
+                verified_by TEXT NOT NULL,
+                completed_at TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_achievement_events_creator ON creator_achievement_events(creator_id)")
+
+        # 15. creator_priority_boosts (temporary candidate ranking boosts)
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS creator_priority_boosts (
+                id TEXT PRIMARY KEY,
+                creator_id TEXT NOT NULL,
+                brief_id TEXT,
+                points_spent INTEGER NOT NULL CHECK(points_spent > 0),
+                starts_at TEXT NOT NULL,
+                expires_at TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'ACTIVE',
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_priority_boost_lookup ON creator_priority_boosts(creator_id, brief_id, status, expires_at)")
+
         # Migrations: ensure columns exist in campaign_briefs
         cursor.execute("PRAGMA table_info(campaign_briefs)")
         columns = [row[1] for row in cursor.fetchall()]

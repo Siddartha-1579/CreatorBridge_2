@@ -17,6 +17,7 @@ import { ProjectFormModal } from "@/components/portfolio/ProjectFormModal"
 import { VerificationCenterModal } from "@/components/creator/VerificationCenterModal"
 import { CreatorActionCarousel } from "@/components/creator/CreatorActionCarousel"
 import { TrustScoreCard } from "@/components/trust/TrustScoreCard"
+import { CreatorAchievementCard } from "@/components/creator/CreatorAchievementCard"
 import { Button } from "@/components/ui/button"
 import {
   Sparkles,
@@ -153,6 +154,9 @@ export const CreatorDashboardPage: React.FC = () => {
 
       {/* Transparent Trust & Demerit Reliability Card */}
       <TrustScoreCard />
+
+      {/* Creator Achievement & Priority System Card */}
+      <CreatorAchievementCard />
 
       {/* Dynamic Profile Completeness Banner */}
       {completeness && (

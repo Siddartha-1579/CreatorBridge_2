@@ -93,7 +93,7 @@ class AchievementService:
                 (creator_id,),
             ).fetchone()
             events = conn.execute(
-                """SELECT id, source_engagement_id, achievement_score, points_awarded, completed_at, created_at
+                """SELECT id, source_engagement_id, achievement_score, points_awarded, evidence_json, completed_at, created_at
                    FROM creator_achievement_events WHERE creator_id = ? ORDER BY created_at DESC LIMIT 20""",
                 (creator_id,),
             ).fetchall()
@@ -104,13 +104,24 @@ class AchievementService:
                 (creator_id, now),
             ).fetchall()
         values = dict(row) if row else {"lifetime_points": 0, "available_points": 0, "spent_points": 0}
+
+        parsed_events = []
+        for item in events:
+            d = dict(item)
+            ev = {}
+            if "evidence_json" in d and d["evidence_json"]:
+                try:
+                    ev = json.loads(d["evidence_json"])
+                except Exception:
+                    pass
+            d["evidence"] = ev
+            parsed_events.append(d)
+
         return {
             **values,
             "long_term_reputation_bonus": self.long_term_bonus(values["lifetime_points"]),
             "active_boosts": [dict(item) for item in boosts],
-            "recent_achievements": [
-                {**dict(item)} for item in events
-            ],
+            "recent_achievements": parsed_events,
         }
 
     @staticmethod
@@ -145,6 +156,17 @@ class AchievementService:
     def spend_for_boost(self, creator_id: str, points: int, brief_id: Optional[str]) -> Dict[str, Any]:
         if points < MIN_BOOST_SPEND or points > MAX_BOOST_SPEND:
             raise ValueError(f"Spend between {MIN_BOOST_SPEND} and {MAX_BOOST_SPEND} points per boost.")
+
+        # If scoped to a specific campaign brief, validate the brief exists on the server
+        if brief_id:
+            with get_db_connection() as conn:
+                brief_row = conn.execute(
+                    "SELECT id, status FROM campaign_briefs WHERE id = ?",
+                    (brief_id,),
+                ).fetchone()
+                if not brief_row:
+                    raise ValueError(f"Target campaign brief '{brief_id}' was not found.")
+
         now = _now()
         expires = now + timedelta(hours=BOOST_HOURS)
         boost_id = str(uuid4())

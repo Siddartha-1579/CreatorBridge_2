@@ -580,6 +580,36 @@ class BriefService(BaseService):
         )
         if not updated:
             raise ValidationException("Failed to update submission review")
+
+        # Award verified achievement points if deliverable was approved
+        if data.status == SubmissionStatus.APPROVED:
+            try:
+                from app.services.achievement_service import achievement_service
+                brief = None
+                try:
+                    brief = await self.repo.get_by_id(UUID(sub.campaign_id))
+                except Exception:
+                    pass
+
+                deadline_at = brief.deadline if brief and hasattr(brief, "deadline") else None
+                q_score = data.quality_score if data.quality_score is not None else 85.0
+                comp_score = data.brief_compliance_score if data.brief_compliance_score is not None else 85.0
+                collab_score = data.collaboration_score if data.collaboration_score is not None else 85.0
+
+                achievement_service.record_verified_completion(
+                    creator_id=str(sub.creator_id),
+                    engagement_id=f"clip_sub_{sub.id}",
+                    verified_by=str(brand_id),
+                    completed_at=datetime.now(timezone.utc).isoformat(),
+                    deadline_at=deadline_at,
+                    quality_score=q_score,
+                    brief_compliance_score=comp_score,
+                    collaboration_score=collab_score,
+                    accepted=True,
+                )
+            except Exception as e:
+                self.logger.warning(f"Failed to record achievement points for approved submission {submission_id}: {e}")
+
         return updated
 
     async def get_analytics(
