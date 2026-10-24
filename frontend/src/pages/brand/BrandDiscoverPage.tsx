@@ -60,6 +60,7 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
   const [selectedStyle, setSelectedStyle] = useState<string>("all")
   const [selectedTool, setSelectedTool] = useState<string>("all")
   const [minMatchScore, setMinMatchScore] = useState<number>(0)
+  const [minTrustScore, setMinTrustScore] = useState<number>(0)
   const [maxHourlyRate, setMaxHourlyRate] = useState<number>(50000)
   const [minRating, setMinRating] = useState<number>(0)
   const [selectedAvailability, setSelectedAvailability] = useState<string>("all")
@@ -264,6 +265,10 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
         // AI Tool filter
         const matchesTool = creatorMatchesTool(creator, selectedTool)
 
+        // Minimum trust filter. Unknown trust is never silently treated as a passing score.
+        const trustScore = typeof matchInfo?.trust_score === "number" ? matchInfo.trust_score : null
+        const matchesTrust = minTrustScore === 0 || (trustScore !== null && trustScore >= minTrustScore)
+
         // Min match score filter
         const matchesScore = isMatchCompatible(matchInfo?.overall_match_score, minMatchScore)
 
@@ -288,6 +293,7 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
           matchesStyle &&
           matchesTool &&
           matchesScore &&
+          matchesTrust &&
           matchesRate &&
           matchesRating &&
           matchesAvailability
@@ -311,6 +317,7 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
     selectedStyle,
     selectedTool,
     minMatchScore,
+    minTrustScore,
     maxHourlyRate,
     minRating,
     selectedAvailability,
@@ -423,7 +430,7 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
         </div>
 
         {/* Row 2: Comprehensive Multi-Filter Controls */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
           {/* 1. Style / Specialization Filter */}
           <div>
             <label className="block text-[10px] font-bold text-[#4B4652] uppercase mb-1">
@@ -482,7 +489,22 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
             </select>
           </div>
 
-          {/* 4. Availability Filter */}
+          {/* 4. Minimum Trust Score */}
+          <div>
+            <label className="block text-[10px] font-bold text-[#4B4652] uppercase mb-1">Minimum Trust</label>
+            <select
+              value={minTrustScore}
+              onChange={(e) => setMinTrustScore(Number(e.target.value))}
+              className="w-full bg-[#FFFDFD] border border-[#D8B8FF] rounded-xl px-2.5 py-1.5 text-xs text-[#111111] font-medium focus:outline-none focus:ring-2 focus:ring-[#9A6ADF]/40"
+            >
+              <option value="0">Any / Unknown</option>
+              <option value="60">60+ Trust</option>
+              <option value="80">80+ Trust</option>
+              <option value="90">90+ Trust</option>
+            </select>
+          </div>
+
+          {/* 5. Availability Filter */}
           <div>
             <label className="block text-[10px] font-bold text-[#4B4652] uppercase mb-1">
               Availability
@@ -537,7 +559,7 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
       {loading ? (
         <div className="py-24 text-center text-[#4B4652] text-sm space-y-3">
           <div className="h-8 w-8 border-3 border-[#9A6ADF] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="font-semibold text-[#111111]">Running 7-factor explainable matching engine...</p>
+          <p className="font-semibold text-[#111111]">Ranking creators by trust, priority, and match compatibility...</p>
         </div>
       ) : filteredCreators.length === 0 ? (
         <div className="py-20 text-center rounded-3xl bg-white border border-dashed border-[#D8B8FF] p-8 space-y-3">
@@ -599,7 +621,7 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
                                 ? "bg-[#F4E7FF] text-[#9A6ADF] border-[#D8B8FF] hover:bg-[#F4E7FF]/80"
                                 : "bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100"
                             }`}
-                            title="Click to view full 7-factor explainable breakdown"
+                            title="Click to view the explainable match breakdown"
                           >
                             <Sparkles className="h-3 w-3" />
                             <span>{formatMatchScore(overallScore)} Match</span>
@@ -778,7 +800,7 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
         </div>
       )}
 
-      {/* Explainable 7-Factor Match Score Drawer Modal */}
+      {/* Explainable Match Score Drawer Modal */}
       <AnimatePresence>
         {inspectingMatch && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
