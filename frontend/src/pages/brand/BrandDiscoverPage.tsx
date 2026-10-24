@@ -294,6 +294,12 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
         )
       })
       .sort((a, b) => {
+        const priorityA = a.matchInfo?.priority_placement ? 1 : 0
+        const priorityB = b.matchInfo?.priority_placement ? 1 : 0
+        if (priorityA !== priorityB) return priorityB - priorityA
+        const trustA = typeof a.matchInfo?.trust_score === "number" ? a.matchInfo.trust_score : -1
+        const trustB = typeof b.matchInfo?.trust_score === "number" ? b.matchInfo.trust_score : -1
+        if (trustA !== trustB) return trustB - trustA
         const scoreA = parseMatchScore(a.matchInfo?.overall_match_score) ?? -1
         const scoreB = parseMatchScore(b.matchInfo?.overall_match_score) ?? -1
         return scoreB - scoreA
@@ -574,9 +580,12 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
                   <CardHeader className="space-y-3 pb-3">
                     {/* Top Row: Tier Pill + AI Match Score + Shortlist Button */}
                     <div className="flex items-center justify-between">
-                      <Badge variant="purple" className="text-[11px] font-semibold">
-                        {(creator.level || "PRO_CREATOR").replace(/_/g, " ")}
-                      </Badge>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Badge variant="purple" className="text-[11px] font-semibold">
+                          {(creator.level || "PRO_CREATOR").replace(/_/g, " ")}
+                        </Badge>
+                        {matchInfo?.priority_placement && <Badge className="text-[10px] bg-amber-100 text-amber-800 border-amber-200">Priority placement</Badge>}
+                      </div>
 
                       <div className="flex items-center gap-1.5">
                         {matchInfo && overallScore !== null && (
@@ -718,7 +727,7 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
                   </CardContent>
                 </div>
 
-                {/* Footer with Rate, Reputation, and Actions */}
+                {/* Footer with Rate, Reputation, Trust, and Actions */}
                 <CardFooter className="pt-3 border-t border-[#F4E7FF] flex items-center justify-between">
                   <div className="flex items-center gap-3 text-xs">
                     <div className="flex items-center gap-1 font-bold">
@@ -734,6 +743,11 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
                         </>
                       )}
                     </div>
+                    {matchInfo && (
+                      <span className="text-[11px] text-violet-700 font-semibold" title="Trust score is independent of points spent">
+                        Trust {typeof matchInfo.trust_score === "number" ? `${matchInfo.trust_score}/100` : "Unknown"}
+                      </span>
+                    )}
                     {creator.hourly_rate_cents && (
                       <span className="text-[#111111] font-mono font-semibold">
                         {formatCurrency(creator.hourly_rate_cents, "INR", true)}/hr
