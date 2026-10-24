@@ -47,3 +47,8 @@ This is a staged implementation branch, not a deployment. The backend ledger and
 ## Priority duration tier update
 
 The server now calculates temporary boost duration from the points actually spent: 10–24 points = 1 hour; 25–49 = 6 hours; 50–99 = 12 hours; 100 points = 24 hours. The server computes and persists the expiry; frontend display is only a preview. This is a declared product rule, not a claim about market prices. It must be reviewed and communicated to users before production rollout. The point-spending/boost ledger remains SQLite-backed, so durable hosting storage still needs verification. Automated tests were updated but have not been executed in this tool session.
+
+
+## Brand discovery ranking integration update
+
+Matching responses now include the dedicated trust engine's public score/status and a separate boolean for active priority placement. Brand discovery sorts active priority placements first; within each tier it sorts by trust score, then matching score. The card labels priority placement and displays trust separately from the existing creator reputation/rating field. Points do not modify the trust engine. Important caveat: the trust repository in this branch is in-memory; trust persistence across restarts remains an existing gap and must be fixed or explicitly accepted before production. Frontend and backend tests/build still require execution in the project environment.
