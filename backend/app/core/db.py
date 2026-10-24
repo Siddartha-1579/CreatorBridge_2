@@ -395,6 +395,99 @@ def init_db():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_user_policy_acceptances_user ON user_policy_acceptances(user_id, policy_version)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_user_policy_acceptances_lookup ON user_policy_acceptances(user_id, accepted_at)")
 
+        # 17. creator_engagements (persistent end-to-end engagement lifecycle)
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS creator_engagements (
+                id TEXT PRIMARY KEY,
+                brief_id TEXT NOT NULL,
+                brand_id TEXT NOT NULL,
+                creator_id TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'SHORTLISTED',
+                production_status TEXT NOT NULL DEFAULT 'NOT_STARTED',
+                proposed_terms TEXT DEFAULT '{}',
+                confirmed_terms TEXT DEFAULT '{}',
+                brand_confirmed_at TEXT,
+                brand_confirmed_by TEXT,
+                creator_confirmed_at TEXT,
+                creator_confirmed_by TEXT,
+                invitation_message TEXT,
+                decline_reason TEXT,
+                cancellation_reason TEXT,
+                cancelled_by TEXT,
+                cancelled_at TEXT,
+                completed_at TEXT,
+                completed_by TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL,
+                UNIQUE(brief_id, creator_id)
+            )
+            """
+        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_engagements_brief ON creator_engagements(brief_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_engagements_brand ON creator_engagements(brand_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_engagements_creator ON creator_engagements(creator_id)")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_engagements_status ON creator_engagements(status)")
+
+        # 18. engagement_deliverable_submissions (versioned final deliverables & revision history)
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS engagement_deliverable_submissions (
+                id TEXT PRIMARY KEY,
+                engagement_id TEXT NOT NULL,
+                creator_id TEXT NOT NULL,
+                version_number INTEGER NOT NULL DEFAULT 1,
+                title TEXT NOT NULL,
+                media_url TEXT NOT NULL,
+                thumbnail_url TEXT,
+                file_format TEXT,
+                submission_notes TEXT,
+                review_decision TEXT NOT NULL DEFAULT 'PENDING',
+                review_notes TEXT,
+                reviewed_by TEXT,
+                reviewed_at TEXT,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """
+        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_eng_submissions_eng ON engagement_deliverable_submissions(engagement_id)")
+
+        # 19. engagement_progress_updates (production status updates & blocker logs)
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS engagement_progress_updates (
+                id TEXT PRIMARY KEY,
+                engagement_id TEXT NOT NULL,
+                sender_id TEXT NOT NULL,
+                sender_role TEXT NOT NULL,
+                production_status TEXT,
+                content TEXT NOT NULL,
+                blocker_details TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_eng_updates_eng ON engagement_progress_updates(engagement_id)")
+
+        # 20. engagement_timeline_events (auditable timeline of state changes)
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS engagement_timeline_events (
+                id TEXT PRIMARY KEY,
+                engagement_id TEXT NOT NULL,
+                actor_id TEXT NOT NULL,
+                actor_role TEXT NOT NULL,
+                action TEXT NOT NULL,
+                from_status TEXT,
+                to_status TEXT,
+                details TEXT,
+                created_at TEXT NOT NULL
+            )
+            """
+        )
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_eng_timeline_eng ON engagement_timeline_events(engagement_id)")
+
         # Ensure users table has policy acceptance columns
         cursor.execute("PRAGMA table_info(users)")
         user_columns = [row[1] for row in cursor.fetchall()]

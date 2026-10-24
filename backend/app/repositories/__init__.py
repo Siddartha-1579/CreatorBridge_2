@@ -11,6 +11,7 @@ from app.repositories.verification_repository import VerificationRepository
 from app.repositories.brand_preferences_repository import BrandPreferencesRepository
 from app.repositories.brand_survey_repository import BrandSurveyRepository
 from app.repositories.brand_verification_repository import BrandVerificationRepository
+from app.repositories.engagement_repository import EngagementRepository
 
 creator_repository = CreatorRepository()
 brand_repository = BrandRepository()
@@ -22,6 +23,7 @@ verification_repository = VerificationRepository()
 brand_preferences_repository = BrandPreferencesRepository()
 brand_survey_repository = BrandSurveyRepository()
 brand_verification_repository = BrandVerificationRepository()
+engagement_repository = EngagementRepository()
 
 __all__ = [
     "BaseRepository",
@@ -35,6 +37,7 @@ __all__ = [
     "BrandPreferencesRepository",
     "BrandSurveyRepository",
     "BrandVerificationRepository",
+    "EngagementRepository",
     "creator_repository",
     "brand_repository",
     "portfolio_repository",
@@ -45,5 +48,6 @@ __all__ = [
     "brand_preferences_repository",
     "brand_survey_repository",
     "brand_verification_repository",
+    "engagement_repository",
 ]
 

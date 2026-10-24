@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from "react"
 import { useParams, Link, useNavigate } from "react-router-dom"
 import { briefsService } from "@/services/briefs.service"
+import { engagementsService } from "@/services/engagements.service"
 import { ApiError } from "@/lib/apiClient"
 import { ErrorState } from "@/components/common/ErrorState"
-import type { CampaignBrief, CampaignAnalytics, ClipSubmission } from "@/types"
+import type { CampaignBrief, CampaignAnalytics, ClipSubmission, ShortlistCreatorItem } from "@/types"
+import { ENGAGEMENT_STATUS_META } from "@/lib/engagementStateMachine"
+import { formatCurrency } from "@/lib/currency"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -30,6 +33,7 @@ import {
   Loader2,
   Edit3,
   MessageSquare,
+  Send,
   ChevronRight,
 } from "lucide-react"
 
@@ -39,8 +43,12 @@ export const BrandCampaignDetailPage: React.FC = () => {
   const [campaign, setCampaign] = useState<CampaignBrief | null>(null)
   const [analytics, setAnalytics] = useState<CampaignAnalytics | null>(null)
   const [submissions, setSubmissions] = useState<ClipSubmission[]>([])
+  const [shortlist, setShortlist] = useState<ShortlistCreatorItem[]>([])
   const [loading, setLoading] = useState(true)
   const [actionLoading, setActionLoading] = useState(false)
+  const [invitingItem, setInvitingItem] = useState<ShortlistCreatorItem | null>(null)
+  const [invitationMessage, setInvitationMessage] = useState("")
+  const [isSendingInvite, setIsSendingInvite] = useState(false)
   const [errorInfo, setErrorInfo] = useState<{
     statusCode?: number
     errorCode?: string
@@ -52,12 +60,14 @@ export const BrandCampaignDetailPage: React.FC = () => {
     setLoading(true)
     setErrorInfo(null)
     try {
-      const [briefData, subsData] = await Promise.all([
+      const [briefData, subsData, shortlistData] = await Promise.all([
         briefsService.getBrief(campaignId),
         briefsService.listSubmissionsForCampaign(campaignId).catch(() => []),
+        engagementsService.getBriefShortlist(campaignId).catch(() => []),
       ])
       setCampaign(briefData)
       setSubmissions(subsData || [])
+      setShortlist(shortlistData || [])
 
       try {
         const analyticsData = await briefsService.getCampaignAnalytics(campaignId)
@@ -109,6 +119,46 @@ export const BrandCampaignDetailPage: React.FC = () => {
       alert(err?.message || "Failed to publish campaign.")
     } finally {
       setActionLoading(false)
+    }
+  }
+
+  const handleRemoveShortlist = async (engagementId: string) => {
+    try {
+      await engagementsService.removeFromShortlist(engagementId)
+      setShortlist((prev) => prev.filter((i) => i.engagement_id !== engagementId))
+    } catch (err: any) {
+      alert(err?.message || "Failed to remove creator from shortlist.")
+    }
+  }
+
+  const handleSendInviteFromDetail = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!campaign || !invitingItem) return
+    setIsSendingInvite(true)
+    try {
+      await engagementsService.sendInvitation({
+        brief_id: campaign.id,
+        creator_id: invitingItem.creator_id,
+        proposed_terms: {
+          deliverables: (campaign.deliverables as any) || [],
+          scope_description: campaign.description || campaign.title,
+          budget_cents: campaign.budget_cents || 250000,
+          currency: "INR",
+          deadline: campaign.deadline,
+          revision_allowance: campaign.commercial_terms?.revisions_count || 2,
+          commercial_rights_required: campaign.commercial_terms?.commercial_rights_required ?? true,
+          usage_rights: "Commercial advertising distribution rights",
+        },
+        invitation_message: invitationMessage || "We would love to invite you to collaborate on our campaign.",
+      })
+      const updated = await engagementsService.getBriefShortlist(campaign.id)
+      setShortlist(updated)
+      setInvitingItem(null)
+      setInvitationMessage("")
+    } catch (err: any) {
+      alert(err?.message || "Failed to send engagement invitation.")
+    } finally {
+      setIsSendingInvite(false)
     }
   }
 
@@ -226,6 +276,13 @@ export const BrandCampaignDetailPage: React.FC = () => {
             </Button>
           </Link>
 
+          <Link to={`/brand/discover?briefId=${campaign.id}`}>
+            <Button variant="outline" size="sm" className="text-xs font-semibold gap-1.5 border-purple-200 text-purple-700 hover:bg-purple-50">
+              <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+              <span>Matched Creators</span>
+            </Button>
+          </Link>
+
           <Link to={`/brand/campaigns/${campaign.id}/analytics`}>
             <Button variant="outline" size="sm" className="text-xs font-semibold gap-1.5">
               <BarChart3 className="w-3.5 h-3.5 text-purple-600" />
@@ -303,6 +360,199 @@ export const BrandCampaignDetailPage: React.FC = () => {
           </Button>
         </Link>
       </Card>
+
+      {/* CANDIDATE SHORTLIST & ENGAGEMENT PIPELINE (FEATURE 3.2) */}
+      <Card className="p-6 bg-white border-purple-100 rounded-2xl shadow-2xs space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold">
+              <Users className="w-5 h-5" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <span>Candidate Shortlist & Engagement Pipeline</span>
+                <span className="text-xs px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 font-bold border border-purple-200">
+                  {shortlist.length} Candidate{shortlist.length !== 1 ? "s" : ""}
+                </span>
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Stage A through E: Track shortlisted creators, send invitations with proposed terms, and manage active deliveries.
+              </p>
+            </div>
+          </div>
+
+          <Link to={`/brand/discover?briefId=${campaign.id}`}>
+            <Button size="sm" variant="outline" className="text-xs font-semibold gap-1.5 border-purple-200 text-purple-700 hover:bg-purple-50">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Discover & Match Creators</span>
+            </Button>
+          </Link>
+        </div>
+
+        {shortlist.length === 0 ? (
+          <div className="p-8 text-center bg-slate-50 rounded-xl border border-dashed border-slate-200">
+            <Users className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+            <h4 className="text-sm font-semibold text-slate-700">No creators shortlisted yet</h4>
+            <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+              Use Creator Matching to find AI creators whose style, tools, and commercial licensing match your brief, then add them to your candidate shortlist.
+            </p>
+            <Link to={`/brand/discover?briefId=${campaign.id}`} className="inline-block mt-3">
+              <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold gap-1.5">
+                <Sparkles className="w-3.5 h-3.5" />
+                Find Matching Creators
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <div className="divide-y divide-slate-100">
+            {shortlist.map((item) => {
+              const statusMeta = ENGAGEMENT_STATUS_META[item.status] || {
+                label: item.status,
+                color: "text-slate-700",
+                bg: "bg-slate-100",
+                border: "border-slate-200",
+              }
+
+              return (
+                <div key={item.engagement_id} className="py-3.5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center overflow-hidden shrink-0">
+                      {item.creator_avatar_url ? (
+                        <img src={item.creator_avatar_url} alt={item.creator_name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xs font-bold text-purple-700">
+                          {item.creator_name.charAt(0)}
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-slate-900">{item.creator_name}</span>
+                        <span className="text-xs text-slate-400">@{item.creator_handle}</span>
+                        {item.is_verified && (
+                          <ShieldCheck className="w-3.5 h-3.5 text-blue-500" />
+                        )}
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusMeta.bg} ${statusMeta.color} ${statusMeta.border}`}>
+                          {statusMeta.label}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 mt-1">
+                        <span>{item.primary_specialization || "AI Video Specialist"}</span>
+                        <span>•</span>
+                        <span>Reputation: {item.reputation_score.toFixed(1)}/5.0</span>
+                        {item.hourly_rate_cents && (
+                          <>
+                            <span>•</span>
+                            <span>Rate: {formatCurrency(item.hourly_rate_cents, "INR")}/hr</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    {item.status === "SHORTLISTED" && (
+                      <>
+                        <Button
+                          size="sm"
+                          onClick={() => setInvitingItem(item)}
+                          className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold gap-1"
+                        >
+                          <Send className="w-3 h-3" />
+                          <span>Send Invitation</span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleRemoveShortlist(item.engagement_id)}
+                          className="text-xs text-rose-600 hover:text-rose-700 hover:bg-rose-50"
+                        >
+                          Remove
+                        </Button>
+                      </>
+                    )}
+
+                    {item.status === "INVITED" && (
+                      <span className="text-xs text-blue-600 font-medium">Awaiting creator response</span>
+                    )}
+
+                    {["ACCEPTED", "AWAITING_CONFIRMATION", "CONFIRMED", "IN_PRODUCTION", "SUBMITTED", "CHANGES_REQUESTED", "COMPLETED"].includes(item.status) && (
+                      <Link to="/brand/projects">
+                        <Button size="sm" variant="outline" className="text-xs font-bold border-purple-200 text-purple-700 hover:bg-purple-50">
+                          <span>View in Projects</span>
+                          <ChevronRight className="w-3 h-3 ml-1" />
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </Card>
+
+      {/* Invitation Modal */}
+      {invitingItem && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl border border-purple-100">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 className="text-base font-bold text-slate-900">
+                Invite {invitingItem.creator_name} to Campaign
+              </h3>
+              <button
+                onClick={() => setInvitingItem(null)}
+                className="text-slate-400 hover:text-slate-600 text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs text-slate-600">
+              <div className="p-3 bg-purple-50 rounded-xl space-y-1">
+                <div className="font-bold text-purple-900">Proposed Engagement Terms</div>
+                <div>Budget: {formatCurrency(campaign.budget_cents || 250000, "INR")}</div>
+                <div>Revision Allowance: {campaign.commercial_terms?.revisions_count || 2} Rounds</div>
+                <div>Commercial Rights: Required (Commercial Advertising)</div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Invitation Message to Creator
+                </label>
+                <textarea
+                  rows={3}
+                  value={invitationMessage}
+                  onChange={(e) => setInvitationMessage(e.target.value)}
+                  placeholder="We loved your style and would love to collaborate on our campaign..."
+                  className="w-full text-xs p-2.5 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setInvitingItem(null)}
+                disabled={isSendingInvite}
+                className="text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSendInviteFromDetail}
+                disabled={isSendingInvite}
+                className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold gap-1"
+              >
+                <Send className="w-3 h-3" />
+                <span>{isSendingInvite ? "Sending..." : "Dispatch Invitation"}</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* MAIN TWO-COLUMN DETAILS */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

@@ -2,7 +2,16 @@ import React, { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { motion, AnimatePresence } from "framer-motion"
 import { projectsService } from "@/services/projects.service"
-import type { ProjectWorkspace, ProjectDeliverable, ProjectMessage } from "@/types"
+import { engagementsService } from "@/services/engagements.service"
+import type {
+  ProjectWorkspace,
+  ProjectDeliverable,
+  ProjectMessage,
+  Engagement,
+  EngagementDetail,
+  EngagementDeliverableSubmission,
+} from "@/types"
+import { ENGAGEMENT_STATUS_META, PRODUCTION_STATUS_META } from "@/lib/engagementStateMachine"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -23,10 +32,15 @@ import {
   MessageSquare,
   UploadCloud,
   ExternalLink,
+  Layers,
+  ChevronRight,
+  ChevronDown,
+  Video,
 } from "lucide-react"
 
 export const CreatorProjectsPage: React.FC = () => {
   const [projects, setProjects] = useState<ProjectWorkspace[]>([])
+  const [engagements, setEngagements] = useState<Engagement[]>([])
   const [loading, setLoading] = useState(true)
   const [activeWorkspace, setActiveWorkspace] = useState<ProjectWorkspace | null>(null)
   const [activeTab, setActiveTab] = useState<"MILESTONES" | "DELIVERABLES" | "MESSAGES">("MILESTONES")
@@ -42,23 +56,151 @@ export const CreatorProjectsPage: React.FC = () => {
   const [deliverableNotes, setDeliverableNotes] = useState("")
   const [submittingDeliverableId, setSubmittingDeliverableId] = useState<string | null>(null)
 
-  const loadProjects = () => {
-    projectsService
-      .listProjects()
-      .then((data) => {
-        setProjects(data || [])
-        setLoading(false)
-        if (activeWorkspace) {
-          const refreshed = (data || []).find((p) => p.id === activeWorkspace.id)
-          if (refreshed) setActiveWorkspace(refreshed)
-        }
-      })
-      .catch(() => setLoading(false))
+  // Feature 3.2 Engagement state
+  const [selectedEngagementDetail, setSelectedEngagementDetail] = useState<EngagementDetail | null>(null)
+  const [isEngagementDetailOpen, setIsEngagementDetailOpen] = useState(false)
+  const [declineModalOpen, setDeclineModalOpen] = useState(false)
+  const [decliningEngagementId, setDecliningEngagementId] = useState<string | null>(null)
+  const [declineReason, setDeclineReason] = useState("")
+  const [engagementSubmissionModalOpen, setEngagementSubmissionModalOpen] = useState(false)
+  const [submittingEngagementId, setSubmittingEngagementId] = useState<string | null>(null)
+  const [engSubTitle, setEngSubTitle] = useState("")
+  const [engSubUrl, setEngSubUrl] = useState("")
+  const [engSubFormat, setEngSubFormat] = useState("video/mp4")
+  const [engSubNotes, setEngSubNotes] = useState("")
+  const [progressStatus, setProgressStatus] = useState<"IN_PROGRESS" | "BLOCKED">("IN_PROGRESS")
+  const [progressNote, setProgressNote] = useState("")
+  const [blockerNote, setBlockerNote] = useState("")
+
+  const loadData = async () => {
+    setLoading(true)
+    try {
+      const [projData, engData] = await Promise.all([
+        projectsService.listProjects().catch(() => []),
+        engagementsService.listEngagements().catch(() => []),
+      ])
+      setProjects(projData || [])
+      setEngagements(engData || [])
+      if (activeWorkspace) {
+        const refreshed = (projData || []).find((p: any) => p.id === activeWorkspace.id)
+        if (refreshed) setActiveWorkspace(refreshed)
+      }
+    } catch {
+      // Graceful fallback
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
-    loadProjects()
+    loadData()
   }, [])
+
+  // Handlers for Feature 3.2 Engagements
+  const handleAcceptInvitation = async (engagementId: string) => {
+    setIsUpdating(true)
+    try {
+      await engagementsService.respondToInvitation(engagementId, { action: "ACCEPT" })
+      await loadData()
+    } catch (err: any) {
+      alert(err.message || "Failed to accept engagement invitation.")
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  const handleDeclineInvitationSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!decliningEngagementId) return
+    setIsUpdating(true)
+    try {
+      await engagementsService.respondToInvitation(decliningEngagementId, {
+        action: "DECLINE",
+        decline_reason: declineReason.trim() || "Creator unavailable for current project timeframe.",
+      })
+      setDeclineModalOpen(false)
+      setDecliningEngagementId(null)
+      setDeclineReason("")
+      await loadData()
+    } catch (err: any) {
+      alert(err.message || "Failed to decline invitation.")
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  const handleStartProduction = async (engagementId: string) => {
+    setIsUpdating(true)
+    try {
+      await engagementsService.startProduction(engagementId)
+      await loadData()
+    } catch (err: any) {
+      alert(err.message || "Failed to initiate production.")
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  const handleOpenEngagementDetail = async (engagementId: string) => {
+    try {
+      const detail = await engagementsService.getEngagementDetail(engagementId)
+      setSelectedEngagementDetail(detail)
+      setIsEngagementDetailOpen(true)
+    } catch (err: any) {
+      alert(err.message || "Failed to load engagement details.")
+    }
+  }
+
+  const handleEngagementDeliverableSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!submittingEngagementId || !engSubTitle.trim() || !engSubUrl.trim()) return
+    setIsUpdating(true)
+    try {
+      await engagementsService.submitDeliverable(submittingEngagementId, {
+        title: engSubTitle.trim(),
+        media_url: engSubUrl.trim(),
+        file_format: engSubFormat,
+        submission_notes: engSubNotes.trim() || undefined,
+      })
+      setEngagementSubmissionModalOpen(false)
+      setSubmittingEngagementId(null)
+      setEngSubTitle("")
+      setEngSubUrl("")
+      setEngSubNotes("")
+      if (selectedEngagementDetail && selectedEngagementDetail.id === submittingEngagementId) {
+        const refreshed = await engagementsService.getEngagementDetail(submittingEngagementId)
+        setSelectedEngagementDetail(refreshed)
+      }
+      await loadData()
+    } catch (err: any) {
+      alert(err.message || "Failed to submit deliverable.")
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  const handlePostCreatorProgressUpdate = async (engagementId: string) => {
+    if (!progressNote.trim()) return
+    setIsUpdating(true)
+    try {
+      await engagementsService.updateProgress(engagementId, {
+        production_status: progressStatus,
+        content: progressNote.trim(),
+        blocker_details: progressStatus === "BLOCKED" ? blockerNote.trim() : undefined,
+      })
+      setProgressNote("")
+      setBlockerNote("")
+      if (selectedEngagementDetail && selectedEngagementDetail.id === engagementId) {
+        const refreshed = await engagementsService.getEngagementDetail(engagementId)
+        setSelectedEngagementDetail(refreshed)
+      }
+      await loadData()
+    } catch (err: any) {
+      alert(err.message || "Failed to log progress update.")
+    } finally {
+      setIsUpdating(false)
+    }
+  }
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -180,13 +322,227 @@ export const CreatorProjectsPage: React.FC = () => {
         </p>
       </div>
 
-      {loading ? (
-        <div className="p-16 text-center text-[#4B4652] text-xs">
-          <div className="h-6 w-6 border-2 border-[#9A6ADF] border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-          <span>Loading active projects...</span>
+      {/* FEATURE 3.2: INCOMING ENGAGEMENT INVITATIONS (STAGE B) */}
+      {engagements.filter((e) => e.status === "INVITED").length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-50 border border-blue-200 px-2.5 py-0.5 rounded-full">
+              Action Required
+            </span>
+            <h2 className="text-base font-bold text-slate-900">
+              Incoming Campaign Invitations ({engagements.filter((e) => e.status === "INVITED").length})
+            </h2>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3">
+            {engagements
+              .filter((e) => e.status === "INVITED")
+              .map((inv) => (
+                <Card
+                  key={inv.id}
+                  className="p-5 rounded-2xl bg-gradient-to-r from-blue-50/70 via-white to-purple-50/50 border border-blue-200 shadow-sm space-y-3"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-extrabold text-slate-900 text-base">
+                          {inv.brief_title || "Creative Campaign Collaboration"}
+                        </span>
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-300">
+                          Formal Invitation
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600 mt-1">
+                        Brand: <strong>{inv.brand_name || "Commercial Brand"}</strong> • Dispatched:{" "}
+                        {new Date(inv.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2 self-end sm:self-auto">
+                      <Button
+                        size="sm"
+                        onClick={() => handleAcceptInvitation(inv.id)}
+                        disabled={isUpdating}
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold gap-1"
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" />
+                        <span>Accept Invitation</span>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setDecliningEngagementId(inv.id)
+                          setDeclineReason("")
+                          setDeclineModalOpen(true)
+                        }}
+                        disabled={isUpdating}
+                        className="text-xs text-rose-600 hover:text-rose-700 border-rose-200 hover:bg-rose-50"
+                      >
+                        Decline
+                      </Button>
+                    </div>
+                  </div>
+
+                  {inv.invitation_message && (
+                    <div className="p-3 bg-white/80 rounded-xl border border-blue-100 text-xs text-slate-700 italic">
+                      "{inv.invitation_message}"
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap items-center gap-4 text-xs text-slate-600 pt-2 border-t border-blue-100">
+                    <span className="font-bold text-emerald-700">
+                      Proposed Budget: {formatCurrency(inv.proposed_terms?.budget_cents || 250000, "INR")}
+                    </span>
+                    {inv.proposed_terms?.deadline && (
+                      <span>Deadline: {new Date(inv.proposed_terms.deadline).toLocaleDateString()}</span>
+                    )}
+                    <span>Revisions: {inv.proposed_terms?.revision_allowance || 2} rounds</span>
+                    <span>Commercial Rights: Required</span>
+                  </div>
+                </Card>
+              ))}
+          </div>
         </div>
-      ) : projects.length === 0 ? (
-        <Card className="p-12 text-center rounded-3xl bg-white border border-[#F4E7FF] space-y-3">
+      )}
+
+      {/* FEATURE 3.2: ACTIVE ENGAGEMENTS PIPELINE (STAGES C, D, E) */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-purple-700 bg-purple-50 border border-purple-200 px-2.5 py-0.5 rounded-full">
+              Production Pipeline
+            </span>
+            <h2 className="text-base font-bold text-slate-900">
+              Active Engagements ({engagements.filter((e) => e.status !== "INVITED").length})
+            </h2>
+          </div>
+        </div>
+
+        {engagements.filter((e) => e.status !== "INVITED").length === 0 ? (
+          <Card className="p-8 text-center rounded-2xl bg-white border border-purple-100 space-y-2">
+            <Briefcase className="w-7 h-7 text-slate-400 mx-auto" />
+            <h4 className="text-sm font-bold text-slate-800">No active engagements</h4>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto">
+              Invitations accepted from brands will appear here as confirmed production workspaces.
+            </p>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 gap-3">
+            {engagements
+              .filter((e) => e.status !== "INVITED")
+              .map((eng) => {
+                const statusMeta = ENGAGEMENT_STATUS_META[eng.status] || {
+                  label: eng.status,
+                  color: "text-slate-700",
+                  bg: "bg-slate-100",
+                  border: "border-slate-200",
+                }
+                const prodMeta = PRODUCTION_STATUS_META[eng.production_status]
+
+                return (
+                  <Card
+                    key={eng.id}
+                    className="p-5 rounded-2xl bg-white border border-purple-100 hover:border-purple-300 transition-all shadow-xs space-y-3"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-extrabold text-slate-900 text-base">
+                            {eng.brief_title || "Creative Collaboration"}
+                          </span>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${statusMeta.bg} ${statusMeta.color} ${statusMeta.border}`}>
+                            {statusMeta.label}
+                          </span>
+                          {eng.status === "IN_PRODUCTION" && prodMeta && (
+                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${prodMeta.bg} ${prodMeta.color}`}>
+                              ● {prodMeta.label}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-600 mt-0.5">
+                          Brand: <strong>{eng.brand_name || "Commercial Brand"}</strong>
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-end sm:self-auto">
+                        {eng.status === "CONFIRMED" && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleStartProduction(eng.id)}
+                            disabled={isUpdating}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold gap-1"
+                          >
+                            <Sparkles className="w-3.5 h-3.5" />
+                            <span>Start Production</span>
+                          </Button>
+                        )}
+
+                        {(eng.status === "IN_PRODUCTION" || eng.status === "CHANGES_REQUESTED") && (
+                          <Button
+                            size="sm"
+                            onClick={() => {
+                              setSubmittingEngagementId(eng.id)
+                              setEngSubTitle(`${eng.brief_title || "Deliverable"} - Final Cut`)
+                              setEngSubUrl("")
+                              setEngSubNotes("")
+                              setEngagementSubmissionModalOpen(true)
+                            }}
+                            className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold gap-1"
+                          >
+                            <UploadCloud className="w-3.5 h-3.5" />
+                            <span>Submit Deliverables</span>
+                          </Button>
+                        )}
+
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleOpenEngagementDetail(eng.id)}
+                          className="text-xs font-semibold border-purple-200 text-purple-700 hover:bg-purple-50 gap-1"
+                        >
+                          <span>Workspace</span>
+                          <ChevronRight className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Notice if changes requested */}
+                    {eng.status === "CHANGES_REQUESTED" && (
+                      <div className="p-3 bg-orange-50 border border-orange-200 rounded-xl text-xs text-orange-900 space-y-1">
+                        <div className="font-bold flex items-center gap-1.5">
+                          <AlertCircle className="w-3.5 h-3.5 text-orange-600" />
+                          <span>Brand Requested Changes on Deliverable</span>
+                        </div>
+                        <p className="text-[11px] text-orange-800">
+                          Review feedback in the workspace drawer, adjust your creative cuts, and upload a new version submission.
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap items-center gap-4 text-xs text-slate-500 pt-2 border-t border-slate-100">
+                      <span className="font-bold text-emerald-700">
+                        Confirmed Budget: {formatCurrency(eng.confirmed_terms?.budget_cents || eng.proposed_terms?.budget_cents || 250000, "INR")}
+                      </span>
+                      <span>Revision Allowance: {eng.confirmed_terms?.revision_allowance || 2}</span>
+                      {eng.completed_at && (
+                        <span className="font-bold text-emerald-600 flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Completed & Verified
+                        </span>
+                      )}
+                    </div>
+                  </Card>
+                )
+              })}
+          </div>
+        )}
+      </div>
+
+      {/* Legacy Milestone Projects */}
+      <div className="pt-6 border-t border-slate-200">
+        <h2 className="text-base font-bold text-slate-900 mb-3">Milestone Escrow Projects</h2>
+        {projects.length === 0 ? (
+          <Card className="p-12 text-center rounded-3xl bg-white border border-[#F4E7FF] space-y-3">
           <div className="w-12 h-12 rounded-2xl bg-[#F4E7FF] text-[#9A6ADF] flex items-center justify-center mx-auto">
             <Briefcase className="h-6 w-6" />
           </div>
@@ -251,6 +607,7 @@ export const CreatorProjectsPage: React.FC = () => {
           ))}
         </div>
       )}
+      </div>
 
       {/* Workspace Management Drawer / Modal */}
       <AnimatePresence>
@@ -629,6 +986,382 @@ export const CreatorProjectsPage: React.FC = () => {
           </div>
         )}
       </AnimatePresence>
+
+      {/* FEATURE 3.2: DECLINE INVITATION MODAL */}
+      {declineModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 space-y-4 shadow-xl border border-rose-100">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 className="text-base font-bold text-slate-900">Decline Invitation</h3>
+              <button
+                onClick={() => setDeclineModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Please share a brief reason so the brand understands why you cannot accept this collaboration at this time.
+            </p>
+
+            <div>
+              <label className="block text-xs font-semibold text-slate-700 mb-1">
+                Decline Reason
+              </label>
+              <textarea
+                rows={3}
+                value={declineReason}
+                onChange={(e) => setDeclineReason(e.target.value)}
+                placeholder="Currently fully booked for this month, or rate requirements differ..."
+                className="w-full text-xs p-2.5 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-rose-500"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDeclineModalOpen(false)}
+                disabled={isUpdating}
+                className="text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleDeclineInvitationSubmit}
+                disabled={isUpdating}
+                className="bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold"
+              >
+                {isUpdating ? "Declining..." : "Decline Collaboration"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FEATURE 3.2: ENGAGEMENT DELIVERABLE SUBMISSION MODAL */}
+      {engagementSubmissionModalOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 space-y-4 shadow-xl border border-purple-100">
+            <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+              <h3 className="text-base font-bold text-slate-900">Submit Deliverable for Review</h3>
+              <button
+                onClick={() => setEngagementSubmissionModalOpen(false)}
+                className="text-slate-400 hover:text-slate-600 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs text-slate-600">
+              <p>
+                Upload your completed render or share your master 4K delivery link. Submissions increment your deliverable version and notify the brand review team.
+              </p>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Deliverable Title *
+                </label>
+                <input
+                  type="text"
+                  value={engSubTitle}
+                  onChange={(e) => setEngSubTitle(e.target.value)}
+                  placeholder="e.g. Master Cut v1 — 4K 9:16 Cinematic Video"
+                  className="w-full text-xs p-2.5 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Media Asset / Storage URL *
+                </label>
+                <input
+                  type="url"
+                  value={engSubUrl}
+                  onChange={(e) => setEngSubUrl(e.target.value)}
+                  placeholder="https://..."
+                  className="w-full text-xs p-2.5 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                    File Format
+                  </label>
+                  <select
+                    value={engSubFormat}
+                    onChange={(e) => setEngSubFormat(e.target.value)}
+                    className="w-full text-xs p-2 border border-slate-200 rounded-xl"
+                  >
+                    <option value="video/mp4">MP4 (H.264 / H.265)</option>
+                    <option value="video/quicktime">ProRes (MOV)</option>
+                    <option value="image/png">High-Res PNG</option>
+                    <option value="application/zip">Asset Archive (ZIP)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  Submission Notes & Creative Context
+                </label>
+                <textarea
+                  rows={2}
+                  value={engSubNotes}
+                  onChange={(e) => setEngSubNotes(e.target.value)}
+                  placeholder="Notes on generation seeds, color grading, audio sync..."
+                  className="w-full text-xs p-2.5 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-purple-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setEngagementSubmissionModalOpen(false)}
+                disabled={isUpdating}
+                className="text-xs"
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleEngagementDeliverableSubmit}
+                disabled={isUpdating || !engSubTitle.trim() || !engSubUrl.trim()}
+                className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold gap-1"
+              >
+                <UploadCloud className="w-3.5 h-3.5" />
+                <span>{isUpdating ? "Submitting..." : "Submit Deliverable"}</span>
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* FEATURE 3.2: CREATOR ENGAGEMENT WORKSPACE & PROGRESS DRAWER */}
+      {isEngagementDetailOpen && selectedEngagementDetail && (
+        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-end">
+          <div className="bg-white h-full max-w-xl w-full p-6 space-y-5 overflow-y-auto shadow-2xl border-l border-slate-200">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div>
+                <h3 className="text-base font-bold text-slate-900">
+                  Engagement Production Workspace
+                </h3>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  ID: {selectedEngagementDetail.id}
+                </p>
+              </div>
+              <button
+                onClick={() => setIsEngagementDetailOpen(false)}
+                className="text-slate-400 hover:text-slate-600 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Scope Summary Banner */}
+            <div className="p-4 rounded-xl bg-purple-50/70 border border-purple-100 space-y-2 text-xs">
+              <div className="flex items-center justify-between font-bold text-purple-950">
+                <span>Status: {selectedEngagementDetail.status}</span>
+                <span>Budget: {formatCurrency(selectedEngagementDetail.confirmed_terms?.budget_cents || 250000, "INR")}</span>
+              </div>
+              <p className="text-purple-900/80">
+                {selectedEngagementDetail.confirmed_terms?.scope_description || "Commercial creative production"}
+              </p>
+            </div>
+
+            {/* Submissions & Revision History */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                  <Video className="w-4 h-4 text-purple-600" />
+                  <span>Deliverable Submissions ({selectedEngagementDetail.submissions?.length || 0})</span>
+                </h4>
+
+                {(selectedEngagementDetail.status === "IN_PRODUCTION" || selectedEngagementDetail.status === "CHANGES_REQUESTED") && (
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      setSubmittingEngagementId(selectedEngagementDetail.id)
+                      setEngSubTitle(`Deliverable Cut v${(selectedEngagementDetail.submissions?.length || 0) + 1}`)
+                      setEngSubUrl("")
+                      setEngSubNotes("")
+                      setEngagementSubmissionModalOpen(true)
+                    }}
+                    className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold gap-1"
+                  >
+                    <UploadCloud className="w-3 h-3" />
+                    <span>Upload New Cut</span>
+                  </Button>
+                )}
+              </div>
+
+              {(!selectedEngagementDetail.submissions || selectedEngagementDetail.submissions.length === 0) ? (
+                <p className="text-xs text-slate-400 p-3 bg-slate-50 rounded-xl text-center">
+                  No deliverables submitted yet.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {selectedEngagementDetail.submissions.map((sub) => (
+                    <div
+                      key={sub.id}
+                      className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-2 text-xs"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-900">
+                          v{sub.version_number}: {sub.title}
+                        </span>
+                        <span
+                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                            sub.review_decision === "ACCEPTED"
+                              ? "bg-emerald-50 text-emerald-700"
+                              : sub.review_decision === "CHANGES_REQUESTED"
+                              ? "bg-orange-50 text-orange-700"
+                              : "bg-blue-50 text-blue-700"
+                          }`}
+                        >
+                          {sub.review_decision}
+                        </span>
+                      </div>
+
+                      <div className="truncate">
+                        <a
+                          href={sub.media_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-purple-600 underline font-medium"
+                        >
+                          {sub.media_url}
+                        </a>
+                      </div>
+
+                      {sub.review_notes && (
+                        <div className="p-2.5 bg-orange-50/70 border border-orange-100 rounded-lg text-orange-900 text-xs space-y-0.5">
+                          <strong>Brand Feedback:</strong>
+                          <p>{sub.review_notes}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Production Progress Logs */}
+            <div className="space-y-3">
+              <h4 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                <Clock className="w-4 h-4 text-purple-600" />
+                <span>Production Progress & Blocker Updates</span>
+              </h4>
+
+              {(!selectedEngagementDetail.progress_updates || selectedEngagementDetail.progress_updates.length === 0) ? (
+                <p className="text-xs text-slate-400 p-3 bg-slate-50 rounded-xl text-center">
+                  No progress updates logged yet.
+                </p>
+              ) : (
+                <div className="space-y-2 max-h-48 overflow-y-auto">
+                  {selectedEngagementDetail.progress_updates.map((prog) => (
+                    <div
+                      key={prog.id}
+                      className="p-3 rounded-xl border border-slate-100 bg-slate-50 text-xs space-y-1"
+                    >
+                      <div className="flex items-center justify-between text-[11px] text-slate-500">
+                        <span className="font-bold text-slate-700">{prog.sender_role}</span>
+                        <span>{new Date(prog.created_at).toLocaleString()}</span>
+                      </div>
+                      <p className="text-slate-800">{prog.content}</p>
+                      {prog.blocker_details && (
+                        <div className="p-2 bg-rose-50 rounded text-rose-800 font-medium">
+                          <strong>Blocker:</strong> {prog.blocker_details}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Creator Log Update Form */}
+              <div className="pt-2 border-t border-slate-100 space-y-2">
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setProgressStatus("IN_PROGRESS")}
+                    className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border ${
+                      progressStatus === "IN_PROGRESS"
+                        ? "bg-blue-50 border-blue-500 text-blue-800"
+                        : "border-slate-200 text-slate-600"
+                    }`}
+                  >
+                    In Progress
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setProgressStatus("BLOCKED")}
+                    className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border ${
+                      progressStatus === "BLOCKED"
+                        ? "bg-rose-50 border-rose-500 text-rose-800"
+                        : "border-slate-200 text-slate-600"
+                    }`}
+                  >
+                    Flag Blocker
+                  </button>
+                </div>
+
+                <textarea
+                  rows={2}
+                  value={progressNote}
+                  onChange={(e) => setProgressNote(e.target.value)}
+                  placeholder="Post progress update for brand..."
+                  className="w-full text-xs p-2.5 border border-slate-200 rounded-xl focus:outline-hidden focus:ring-2 focus:ring-purple-500"
+                />
+
+                {progressStatus === "BLOCKED" && (
+                  <input
+                    type="text"
+                    value={blockerNote}
+                    onChange={(e) => setBlockerNote(e.target.value)}
+                    placeholder="Describe what you are awaiting or blocked by..."
+                    className="w-full text-xs p-2 border border-rose-200 rounded-xl focus:outline-hidden"
+                  />
+                )}
+
+                <Button
+                  size="sm"
+                  onClick={() => handlePostCreatorProgressUpdate(selectedEngagementDetail.id)}
+                  disabled={isUpdating || !progressNote.trim()}
+                  className="text-xs bg-purple-600 hover:bg-purple-700 text-white font-bold w-full"
+                >
+                  Log Progress Update
+                </Button>
+              </div>
+            </div>
+
+            {/* Audit Timeline */}
+            <div className="space-y-3 pt-3 border-t border-slate-100">
+              <h4 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                <span>Audit Timeline History</span>
+              </h4>
+
+              <div className="space-y-2">
+                {(selectedEngagementDetail.timeline_events || []).map((ev) => (
+                  <div key={ev.id} className="text-xs p-2.5 rounded-lg bg-slate-50 border border-slate-100">
+                    <div className="flex items-center justify-between text-[11px] text-slate-400">
+                      <span className="font-bold text-slate-700">{ev.action}</span>
+                      <span>{new Date(ev.created_at).toLocaleTimeString()}</span>
+                    </div>
+                    {ev.details && <p className="text-slate-600 mt-0.5">{ev.details}</p>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

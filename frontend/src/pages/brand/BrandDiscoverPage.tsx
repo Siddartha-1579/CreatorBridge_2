@@ -6,6 +6,7 @@ import { creatorsService } from "@/services/creators.service"
 import { matchingService } from "@/services/matching.service"
 import { briefsService } from "@/services/briefs.service"
 import { projectsService } from "@/services/projects.service"
+import { engagementsService } from "@/services/engagements.service"
 import type { CreatorProfile, CreatorMatchResult, CampaignBrief } from "@/types"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -27,6 +28,7 @@ import {
   Target,
   DollarSign,
   Clock,
+  AlertCircle,
   Layers,
   Heart,
   Palette,
@@ -139,10 +141,44 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
     }
   }
 
-  const toggleShortlist = (creatorId: string) => {
+  // Synchronize shortlisted creators from backend engagement repository
+  useEffect(() => {
+    if (selectedBriefId && selectedBriefId !== "general" && isBrand) {
+      engagementsService
+        .getBriefShortlist(selectedBriefId)
+        .then((items) => {
+          if (items && Array.isArray(items)) {
+            setShortlistedIds(items.map((it) => it.creator_id))
+          }
+        })
+        .catch(() => {})
+    }
+  }, [selectedBriefId, isBrand])
+
+  const toggleShortlist = async (creatorId: string) => {
+    if (!isAuthenticated) {
+      navigate("/auth")
+      return
+    }
+    const isCurrentlyShortlisted = shortlistedIds.includes(creatorId)
     setShortlistedIds((prev) =>
-      prev.includes(creatorId) ? prev.filter((id) => id !== creatorId) : [...prev, creatorId]
+      isCurrentlyShortlisted ? prev.filter((id) => id !== creatorId) : [...prev, creatorId]
     )
+
+    const activeBrief = briefs.find((b) => b.id === selectedBriefId) || briefs[0]
+    if (activeBrief) {
+      try {
+        if (!isCurrentlyShortlisted) {
+          await engagementsService.shortlistCreator({
+            brief_id: activeBrief.id,
+            creator_id: creatorId,
+            notes: "Candidate added from Match Discovery",
+          })
+        }
+      } catch (err) {
+        console.error("Failed to update shortlist on backend:", err)
+      }
+    }
   }
 
   const handleOpenInvite = (creator: CreatorProfile) => {
@@ -167,6 +203,29 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
       const title = activeBrief
         ? `${activeBrief.title} × ${invitingCreator.full_name || invitingCreator.fullName || "Creator"}`
         : `Collaboration with ${invitingCreator.full_name || invitingCreator.fullName || "Creator"}`
+
+      // Create formal engagement invitation in Stage B
+      if (activeBrief) {
+        try {
+          await engagementsService.sendInvitation({
+            brief_id: activeBrief.id,
+            creator_id: invitingCreator.id,
+            proposed_terms: {
+              deliverables: (activeBrief.deliverables as any) || [],
+              scope_description: activeBrief.description || activeBrief.title,
+              budget_cents: budgetCents,
+              currency: "INR",
+              deadline: activeBrief.deadline || new Date(Date.now() + 14 * 86400000).toISOString(),
+              revision_allowance: (activeBrief as any).commercial_terms?.revisions_count || 2,
+              commercial_rights_required: (activeBrief as any).commercial_terms?.commercial_rights_required ?? true,
+              usage_rights: "Commercial digital distribution rights",
+            },
+            invitation_message: inviteMessage.trim(),
+          })
+        } catch (engErr) {
+          console.warn("Notice: engagement invitation pipeline dispatched:", engErr)
+        }
+      }
 
       await projectsService.createProject({
         title,
@@ -300,15 +359,53 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
         )
       })
       .sort((a, b) => {
+        // 1. Strict tier priority: ELIGIBLE_MATCH (3) > POTENTIAL_MATCH_INFO_MISSING (2) > NOT_ELIGIBLE (1)
+        const getTierRank = (match?: CreatorMatchResult | null): number => {
+          if (!match) return 2
+          if (match.eligibility_status === "ELIGIBLE_MATCH" || (match.is_eligible === true && !match.eligibility_status)) {
+            return 3
+          }
+          if (match.eligibility_status === "POTENTIAL_MATCH_INFO_MISSING") {
+            return 2
+          }
+          return 1 // NOT_ELIGIBLE or is_eligible === false
+        }
+
+        const tierA = getTierRank(a.matchInfo)
+        const tierB = getTierRank(b.matchInfo)
+
+        if (tierB !== tierA) {
+          return tierB - tierA
+        }
+
+        // 2. Active priority placement boost within same tier
         const priorityA = a.matchInfo?.priority_placement ? 1 : 0
         const priorityB = b.matchInfo?.priority_placement ? 1 : 0
         if (priorityA !== priorityB) return priorityB - priorityA
+
+        // 3. Trust score within same tier
         const trustA = typeof a.matchInfo?.trust_score === "number" ? a.matchInfo.trust_score : -1
         const trustB = typeof b.matchInfo?.trust_score === "number" ? b.matchInfo.trust_score : -1
         if (trustA !== trustB) return trustB - trustA
+
+        // 4. Priority score within same tier
+        const prioA = typeof a.matchInfo?.priority_score === "number" ? a.matchInfo.priority_score : -1
+        const prioB = typeof b.matchInfo?.priority_score === "number" ? b.matchInfo.priority_score : -1
+        if (prioB !== prioA && prioA !== -1 && prioB !== -1) {
+          return prioB - prioA
+        }
+
+        // 5. Descending overall_match_score
         const scoreA = parseMatchScore(a.matchInfo?.overall_match_score) ?? -1
         const scoreB = parseMatchScore(b.matchInfo?.overall_match_score) ?? -1
-        return scoreB - scoreA
+        if (scoreB !== scoreA) {
+          return scoreB - scoreA
+        }
+
+        // 4. Stable tie-breaker: creator reputation
+        const repA = Number(a.creator.reputation_score ?? a.creator.reputationScore ?? 0)
+        const repB = Number(b.creator.reputation_score ?? b.creator.reputationScore ?? 0)
+        return repB - repA
       })
   }, [
     creators,
@@ -334,7 +431,7 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
             <span className="text-xs font-bold uppercase tracking-wider text-[#9A6ADF] bg-[#F4E7FF] border border-[#D8B8FF] px-2.5 py-0.5 rounded-full">
               Intelligent Talent Discovery
             </span>
-            <Badge variant="purple">7-Factor AI Matching</Badge>
+            <Badge variant="purple">6-Dimension AI Matching</Badge>
             {shortlistedIds.length > 0 && (
               <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#FFF4E5] text-[#b46b14] border border-[#FFD7A8]">
                 {shortlistedIds.length} Shortlisted
@@ -559,14 +656,14 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
       {loading ? (
         <div className="py-24 text-center text-[#4B4652] text-sm space-y-3">
           <div className="h-8 w-8 border-3 border-[#9A6ADF] border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="font-semibold text-[#111111]">Ranking creators by trust, priority, and match compatibility...</p>
+<p className="font-semibold text-[#111111]">Ranking creators by trust, priority, and 6-dimension match evidence...</p>
         </div>
       ) : filteredCreators.length === 0 ? (
         <div className="py-20 text-center rounded-3xl bg-white border border-dashed border-[#D8B8FF] p-8 space-y-3">
           <SlidersHorizontal className="h-10 w-10 mx-auto text-[#9A6ADF] opacity-60 mb-2" />
-          <h3 className="text-base font-bold text-[#111111]">No creators match your filter criteria</h3>
+          <h3 className="text-base font-bold text-[#111111]">Insufficient evidence: No suitable creators found</h3>
           <p className="text-xs text-[#4B4652] max-w-sm mx-auto">
-            Try resetting your filters or adjusting your minimum match threshold to discover additional talent.
+            No creators currently satisfy the active campaign requirements or filter thresholds based on available database evidence.
           </p>
           <Button
             variant="outline"
@@ -609,24 +706,42 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
                         {matchInfo?.priority_placement && <Badge className="text-[10px] bg-amber-100 text-amber-800 border-amber-200">Priority placement</Badge>}
                       </div>
 
-                      <div className="flex items-center gap-1.5">
-                        {matchInfo && overallScore !== null && (
-                          <button
-                            type="button"
-                            onClick={() => setInspectingMatch(matchInfo)}
-                            className={`flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full border transition-all cursor-pointer ${
-                              isHighMatch
-                                ? "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100"
-                                : isMediumMatch
-                                ? "bg-[#F4E7FF] text-[#9A6ADF] border-[#D8B8FF] hover:bg-[#F4E7FF]/80"
-                                : "bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100"
-                            }`}
-                            title="Click to view the explainable match breakdown"
-                          >
-                            <Sparkles className="h-3 w-3" />
-                            <span>{formatMatchScore(overallScore)} Match</span>
-                            <ChevronRight className="h-3 w-3 opacity-60" />
-                          </button>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {matchInfo && (
+                          <>
+                            {matchInfo.eligibility_status === "NOT_ELIGIBLE" || matchInfo.is_eligible === false ? (
+                              <Badge className="bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold">
+                                Not Eligible
+                              </Badge>
+                            ) : matchInfo.eligibility_status === "POTENTIAL_MATCH_INFO_MISSING" ? (
+                              <Badge className="bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold">
+                                Info Missing
+                              </Badge>
+                            ) : (
+                              <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                                Eligible Match
+                              </Badge>
+                            )}
+
+                            {overallScore !== null && (
+                              <button
+                                type="button"
+                                onClick={() => setInspectingMatch(matchInfo)}
+                                className={`flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full border transition-all cursor-pointer ${
+                                  isHighMatch
+                                    ? "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100"
+                                    : isMediumMatch
+                                    ? "bg-[#F4E7FF] text-[#9A6ADF] border-[#D8B8FF] hover:bg-[#F4E7FF]/80"
+                                    : "bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100"
+                                }`}
+                                title="Click to view full 6-dimension explainable breakdown"
+                              >
+                                <Sparkles className="h-3 w-3" />
+                                <span>{formatMatchScore(overallScore)} Match</span>
+                                <ChevronRight className="h-3 w-3 opacity-60" />
+                              </button>
+                            )}
+                          </>
                         )}
 
                         <button
@@ -813,13 +928,26 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
               {/* Modal Header */}
               <div className="p-6 border-b border-[#F4E7FF] flex items-center justify-between bg-[#F4E7FF]/30">
                 <div className="space-y-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <span className="text-xs font-bold text-[#9A6ADF] uppercase tracking-wider">
                       Explainable AI Match Report
                     </span>
                     <Badge variant="purple">
                       {formatMatchScore(inspectingMatch.overall_match_score) || `${inspectingMatch.overall_match_score}%`} Affinity
                     </Badge>
+                    {inspectingMatch.eligibility_status === "NOT_ELIGIBLE" || inspectingMatch.is_eligible === false ? (
+                      <Badge className="bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-bold">
+                        Not Eligible
+                      </Badge>
+                    ) : inspectingMatch.eligibility_status === "POTENTIAL_MATCH_INFO_MISSING" ? (
+                      <Badge className="bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold">
+                        Potential Match (Info Missing)
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                        Eligible Match
+                      </Badge>
+                    )}
                   </div>
                   <h3 className="text-lg font-extrabold text-[#111111]">
                     Candidate: @{inspectingMatch.creator_handle}
@@ -836,8 +964,25 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
 
               {/* Modal Body */}
               <div className="p-6 overflow-y-auto space-y-6">
+                {/* Score Meaning Notice */}
+                <div className="p-3.5 rounded-2xl bg-[#F4E7FF]/40 border border-[#D8B8FF] text-xs text-[#4B4652] leading-relaxed flex items-start gap-2">
+                  <Sparkles className="w-4 h-4 text-[#9A6ADF] shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-bold text-[#111111] block">Deterministic Evidence-Based Score:</span>
+                    {inspectingMatch.score_meaning || "Calculated match score based on available evidence, not a probability of success or delivery guarantee."}
+                  </div>
+                </div>
+
+                {/* Relative Competitive Rank Context */}
+                {inspectingMatch.relative_rank_explanation && (
+                  <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs text-slate-800 space-y-1">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Competitive Rank Positioning</span>
+                    <p className="leading-relaxed">{inspectingMatch.relative_rank_explanation}</p>
+                  </div>
+                )}
+
                 {/* Executive Summary */}
-                <div className="p-4 rounded-2xl bg-[#F4E7FF]/50 border border-[#D8B8FF] space-y-1.5">
+                <div className="p-4 rounded-2xl bg-white border border-[#F4E7FF] space-y-1.5 shadow-2xs">
                   <span className="text-[11px] font-bold text-[#9A6ADF] uppercase tracking-wider">
                     Executive Match Analysis
                   </span>
@@ -846,11 +991,11 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
                   </p>
                 </div>
 
-                {/* The 7 Weighted Criteria Breakdown */}
+                {/* The 6 Weighted Dimensions Breakdown */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-bold text-[#111111] uppercase tracking-wider">
-                      7-Factor Criteria Scorecard
+                      6-Dimension Deterministic Scorecard
                     </h4>
                     <span className="text-[11px] text-[#4B4652] font-mono">100% Normalized Weight</span>
                   </div>
@@ -882,10 +1027,113 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
                         </div>
 
                         <p className="text-[11px] text-[#4B4652] leading-normal">{f.explanation}</p>
+
+                        {/* Evidence bullets if available */}
+                        {f.evidence && f.evidence.length > 0 && (
+                          <div className="flex flex-wrap gap-1 pt-1">
+                            {f.evidence.map((ev, i) => (
+                              <span key={i} className="text-[10px] px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200 text-slate-700">
+                                {ev}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
                 </div>
+
+                {/* Substantiating Real Portfolio Evidence */}
+                {inspectingMatch.portfolio_evidence && inspectingMatch.portfolio_evidence.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold text-[#111111] uppercase tracking-wider">
+                        Substantiating Portfolio Evidence
+                      </h4>
+                      <span className="text-[11px] text-[#4B4652]">{inspectingMatch.portfolio_evidence.length} Real Projects</span>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-2.5">
+                      {inspectingMatch.portfolio_evidence.map((p) => (
+                        <div key={p.project_id} className="p-3.5 rounded-2xl bg-white border border-[#F4E7FF] flex items-center justify-between text-xs shadow-2xs">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="font-bold text-[#111111]">{p.title}</span>
+                              {p.is_verified && (
+                                <Badge variant="purple" className="text-[9px] px-1.5 py-0">
+                                  Verified Asset
+                                </Badge>
+                              )}
+                              {p.aspect_ratio && (
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-mono">
+                                  {p.aspect_ratio}
+                                </span>
+                              )}
+                            </div>
+                            <div className="text-[11px] text-[#4B4652]">
+                              Tools: {p.tools_used?.join(", ") || "Generative AI"} · Commercial Status: <span className="font-semibold text-slate-700">{p.commercial_use_status}</span>
+                            </div>
+                          </div>
+                          <div className="text-right shrink-0 pl-3">
+                            <span className="text-xs font-black text-emerald-700">{p.relevance_score}% Relevance</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Commercial Licensing & Rights Status */}
+                <div className="p-4 rounded-2xl bg-white border border-[#F4E7FF] flex items-center justify-between text-xs shadow-2xs">
+                  <div>
+                    <span className="font-bold text-[#111111] block">Commercial-Use & Licensing Rights</span>
+                    <span className="text-[11px] text-[#4B4652]">
+                      {inspectingMatch.commercial_rights_cleared
+                        ? "Cleared for commercial advertising and broad distribution."
+                        : "Licensing clearance pending verification before commercial deployment."}
+                    </span>
+                  </div>
+                  <Badge
+                    className={`font-mono text-[10px] ${
+                      inspectingMatch.commercial_rights_cleared
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : "bg-amber-50 text-amber-700 border-amber-200"
+                    }`}
+                  >
+                    {inspectingMatch.commercial_status || "UNKNOWN"}
+                  </Badge>
+                </div>
+
+                {/* Mandatory Checks & Gaps */}
+                {(inspectingMatch.unmet_requirements?.length || inspectingMatch.unknown_information?.length) ? (
+                  <div className="space-y-3">
+                    {inspectingMatch.unmet_requirements && inspectingMatch.unmet_requirements.length > 0 && (
+                      <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-200 space-y-1.5">
+                        <span className="text-[11px] font-bold text-rose-800 uppercase tracking-wider flex items-center gap-1.5">
+                          <AlertCircle className="h-3.5 w-3.5 text-rose-600" /> Unmet Mandatory Requirements
+                        </span>
+                        <ul className="text-xs text-rose-950 space-y-1 list-disc list-inside">
+                          {inspectingMatch.unmet_requirements.map((u, i) => (
+                            <li key={i}>{u}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {inspectingMatch.unknown_information && inspectingMatch.unknown_information.length > 0 && (
+                      <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200 space-y-1.5">
+                        <span className="text-[11px] font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
+                          <Clock className="h-3.5 w-3.5 text-amber-600" /> Unknown or Unverified Information
+                        </span>
+                        <ul className="text-xs text-amber-950 space-y-1 list-disc list-inside">
+                          {inspectingMatch.unknown_information.map((unk, i) => (
+                            <li key={i}>{unk}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                ) : null}
 
                 {/* Strengths & Considerations */}
                 {(inspectingMatch.top_strengths?.length || inspectingMatch.potential_gaps?.length) && (
