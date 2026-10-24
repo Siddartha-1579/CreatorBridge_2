@@ -24,7 +24,18 @@ MAX_LIFETIME_REPUTATION_BONUS = 5.0
 MAX_ACTIVE_BOOST_BONUS = 8.0
 MAX_BOOST_SPEND = 100
 MIN_BOOST_SPEND = 10
-BOOST_HOURS = 24
+# Duration is a product rule based on points actually spent. The server is authoritative.
+# These tiers are shown transparently in the creator UI and covered by tests.
+def boost_duration_hours(points: int) -> int:
+    if points < MIN_BOOST_SPEND or points > MAX_BOOST_SPEND:
+        raise ValueError(f"Spend between {MIN_BOOST_SPEND} and {MAX_BOOST_SPEND} points per boost.")
+    if points < 25:
+        return 1
+    if points < 50:
+        return 6
+    if points < 100:
+        return 12
+    return 24
 
 
 def _now() -> datetime:
@@ -168,7 +179,8 @@ class AchievementService:
                     raise ValueError(f"Target campaign brief '{brief_id}' was not found.")
 
         now = _now()
-        expires = now + timedelta(hours=BOOST_HOURS)
+        duration_hours = boost_duration_hours(points)
+        expires = now + timedelta(hours=duration_hours)
         boost_id = str(uuid4())
         with get_db_connection() as conn:
             conn.execute("BEGIN IMMEDIATE")
@@ -194,6 +206,7 @@ class AchievementService:
             "creator_id": creator_id,
             "brief_id": brief_id,
             "points_spent": points,
+            "duration_hours": duration_hours,
             "starts_at": now.isoformat(),
             "expires_at": expires.isoformat(),
             "status": "ACTIVE",
