@@ -16,6 +16,7 @@ from app.api.v1.endpoints import (
     ai,
     surveys,
     trust,
+    achievements,
     ai_intelligence,
     chatbot,
 )
@@ -27,6 +28,7 @@ api_v1_router.include_router(auth.router, prefix="/auth", tags=["Authentication"
 api_v1_router.include_router(onboarding.router, prefix="/onboarding", tags=["Creator Onboarding"])
 api_v1_router.include_router(surveys.router, prefix="/surveys", tags=["Adaptive Surveys"])
 api_v1_router.include_router(trust.router, prefix="/trust", tags=["Trust & Reliability"])
+api_v1_router.include_router(achievements.router, prefix="/achievements", tags=["Creator Achievements"])
 api_v1_router.include_router(search.router, prefix="/search", tags=["Search"])
 api_v1_router.include_router(creators.router, prefix="/creators", tags=["Creators"])
 api_v1_router.include_router(brands.router, prefix="/brands", tags=["Brands"])
