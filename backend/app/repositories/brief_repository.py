@@ -354,8 +354,8 @@ class BriefRepository(BaseRepository[CampaignBriefResponse]):
         }
         ct = {
             "budget_tier": "GROWTH",
-            "budget_cents": 250000,
-            "currency": "USD",
+            "budget_cents": 25000000,
+            "currency": "INR",
             "payment_model": "MILESTONE",
             "intended_usage": ["PAID_ADS", "ORGANIC_SOCIAL", "ECOMMERCE"],
             "commercial_rights_required": True,

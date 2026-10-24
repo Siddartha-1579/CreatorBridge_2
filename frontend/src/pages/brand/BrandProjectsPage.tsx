@@ -13,6 +13,7 @@ import type {
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { formatCurrency } from "@/lib/currency"
 import {
   Briefcase,
   Plus,
@@ -279,7 +280,7 @@ export const BrandProjectsPage: React.FC = () => {
 
                   <div className="flex flex-wrap items-center gap-4 text-xs text-[#4B4652]">
                     <span className="font-bold text-emerald-700">
-                      Budget: ${(proj.agreedBudgetCents / 100).toLocaleString()}
+                      Budget: {formatCurrency(proj.agreedBudgetCents, "INR", true)}
                     </span>
                     {totalMilestones > 0 && (
                       <span>
@@ -337,7 +338,7 @@ export const BrandProjectsPage: React.FC = () => {
                     {activeWorkspace.title}
                   </h3>
                   <p className="text-xs text-emerald-700 font-bold mt-0.5">
-                    Agreed Budget: ${(activeWorkspace.agreedBudgetCents / 100).toLocaleString()} USD
+                    Agreed Budget: {formatCurrency(activeWorkspace.agreedBudgetCents, "INR", true)} (Escrow Protected)
                   </p>
                 </div>
                 <button
@@ -417,7 +418,7 @@ export const BrandProjectsPage: React.FC = () => {
                               </span>
                             </div>
                             <p className="text-xs font-semibold text-emerald-700 mt-1">
-                              ${((m.amount_cents || 0) / 100).toLocaleString()} USD
+                              {formatCurrency(m.amount_cents, "INR", true)}
                             </p>
                           </div>
 

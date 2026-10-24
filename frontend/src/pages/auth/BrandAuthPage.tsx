@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth"
 import { authService } from "@/services/auth.service"
 import { TurnstileWidget } from "@/components/common/TurnstileWidget"
 import { CreatorBridgeLogo } from "@/components/common/CreatorBridgeLogo"
+import { ThemeToggle } from "@/components/common/ThemeToggle"
 import { PolicyAgreementCheckbox } from "@/components/policy/PolicyAgreementCheckbox"
 import { PlatformPoliciesModal } from "@/components/policy/PlatformPoliciesModal"
 import type { UserRole } from "@/types"
@@ -43,7 +44,7 @@ export const BrandAuthPage: React.FC = () => {
 
     if (mode === "register") {
       if (!organizationName.trim()) {
-        setError("Please enter your company or agency name.")
+        setError("Please provide your company or agency brand name.")
         return
       }
       if (password.length < 8) {
@@ -56,37 +57,33 @@ export const BrandAuthPage: React.FC = () => {
       }
       if (!policyAccepted) {
         setPolicyError(true)
-        setError("You must read and agree to the CreatorBridge Platform Policies to complete registration.")
+        setError("You must read and agree to the CreatorBridge Platform Policies to create an account.")
         return
       }
     }
 
     setIsLoading(true)
+
     try {
-      if (mode === "register") {
-        const session = await register({
-          email,
-          password,
-          confirmPassword,
-          fullName: organizationName,
-          role,
-          turnstileToken: turnstileToken || undefined,
-          policyAccepted: true,
-          policyVersion: "2026.1",
-        })
-        navigate(session.redirectPath || "/brand/onboarding")
-      } else {
+      if (mode === "login") {
         const session = await login({
           email,
           password,
+          portal: "BRAND",
           turnstileToken: turnstileToken || undefined,
-          portal: "brand",
         })
-        if (session.user.role === "CREATOR") {
-          await authService.logout()
-          setError("This portal is reserved for Brand and Agency accounts. Creators should log in via the Creator Portal.")
-          return
-        }
+        navigate(session.redirectPath || "/brand/dashboard")
+      } else {
+        const session = await register({
+          email,
+          password,
+          fullName: organizationName,
+          role,
+          portal: "BRAND",
+          turnstileToken: turnstileToken || undefined,
+          policyAccepted: policyAccepted,
+          policyVersion: "2026.1",
+        })
         navigate(session.redirectPath || "/brand/dashboard")
       }
     } catch (err: any) {
@@ -97,22 +94,23 @@ export const BrandAuthPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FFFDFD] py-12 px-4 sm:px-6 lg:px-8 flex flex-col justify-center">
+    <div className="min-h-screen bg-[#FFFDFD] dark:bg-[#0F0D15] text-[#111111] dark:text-[#F5F3F8] py-12 px-4 sm:px-6 lg:px-8 flex flex-col justify-center transition-colors duration-200">
       <div className="max-w-md mx-auto w-full">
-        {/* Top Header with CreatorBridge Logo */}
-        <div className="flex items-center justify-between mb-8">
+        {/* Top Header with CreatorBridge Logo & Theme Toggle */}
+        <div className="flex items-center justify-between mb-8 pb-3 border-b border-[#F4E7FF] dark:border-[#2D2447]">
           <CreatorBridgeLogo size="sm" badgeText="Brand Hub" />
           <div className="flex items-center space-x-2 text-xs">
+            <ThemeToggle />
             <Link
               to={`/auth/creator${mode === "register" ? "?mode=register" : ""}`}
-              className="font-medium text-[#9A6ADF] hover:underline"
+              className="font-medium text-[#9A6ADF] dark:text-[#B78AF7] hover:underline"
             >
               Creator Portal →
             </Link>
-            <span className="text-slate-300">|</span>
+            <span className="text-slate-300 dark:text-[#3E325D]">|</span>
             <Link
               to="/auth"
-              className="inline-flex items-center space-x-1 font-semibold text-[#4B4652] hover:text-[#9A6ADF] transition-colors"
+              className="inline-flex items-center space-x-1 font-semibold text-[#4B4652] dark:text-[#C7C3D4] hover:text-[#9A6ADF] dark:hover:text-[#B78AF7] transition-colors"
             >
               <ArrowLeft className="h-3.5 w-3.5" />
               <span>All Portals</span>
@@ -122,10 +120,10 @@ export const BrandAuthPage: React.FC = () => {
 
         {/* Card Header */}
         <div className="text-center mb-8">
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#111111] tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#111111] dark:text-[#F5F3F8] tracking-tight">
             Brand & Agency Portal
           </h1>
-          <p className="mt-1.5 text-xs sm:text-sm text-[#4B4652]">
+          <p className="mt-1.5 text-xs sm:text-sm text-[#4B4652] dark:text-[#C7C3D4]">
             {mode === "login"
               ? "Sign in to publish briefs, review deliverables, and hire creators."
               : "Set up your brand account to hire top AI creators with enterprise guarantees."}
@@ -133,7 +131,7 @@ export const BrandAuthPage: React.FC = () => {
         </div>
 
         {/* Tab Switcher */}
-        <div className="flex rounded-xl bg-[#F4E7FF]/50 p-1 mb-4 border border-[#D8B8FF]/60">
+        <div className="flex rounded-xl bg-[#F4E7FF]/50 dark:bg-[#181524] p-1 mb-4 border border-[#D8B8FF]/60 dark:border-[#2D2447]">
           <button
             type="button"
             onClick={() => {
@@ -141,10 +139,10 @@ export const BrandAuthPage: React.FC = () => {
               setSearchParams({ mode: "login" })
               setError(null)
             }}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
               mode === "login"
-                ? "bg-white text-[#9A6ADF] shadow-xs"
-                : "text-[#4B4652] hover:text-[#111111]"
+                ? "bg-white dark:bg-[#231C35] text-[#9A6ADF] dark:text-[#B78AF7] shadow-xs"
+                : "text-[#4B4652] dark:text-[#C7C3D4] hover:text-[#111111] dark:hover:text-[#F5F3F8]"
             }`}
           >
             Sign In
@@ -156,25 +154,25 @@ export const BrandAuthPage: React.FC = () => {
               setSearchParams({ mode: "register" })
               setError(null)
             }}
-            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all ${
+            className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all cursor-pointer ${
               mode === "register"
-                ? "bg-white text-[#9A6ADF] shadow-xs"
-                : "text-[#4B4652] hover:text-[#111111]"
+                ? "bg-white dark:bg-[#231C35] text-[#9A6ADF] dark:text-[#B78AF7] shadow-xs"
+                : "text-[#4B4652] dark:text-[#C7C3D4] hover:text-[#111111] dark:hover:text-[#F5F3F8]"
             }`}
           >
             Brand Registration
           </button>
         </div>
 
-        {/* Demo Brand Quick Login Helper for Live Hackathon Evaluation */}
+        {/* Demo Brand Quick Login Helper */}
         {mode === "login" && (
-          <div className="mb-6 p-3.5 rounded-2xl bg-[#F4E7FF]/40 border border-[#D8B8FF]">
+          <div className="mb-6 p-3.5 rounded-2xl bg-[#F4E7FF]/40 dark:bg-[#231C35]/60 border border-[#D8B8FF] dark:border-[#3E325D]">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-[#9A6ADF] flex items-center gap-1.5">
-                <Sparkles className="w-3 h-3 text-[#9A6ADF]" />
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#9A6ADF] dark:text-[#B78AF7] flex items-center gap-1.5">
+                <Sparkles className="w-3 h-3 text-[#9A6ADF] dark:text-[#B78AF7]" />
                 Live Demo Evaluation Accounts
               </span>
-              <span className="text-[10px] text-[#9A6ADF]/80 font-medium">1-Click Sign In</span>
+              <span className="text-[10px] text-[#9A6ADF]/80 dark:text-[#B78AF7]/80 font-medium">1-Click Sign In</span>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -185,27 +183,25 @@ export const BrandAuthPage: React.FC = () => {
                   setError(null)
                   setIsLoading(true)
                   try {
-                    const session = await login({
+                    await login({
                       email: "lumina@demo.creatorbridge.com",
                       password: "demo123456",
-                      portal: "brand",
+                      portal: "BRAND",
                     })
-                    if (session.user.role === "CREATOR") {
-                      await authService.logout()
-                      setError("This portal is reserved for Brand and Agency accounts. Creators should log in via the Creator Portal.")
-                      return
-                    }
-                    navigate(session.redirectPath || "/brand/dashboard")
-                  } catch (err: any) {
-                    setError(err?.message || "Demo login failed.")
+                    navigate("/brand/dashboard")
+                  } catch (e: any) {
+                    setError(e.message || "Failed to login as Lumina Skincare")
                   } finally {
                     setIsLoading(false)
                   }
                 }}
-                className="py-2 px-3 rounded-xl bg-white border border-[#D8B8FF] text-xs font-semibold text-[#111111] hover:bg-[#9A6ADF] hover:text-white hover:border-[#9A6ADF] transition-all text-left shadow-xs cursor-pointer"
+                className="text-left p-2.5 rounded-xl bg-white dark:bg-[#181524] border border-[#D8B8FF]/60 dark:border-[#2D2447] hover:border-[#9A6ADF] dark:hover:border-[#3E325D] hover:shadow-xs transition-all group cursor-pointer"
               >
-                <div className="font-bold truncate">Lumina Skincare</div>
-                <div className="text-[10px] opacity-75 font-normal">Luxury Cosmetics</div>
+                <div className="font-semibold text-xs text-slate-800 dark:text-[#F5F3F8] group-hover:text-[#9A6ADF] dark:group-hover:text-[#B78AF7]">
+                  Lumina Skincare
+                </div>
+                <div className="text-[10px] text-[#4B4652] dark:text-[#A9A3B8]">DTC Luxury Brand</div>
+                <div className="text-[9px] text-[#9A6ADF] dark:text-[#B78AF7] font-mono mt-0.5">2 Published Briefs</div>
               </button>
 
               <button
@@ -216,36 +212,34 @@ export const BrandAuthPage: React.FC = () => {
                   setError(null)
                   setIsLoading(true)
                   try {
-                    const session = await login({
+                    await login({
                       email: "terra@demo.creatorbridge.com",
                       password: "demo123456",
-                      portal: "brand",
+                      portal: "BRAND",
                     })
-                    if (session.user.role === "CREATOR") {
-                      await authService.logout()
-                      setError("This portal is reserved for Brand and Agency accounts. Creators should log in via the Creator Portal.")
-                      return
-                    }
-                    navigate(session.redirectPath || "/brand/dashboard")
-                  } catch (err: any) {
-                    setError(err?.message || "Demo login failed.")
+                    navigate("/brand/dashboard")
+                  } catch (e: any) {
+                    setError(e.message || "Failed to login as Terra Outdoor")
                   } finally {
                     setIsLoading(false)
                   }
                 }}
-                className="py-2 px-3 rounded-xl bg-white border border-[#D8B8FF] text-xs font-semibold text-[#111111] hover:bg-[#9A6ADF] hover:text-white hover:border-[#9A6ADF] transition-all text-left shadow-xs cursor-pointer"
+                className="text-left p-2.5 rounded-xl bg-white dark:bg-[#181524] border border-[#D8B8FF]/60 dark:border-[#2D2447] hover:border-[#9A6ADF] dark:hover:border-[#3E325D] hover:shadow-xs transition-all group cursor-pointer"
               >
-                <div className="font-bold truncate">Terra Outdoor</div>
-                <div className="text-[10px] opacity-75 font-normal">Technical Alpine Gear</div>
+                <div className="font-semibold text-xs text-slate-800 dark:text-[#F5F3F8] group-hover:text-[#9A6ADF] dark:group-hover:text-[#B78AF7]">
+                  Terra Outdoor
+                </div>
+                <div className="text-[10px] text-[#4B4652] dark:text-[#A9A3B8]">Adventure Apparel</div>
+                <div className="text-[9px] text-[#9A6ADF] dark:text-[#B78AF7] font-mono mt-0.5">2 Active Campaigns</div>
               </button>
             </div>
           </div>
         )}
 
         {/* Auth Box */}
-        <div className="rounded-3xl border border-[#F4E7FF] bg-white p-6 sm:p-8 shadow-xl shadow-[#9A6ADF]/5">
+        <div className="rounded-3xl border border-[#D8B8FF]/70 dark:border-[#2D2447] bg-white dark:bg-[#181524] p-6 sm:p-8 shadow-xl shadow-[#9A6ADF]/5 transition-colors duration-200">
           {error && (
-            <div className="mb-5 rounded-xl border border-rose-200 bg-rose-50/80 p-3 flex items-start space-x-2.5 text-xs text-rose-700">
+            <div className="mb-5 rounded-xl border border-rose-200 dark:border-rose-900/60 bg-rose-50/80 dark:bg-rose-950/20 p-3 flex items-start space-x-2.5 text-xs text-rose-700 dark:text-rose-400">
               <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
@@ -253,55 +247,51 @@ export const BrandAuthPage: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "register" && (
-              <>
-                <div>
-                  <label className="block text-xs font-bold text-[#111111] mb-1.5">
-                    Organization Type
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setRole("BRAND")}
-                      className={`py-2 px-3 text-xs rounded-xl border transition-all text-center cursor-pointer ${
-                        role === "BRAND"
-                          ? "border-[#9A6ADF] bg-[#F4E7FF]/60 text-[#9A6ADF] font-bold shadow-2xs"
-                          : "border-[#D8B8FF]/60 bg-white text-[#4B4652] hover:bg-[#F4E7FF]/20 hover:border-[#D8B8FF]"
-                      }`}
-                    >
-                      Brand / Enterprise
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setRole("AGENCY")}
-                      className={`py-2 px-3 text-xs rounded-xl border transition-all text-center cursor-pointer ${
-                        role === "AGENCY"
-                          ? "border-[#9A6ADF] bg-[#F4E7FF]/60 text-[#9A6ADF] font-bold shadow-2xs"
-                          : "border-[#D8B8FF]/60 bg-white text-[#4B4652] hover:bg-[#F4E7FF]/20 hover:border-[#D8B8FF]"
-                      }`}
-                    >
-                      Creative Agency
-                    </button>
-                  </div>
+              <div>
+                <label className="block text-xs font-semibold text-[#111111] dark:text-[#C7C3D4] mb-1">
+                  Account Type
+                </label>
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <button
+                    type="button"
+                    onClick={() => setRole("BRAND")}
+                    className={`py-2 px-3 text-xs font-semibold rounded-xl border transition-all cursor-pointer ${
+                      role === "BRAND"
+                        ? "bg-[#F4E7FF] dark:bg-[#231C35] text-[#9A6ADF] dark:text-[#B78AF7] border-[#9A6ADF] dark:border-[#B78AF7]"
+                        : "border-slate-200 dark:border-[#2D2447] text-[#4B4652] dark:text-[#C7C3D4] hover:bg-slate-50 dark:hover:bg-[#181524]"
+                    }`}
+                  >
+                    Direct Brand
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setRole("AGENCY")}
+                    className={`py-2 px-3 text-xs font-semibold rounded-xl border transition-all cursor-pointer ${
+                      role === "AGENCY"
+                        ? "bg-[#F4E7FF] dark:bg-[#231C35] text-[#9A6ADF] dark:text-[#B78AF7] border-[#9A6ADF] dark:border-[#B78AF7]"
+                        : "border-slate-200 dark:border-[#2D2447] text-[#4B4652] dark:text-[#C7C3D4] hover:bg-slate-50 dark:hover:bg-[#181524]"
+                    }`}
+                  >
+                    Creative Agency
+                  </button>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-[#111111] mb-1.5">
-                    {role === "AGENCY" ? "Agency Name" : "Company / Brand Name"}
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={organizationName}
-                    onChange={(e) => setOrganizationName(e.target.value)}
-                    placeholder={role === "AGENCY" ? "e.g. Apex Media Agency" : "e.g. Lumina Studios"}
-                    className="w-full rounded-xl border border-[#D8B8FF] bg-white px-3.5 py-2.5 text-sm text-[#111111] placeholder:text-[#4B4652]/60 focus:border-[#9A6ADF] focus:outline-none focus:ring-2 focus:ring-[#9A6ADF]/30 shadow-2xs transition-colors"
-                  />
-                </div>
-              </>
+                <label className="block text-xs font-semibold text-[#111111] dark:text-[#C7C3D4] mb-1">
+                  Company or Agency Name
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={organizationName}
+                  onChange={(e) => setOrganizationName(e.target.value)}
+                  placeholder="e.g. Lumina Global, Studio Seven"
+                  className="w-full rounded-xl border border-slate-200 dark:border-[#2D2447] bg-white dark:bg-[#0F0D15] px-3.5 py-2.5 text-sm text-[#111111] dark:text-[#F5F3F8] placeholder:text-slate-400 dark:placeholder:text-[#A9A3B8]/60 focus:border-[#9A6ADF] focus:outline-none focus:ring-1 focus:ring-[#9A6ADF]"
+                />
+              </div>
             )}
 
             <div>
-              <label className="block text-xs font-bold text-[#111111] mb-1.5">
+              <label className="block text-xs font-semibold text-[#111111] dark:text-[#C7C3D4] mb-1">
                 Work Email Address
               </label>
               <input
@@ -310,19 +300,19 @@ export const BrandAuthPage: React.FC = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="name@company.com"
-                className="w-full rounded-xl border border-[#D8B8FF] bg-white px-3.5 py-2.5 text-sm text-[#111111] placeholder:text-[#4B4652]/60 focus:border-[#9A6ADF] focus:outline-none focus:ring-2 focus:ring-[#9A6ADF]/30 shadow-2xs transition-colors"
+                className="w-full rounded-xl border border-slate-200 dark:border-[#2D2447] bg-white dark:bg-[#0F0D15] px-3.5 py-2.5 text-sm text-[#111111] dark:text-[#F5F3F8] placeholder:text-slate-400 dark:placeholder:text-[#A9A3B8]/60 focus:border-[#9A6ADF] focus:outline-none focus:ring-1 focus:ring-[#9A6ADF]"
               />
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-bold text-[#111111]">
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold text-[#111111] dark:text-[#C7C3D4]">
                   Password
                 </label>
                 {mode === "login" && (
                   <Link
                     to="/auth/forgot-password"
-                    className="text-[11px] font-semibold text-[#9A6ADF] hover:text-[#8655cb]"
+                    className="text-[11px] font-medium text-[#9A6ADF] dark:text-[#B78AF7] hover:underline"
                   >
                     Forgot password?
                   </Link>
@@ -335,12 +325,12 @@ export const BrandAuthPage: React.FC = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-xl border border-[#D8B8FF] bg-white px-3.5 py-2.5 text-sm text-[#111111] placeholder:text-[#4B4652]/60 focus:border-[#9A6ADF] focus:outline-none focus:ring-2 focus:ring-[#9A6ADF]/30 shadow-2xs transition-colors pr-10"
+                  className="w-full rounded-xl border border-slate-200 dark:border-[#2D2447] bg-white dark:bg-[#0F0D15] px-3.5 py-2.5 text-sm text-[#111111] dark:text-[#F5F3F8] placeholder:text-slate-400 dark:placeholder:text-[#A9A3B8]/60 focus:border-[#9A6ADF] focus:outline-none focus:ring-1 focus:ring-[#9A6ADF] pr-10"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4B4652]/60 hover:text-[#111111] cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-[#F5F3F8]"
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -349,7 +339,7 @@ export const BrandAuthPage: React.FC = () => {
 
             {mode === "register" && (
               <div>
-                <label className="block text-xs font-bold text-[#111111] mb-1.5">
+                <label className="block text-xs font-semibold text-[#111111] dark:text-[#C7C3D4] mb-1">
                   Confirm Password
                 </label>
                 <input
@@ -358,7 +348,7 @@ export const BrandAuthPage: React.FC = () => {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="••••••••"
-                  className="w-full rounded-xl border border-[#D8B8FF] bg-white px-3.5 py-2.5 text-sm text-[#111111] placeholder:text-[#4B4652]/60 focus:border-[#9A6ADF] focus:outline-none focus:ring-2 focus:ring-[#9A6ADF]/30 shadow-2xs transition-colors"
+                  className="w-full rounded-xl border border-slate-200 dark:border-[#2D2447] bg-white dark:bg-[#0F0D15] px-3.5 py-2.5 text-sm text-[#111111] dark:text-[#F5F3F8] placeholder:text-slate-400 dark:placeholder:text-[#A9A3B8]/60 focus:border-[#9A6ADF] focus:outline-none focus:ring-1 focus:ring-[#9A6ADF]"
                 />
               </div>
             )}
@@ -388,7 +378,7 @@ export const BrandAuthPage: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading || (mode === "register" && !policyAccepted)}
-              className="w-full py-3.5 px-4 rounded-xl bg-[#9A6ADF] hover:bg-[#8655cb] text-white font-bold text-sm shadow-md shadow-[#9A6ADF]/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2 cursor-pointer"
+              className="w-full py-3.5 px-4 rounded-xl bg-[#9A6ADF] hover:bg-[#8655cb] text-white font-bold text-sm shadow-md shadow-[#9A6ADF]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center space-x-2 cursor-pointer"
             >
               {isLoading ? (
                 <span>Authenticating...</span>
@@ -396,7 +386,7 @@ export const BrandAuthPage: React.FC = () => {
                 <>
                   <Sparkles className="h-4 w-4" />
                   <span>
-                    {mode === "login" ? "Enter Brand Portal" : "Complete Brand Setup"}
+                    {mode === "login" ? "Enter Brand Dashboard" : "Complete Brand Registration"}
                   </span>
                 </>
               )}
@@ -413,23 +403,12 @@ export const BrandAuthPage: React.FC = () => {
               setShowPolicyModal(false)
             }}
           />
-
-          {/* Switch to Creator portal link */}
-          <div className="mt-6 pt-5 border-t border-[#F4E7FF] text-center">
-            <span className="text-xs text-[#4B4652]">Are you an AI creator looking to bid on briefs? </span>
-            <Link
-              to="/auth/creator"
-              className="text-xs font-bold text-[#9A6ADF] hover:text-[#8655cb] transition-colors"
-            >
-              Switch to Creator Portal
-            </Link>
-          </div>
         </div>
 
         {/* Security badge */}
-        <div className="mt-6 flex items-center justify-center space-x-2 text-[11px] text-[#4B4652]/70">
-          <ShieldCheck className="h-3.5 w-3.5 text-[#9A6ADF]" />
-          <span>Secured with Supabase Auth & Cloudflare Turnstile bot defense</span>
+        <div className="mt-6 flex items-center justify-center space-x-2 text-[11px] text-[#4B4652] dark:text-[#A9A3B8]">
+          <ShieldCheck className="h-3.5 w-3.5 text-[#9A6ADF] dark:text-[#B78AF7]" />
+          <span>Enterprise Grade Escrow & Intellectual Property Protections</span>
         </div>
       </div>
     </div>

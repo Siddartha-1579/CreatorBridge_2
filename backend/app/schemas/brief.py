@@ -74,7 +74,7 @@ class CommercialTerms(BaseModel):
     budget_tier: Optional[str] = None
     budget_cents: Optional[int] = None
     budget_per_deliverable_cents: Optional[int] = None
-    currency: str = "USD"
+    currency: str = "INR"
     compensation_model: str = "PAID"  # PAID, GIFTING, HYBRID
     payment_model: str = "MILESTONE"  # FIXED_PRICE, MILESTONE, RETAINER, OPEN_TO_PROPOSALS
     intended_usage: List[str] = Field(default_factory=list)  # ORGANIC_SOCIAL, PAID_ADS, ECOMMERCE, INTERNAL

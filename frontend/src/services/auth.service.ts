@@ -67,6 +67,7 @@ export const authService = {
       full_name: data.fullName,
       role: data.role,
       turnstile_token: data.turnstileToken,
+      portal: data.portal,
       policy_accepted: data.policyAccepted ?? false,
       policy_version: data.policyVersion ?? "2026.1",
     })

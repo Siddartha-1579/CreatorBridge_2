@@ -293,7 +293,7 @@ export const HomePage: React.FC = () => {
                   <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#F4E7FF] text-xs">
                     <div className="p-2 rounded-lg bg-white border border-[#F4E7FF]">
                       <span className="text-[10px] text-[#4B4652] block">Escrow Funding</span>
-                      <span className="font-bold text-[#111111]">$3,200 USD Locked</span>
+                      <span className="font-bold text-[#111111]">₹2,50,000 INR Locked</span>
                     </div>
                     <div className="p-2 rounded-lg bg-white border border-[#F4E7FF]">
                       <span className="text-[10px] text-[#4B4652] block">Commercial IP</span>
@@ -682,7 +682,7 @@ export const HomePage: React.FC = () => {
                   image="/demo-assets/beverage-premium-matcha.jpg"
                   tags={["Runway Gen-3", "Midjourney v6", "Commercial Use"]}
                   metadata={{
-                    "Budget Allocated": "$3,200 USD",
+                    "Budget Allocated": "₹2,50,000 INR",
                     "Required Format": "Vertical Video (9:16)",
                     "Target Timeline": "5 Business Days",
                     "IP Handover": "Commercial Buyout Included",

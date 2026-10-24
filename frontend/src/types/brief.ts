@@ -116,6 +116,7 @@ export interface CampaignBrief {
   commercial_terms: CommercialTerms
   sections?: Record<string, string>
   budget_cents?: number
+  currency?: string
   reward_type?: string
   cpm_rate_cents?: number
   total_pool_cents?: number
@@ -162,6 +163,7 @@ export interface CampaignBriefCreate {
   commercial_terms?: Partial<CommercialTerms>
   sections?: Record<string, string>
   budget_cents?: number
+  currency?: string
   start_date?: string
   deadline?: string
   published_at?: string

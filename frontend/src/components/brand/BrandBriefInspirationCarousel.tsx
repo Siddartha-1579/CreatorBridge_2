@@ -1,6 +1,7 @@
 import React from "react"
 import { Carousel, Card, type CardData } from "@/components/ui/apple-cards-carousel"
 import { Sparkles, Layers, CheckCircle2, Film, Camera, Zap, Check } from "lucide-react"
+import { formatINR } from "@/lib/currency"
 
 export interface BriefTemplate {
   title: string
@@ -8,7 +9,8 @@ export interface BriefTemplate {
   description: string
   defaultTitle: string
   defaultDescription: string
-  defaultBudgetUSD: number
+  defaultBudgetINR: number
+  defaultBudgetUSD?: number
   deliverables: { type: string; count: number }[]
   requiredTools: string[]
   aspectRatios: string[]
@@ -24,7 +26,8 @@ const TEMPLATES: BriefTemplate[] = [
     description: "Multi-shot high-production spec film with synchronized lighting, camera sweeps, and neural sound design.",
     defaultTitle: "Cinematic Product Reveal Commercial",
     defaultDescription: "30-second photorealistic product launch video with dramatic dynamic camera angles, cinematic volumetric lighting, and synchronized sound design. Must adhere to brand color palette.",
-    defaultBudgetUSD: 3500,
+    defaultBudgetINR: 275000,
+    defaultBudgetUSD: 275000,
     deliverables: [{ type: "video", count: 1 }],
     requiredTools: ["Runway Gen-3", "Midjourney", "ElevenLabs"],
     aspectRatios: ["16:9 Master 4K", "9:16 Social Cut"],
@@ -37,7 +40,8 @@ const TEMPLATES: BriefTemplate[] = [
     description: "Ultra-sharp 8K e-commerce packshots with customized studio lighting, shadow accuracy, and material fidelity.",
     defaultTitle: "High-End E-Commerce Product Packshots (10 SKUs)",
     defaultDescription: "Suite of high-resolution lifestyle product renders showcasing our new collection across 3 distinct minimalist studio environments with precise reflections and shadow falloff.",
-    defaultBudgetUSD: 1800,
+    defaultBudgetINR: 145000,
+    defaultBudgetUSD: 145000,
     deliverables: [{ type: "image", count: 10 }],
     requiredTools: ["FLUX.1 Pro", "Magnific AI", "ControlNet"],
     aspectRatios: ["1:1 Square", "4:5 Portrait"],
@@ -50,7 +54,8 @@ const TEMPLATES: BriefTemplate[] = [
     description: "Scroll-stopping TikTok and Reels performance ads with rapid hook variations and engaging kinetic typography.",
     defaultTitle: "Iterative Performance Ad Hooks for TikTok & Meta",
     defaultDescription: "5 high-energy 15-second vertical video variations testing distinct emotional angles, product benefit hooks, and native UGC-style voiceovers.",
-    defaultBudgetUSD: 2200,
+    defaultBudgetINR: 180000,
+    defaultBudgetUSD: 180000,
     deliverables: [{ type: "video", count: 5 }],
     requiredTools: ["CapCut AI", "HeyGen", "Midjourney"],
     aspectRatios: ["9:16 Vertical"],
@@ -63,7 +68,8 @@ const TEMPLATES: BriefTemplate[] = [
     description: "Recurring digital brand ambassador with facial identity lock across narrative scenes and consistent voice acting.",
     defaultTitle: "Digital Brand Spokesperson Origin Story",
     defaultDescription: "Multi-scene animated lore video featuring a persistent brand avatar guiding viewers through our core mission and origin story with emotive line delivery.",
-    defaultBudgetUSD: 4000,
+    defaultBudgetINR: 325000,
+    defaultBudgetUSD: 325000,
     deliverables: [{ type: "video", count: 1 }, { type: "image", count: 5 }],
     requiredTools: ["HeyGen", "Runway Gen-3", "ElevenLabs"],
     aspectRatios: ["16:9 Cinema", "9:16 Mobile"],
@@ -76,7 +82,8 @@ const TEMPLATES: BriefTemplate[] = [
     description: "Surreal animated transitions and latent keyframing loops tailored for festival screens and immersive brand spaces.",
     defaultTitle: "Surreal Latent Loop Installation Assets",
     defaultDescription: "Seamless 60fps generative visual loops combining morphing abstract geometries and brand motifs for digital billboards and stage installations.",
-    defaultBudgetUSD: 3000,
+    defaultBudgetINR: 240000,
+    defaultBudgetUSD: 240000,
     deliverables: [{ type: "video", count: 3 }],
     requiredTools: ["ComfyUI", "AnimateDiff", "Deforum"],
     aspectRatios: ["16:9 Ultra-Wide", "1:1"],
@@ -89,7 +96,8 @@ const TEMPLATES: BriefTemplate[] = [
     description: "Complete asset bundle encompassing hero 4K commercials, social cutdowns, display keyframes, and localized voiceovers.",
     defaultTitle: "Integrated Q3 Global Product Launch Asset Suite",
     defaultDescription: "Comprehensive campaign package: 1x 30s hero brand film, 3x 15s vertical social ads, 8x high-res display banners, and multi-language voice tracks.",
-    defaultBudgetUSD: 7500,
+    defaultBudgetINR: 600000,
+    defaultBudgetUSD: 600000,
     deliverables: [{ type: "video", count: 4 }, { type: "image", count: 8 }],
     requiredTools: ["Runway Gen-3", "Midjourney v6", "ElevenLabs", "CapCut AI"],
     aspectRatios: ["16:9", "9:16", "1:1", "4:5"],
@@ -129,7 +137,7 @@ export const BrandBriefInspirationCarousel: React.FC<BrandBriefInspirationCarous
 
             <div className="p-3 rounded-xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-100 dark:border-zinc-700">
               <span className="text-[11px] text-slate-400 block font-medium">Est. Starting Budget</span>
-              <strong className="text-slate-900 dark:text-white font-bold">${tmpl.defaultBudgetUSD.toLocaleString()} USD</strong>
+              <strong className="text-slate-900 dark:text-white font-bold">{formatINR(tmpl.defaultBudgetINR)}</strong>
             </div>
           </div>
 

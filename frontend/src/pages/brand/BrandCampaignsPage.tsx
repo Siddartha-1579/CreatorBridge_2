@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ImageWithFallback } from "@/components/common/ImageWithFallback"
+import { formatCurrency } from "@/lib/currency"
 import {
   Megaphone,
   Plus,
@@ -193,7 +194,7 @@ export const BrandCampaignsPage: React.FC = () => {
             <DollarSign className="h-4 w-4 text-[#FF8E6E]" />
           </div>
           <p className="text-2xl font-extrabold text-[#111111] mt-2">
-            ${Math.round(totalBudgetCents / 100).toLocaleString()}
+            {formatCurrency(totalBudgetCents, "INR", true)}
           </p>
           <p className="text-[11px] text-[#4B4652] mt-0.5">Committed across briefs</p>
         </Card>
@@ -298,9 +299,12 @@ export const BrandCampaignsPage: React.FC = () => {
         <div className="space-y-4">
           {filteredCampaigns.map((camp) => {
             const isPublished = camp.status === "PUBLISHED"
-            const budgetFormatted = (
-              (camp.budget_cents || camp.commercial_terms?.budget_cents || 0) / 100
-            ).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 })
+            const campCurrency = camp.commercial_terms?.currency || camp.currency || "INR"
+            const budgetFormatted = formatCurrency(
+              camp.budget_cents || camp.commercial_terms?.budget_cents || 0,
+              campCurrency,
+              true
+            )
             const deliverableCount = camp.deliverables?.length || 0
 
             return (
@@ -365,7 +369,7 @@ export const BrandCampaignsPage: React.FC = () => {
 
                       {camp.cpm_rate_cents ? (
                         <div className="flex items-center gap-1 font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md border border-purple-200">
-                          <span>${Math.round(camp.cpm_rate_cents / 100)} CPM</span>
+                          <span>{formatCurrency(camp.cpm_rate_cents, campCurrency, true)} CPM</span>
                         </div>
                       ) : null}
 
@@ -526,7 +530,7 @@ export const BrandCampaignsPage: React.FC = () => {
                         <span>
                           Proposed Fee:{" "}
                           <strong className="text-slate-900">
-                            {app.proposed_rate_cents ? `$${(app.proposed_rate_cents / 100).toLocaleString()}` : "Standard"}
+                            {app.proposed_rate_cents ? formatCurrency(app.proposed_rate_cents, "INR", true) : "Standard"}
                           </strong>
                         </span>
                         {app.estimated_days && (

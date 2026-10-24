@@ -95,7 +95,7 @@ class SurveyRepository:
                 "technical_skills": merged_answers.get("cr_skills", []),
                 "tools_experience": merged_answers.get("cr_tools_catalog", []),
                 "pricing_model": merged_answers.get("cr_pricing_model", "fixed_milestone"),
-                "starting_price": merged_answers.get("cr_starting_price", 250),
+                "starting_price": merged_answers.get("cr_starting_price", 2500),
                 "availability": merged_answers.get("cr_current_availability", "immediate"),
                 "updated_at": now,
             }

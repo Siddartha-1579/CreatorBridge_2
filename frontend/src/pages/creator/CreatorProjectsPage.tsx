@@ -6,6 +6,7 @@ import type { ProjectWorkspace, ProjectDeliverable, ProjectMessage } from "@/typ
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { formatCurrency } from "@/lib/currency"
 import {
   Briefcase,
   ArrowRight,
@@ -220,7 +221,7 @@ export const CreatorProjectsPage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-4 text-xs text-[#4B4652]">
                   <span className="font-mono font-semibold text-emerald-700">
-                    Budget: ${(proj.agreedBudgetCents / 100).toLocaleString()} USD
+                    Budget: {formatCurrency(proj.agreedBudgetCents, "INR", true)}
                   </span>
                   <span className="flex items-center gap-1 text-slate-500">
                     <Clock className="w-3.5 h-3.5" />
@@ -274,7 +275,7 @@ export const CreatorProjectsPage: React.FC = () => {
                     {activeWorkspace.title}
                   </h3>
                   <p className="text-xs text-emerald-700 font-bold mt-0.5">
-                    Agreed Budget: ${(activeWorkspace.agreedBudgetCents / 100).toLocaleString()} USD (Escrow Protected)
+                    Agreed Budget: {formatCurrency(activeWorkspace.agreedBudgetCents, "INR", true)} (Escrow Protected)
                   </p>
                 </div>
                 <button
@@ -353,7 +354,7 @@ export const CreatorProjectsPage: React.FC = () => {
                             <div className="space-y-0.5">
                               <p className="text-xs font-bold text-[#111111]">{m.title}</p>
                               <p className="text-[11px] text-[#4B4652]">
-                                ${(m.amount_cents / 100).toLocaleString()} USD •{" "}
+                                {formatCurrency(m.amount_cents, "INR", true)} •{" "}
                                 <span
                                   className={`font-semibold ${
                                     isReleased

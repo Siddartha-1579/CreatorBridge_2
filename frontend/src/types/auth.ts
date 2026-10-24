@@ -27,6 +27,7 @@ export interface RegisterData {
   fullName: string
   role: UserRole
   turnstileToken?: string
+  portal?: string
   policyAccepted?: boolean
   policyVersion?: string
 }

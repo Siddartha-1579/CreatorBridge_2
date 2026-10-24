@@ -65,23 +65,23 @@ export const PriorityBoostModal: React.FC<PriorityBoostModalProps> = ({
   const bonus = calculateBonus(points)
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="relative w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl border border-[#D8B8FF] space-y-5 text-left">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 dark:bg-black/80 backdrop-blur-xs animate-in fade-in duration-200">
+      <div className="relative w-full max-w-lg rounded-2xl bg-white dark:bg-[#181524] p-6 shadow-2xl border border-[#D8B8FF] dark:border-purple-500/20 space-y-5 text-left">
         {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-[#F4E7FF]">
+        <div className="flex items-center justify-between pb-3 border-b border-[#F4E7FF] dark:border-zinc-800">
           <div className="flex items-center gap-2.5">
-            <div className="p-2 rounded-xl bg-[#F4E7FF] text-[#9A6ADF]">
+            <div className="p-2 rounded-xl bg-[#F4E7FF] dark:bg-purple-900/30 text-[#9A6ADF] dark:text-purple-300">
               <Zap className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-[#111111]">Activate Priority Boost</h3>
-              <p className="text-xs text-[#4B4652]">Spend points for temporary candidate ranking priority</p>
+              <h3 className="text-base font-bold text-[#111111] dark:text-zinc-100">Activate Priority Boost</h3>
+              <p className="text-xs text-[#4B4652] dark:text-zinc-400">Spend points for temporary candidate ranking priority</p>
             </div>
           </div>
           <button
             onClick={onClose}
             aria-label="Close boost modal"
-            className="p-1 rounded-lg text-[#4B4652] hover:bg-[#F4E7FF]/50 hover:text-[#111111] transition-colors"
+            className="p-1 rounded-lg text-[#4B4652] dark:text-zinc-400 hover:bg-[#F4E7FF]/50 dark:hover:bg-zinc-800 hover:text-[#111111] dark:hover:text-zinc-100 transition-colors cursor-pointer"
           >
             <X className="h-5 w-5" />
           </button>
@@ -89,31 +89,31 @@ export const PriorityBoostModal: React.FC<PriorityBoostModalProps> = ({
 
         {success ? (
           <div className="py-8 text-center space-y-3">
-            <div className="inline-flex p-3 rounded-full bg-emerald-50 text-emerald-600">
+            <div className="inline-flex p-3 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">
               <CheckCircle2 className="h-8 w-8" />
             </div>
-            <h4 className="text-base font-bold text-[#111111]">Priority Boost Activated!</h4>
-            <p className="text-xs text-[#4B4652]">
+            <h4 className="text-base font-bold text-[#111111] dark:text-zinc-100">Priority Boost Activated!</h4>
+            <p className="text-xs text-[#4B4652] dark:text-zinc-400">
               Your +{bonus} ranking priority bonus is now active for the next 24 hours.
             </p>
           </div>
         ) : (
           <>
             {/* Balance Overview */}
-            <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#FFFDFD] border border-[#F4E7FF] text-xs">
+            <div className="flex items-center justify-between p-3.5 rounded-xl bg-[#FFFDFD] dark:bg-[#231C35] border border-[#F4E7FF] dark:border-zinc-800 text-xs">
               <div>
-                <span className="text-[#4B4652] block text-[11px]">Available Balance</span>
-                <span className="text-sm font-bold text-[#111111]">{availablePoints} pts</span>
+                <span className="text-[#4B4652] dark:text-zinc-400 block text-[11px]">Available Balance</span>
+                <span className="text-sm font-bold text-[#111111] dark:text-zinc-100">{availablePoints} pts</span>
               </div>
               <div className="text-right">
-                <span className="text-[#4B4652] block text-[11px]">Balance After Boost</span>
-                <span className="text-sm font-bold text-[#9A6ADF]">{remainingBalance} pts</span>
+                <span className="text-[#4B4652] dark:text-zinc-400 block text-[11px]">Balance After Boost</span>
+                <span className="text-sm font-bold text-[#9A6ADF] dark:text-[#B78AF7]">{remainingBalance} pts</span>
               </div>
             </div>
 
             {/* Point Selection Chips */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-[#111111] block">
+              <label className="text-xs font-semibold text-[#111111] dark:text-zinc-200 block">
                 Select Points to Spend (10 – 100 pts)
               </label>
               <div className="grid grid-cols-4 gap-2">
@@ -128,8 +128,8 @@ export const PriorityBoostModal: React.FC<PriorityBoostModalProps> = ({
                       onClick={() => setPoints(preset)}
                       className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
                         isSelected
-                          ? "bg-[#F4E7FF] border-[#9A6ADF] text-[#9A6ADF] shadow-2xs"
-                          : "bg-white border-[#D8B8FF]/60 text-[#4B4652] hover:bg-[#F4E7FF]/30"
+                          ? "bg-[#F4E7FF] dark:bg-purple-900/40 border-[#9A6ADF] text-[#9A6ADF] dark:text-[#B78AF7] shadow-2xs"
+                          : "bg-white dark:bg-[#231C35] border-[#D8B8FF]/60 dark:border-zinc-700 text-[#4B4652] dark:text-zinc-300 hover:bg-[#F4E7FF]/30 dark:hover:bg-zinc-800"
                       }`}
                     >
                       {preset} pts
@@ -154,28 +154,28 @@ export const PriorityBoostModal: React.FC<PriorityBoostModalProps> = ({
             </div>
 
             {/* Impact Calculation Preview */}
-            <div className="p-3.5 rounded-xl bg-purple-50/50 border border-purple-100 flex items-center justify-between text-xs">
+            <div className="p-3.5 rounded-xl bg-purple-50/50 dark:bg-purple-950/30 border border-purple-100 dark:border-purple-900/40 flex items-center justify-between text-xs">
               <div className="space-y-0.5">
-                <span className="font-semibold text-purple-900 flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5 text-[#9A6ADF]" />
+                <span className="font-semibold text-purple-900 dark:text-purple-300 flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-[#9A6ADF] dark:text-[#B78AF7]" />
                   Temporary Priority Impact
                 </span>
-                <span className="text-[11px] text-[#4B4652] flex items-center gap-1">
+                <span className="text-[11px] text-[#4B4652] dark:text-zinc-400 flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   Duration: 24 hours from activation
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-lg font-black text-[#9A6ADF] font-mono">+{bonus}</span>
-                <span className="block text-[10px] text-[#4B4652]">Ranking Bonus</span>
+                <span className="text-lg font-black text-[#9A6ADF] dark:text-[#B78AF7] font-mono">+{bonus}</span>
+                <span className="block text-[10px] text-[#4B4652] dark:text-zinc-400">Ranking Bonus</span>
               </div>
             </div>
 
             {/* Optional Brief Scope */}
             <div className="space-y-1.5">
-              <label htmlFor="briefId" className="text-xs font-semibold text-[#111111] flex items-center justify-between">
+              <label htmlFor="briefId" className="text-xs font-semibold text-[#111111] dark:text-zinc-200 flex items-center justify-between">
                 <span>Optional Campaign Scope</span>
-                <span className="text-[10px] font-normal text-[#4B4652]">Leave blank for Global Boost</span>
+                <span className="text-[10px] font-normal text-[#4B4652] dark:text-zinc-400">Leave blank for Global Boost</span>
               </label>
               <input
                 id="briefId"
@@ -183,20 +183,20 @@ export const PriorityBoostModal: React.FC<PriorityBoostModalProps> = ({
                 placeholder="e.g. Brief ID (optional)"
                 value={briefId}
                 onChange={(e) => setBriefId(e.target.value)}
-                className="w-full px-3 py-2 text-xs rounded-xl border border-[#D8B8FF] bg-white focus:outline-none focus:ring-2 focus:ring-[#9A6ADF]/40"
+                className="w-full px-3 py-2 text-xs rounded-xl border border-[#D8B8FF] dark:border-zinc-700 bg-white dark:bg-[#231C35] text-[#111111] dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-[#9A6ADF]/40"
               />
             </div>
 
             {/* Error banner */}
             {error && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+              <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
             {/* Transparency Disclaimer */}
-            <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-[11px] text-[#4B4652] flex items-start gap-2">
+            <div className="p-3 rounded-xl bg-slate-50 dark:bg-[#231C35] border border-slate-200/80 dark:border-zinc-800 text-[11px] text-[#4B4652] dark:text-zinc-400 flex items-start gap-2">
               <ShieldAlert className="h-4 w-4 text-slate-400 shrink-0 mt-0.5" />
               <span>
                 <strong>System Guarantee:</strong> Priority boosts enhance eligible discovery ranking only. Boosts do NOT modify your independent Trust score or guarantee selection over better-fit criteria.

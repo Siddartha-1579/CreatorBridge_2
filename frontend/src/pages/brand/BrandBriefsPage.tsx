@@ -20,6 +20,7 @@ import {
   BrandBriefInspirationCarousel,
   type BriefTemplate,
 } from "@/components/brand/BrandBriefInspirationCarousel"
+import { formatCurrency } from "@/lib/currency"
 
 export const BrandBriefsPage: React.FC = () => {
   const navigate = useNavigate()
@@ -167,7 +168,7 @@ export const BrandBriefsPage: React.FC = () => {
                     <div className="flex items-center gap-1 font-semibold text-slate-900">
                       <span>Budget:</span>
                       <span className="text-purple-700 font-bold">
-                        ${(budgetAmount / 100).toLocaleString()} USD
+                        {formatCurrency(budgetAmount, brief.commercial_terms?.currency || brief.currency || "INR", true)}
                       </span>
                     </div>
 

@@ -6,6 +6,7 @@ import type { CreatorProfileDetail, PortfolioProject } from "@/types"
 import { PortfolioProject3DCard } from "@/components/portfolio/PortfolioProject3DCard"
 import { ProjectDetailModal } from "@/components/portfolio/ProjectDetailModal"
 import { CreatorPortfolioCarousel } from "@/components/portfolio/CreatorPortfolioCarousel"
+import { formatCurrency } from "@/lib/currency"
 import {
   ShieldCheck,
   Award,
@@ -165,7 +166,7 @@ export const PublicCreatorProfilePage: React.FC = () => {
                 )}
                 {profile.hourly_rate_cents && (
                   <span className="font-semibold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-md">
-                    ${profile.hourly_rate_cents / 100} / hr
+                    {formatCurrency(profile.hourly_rate_cents, "INR", true)} / hr
                   </span>
                 )}
                 <span className="flex items-center gap-1 text-slate-700 font-medium">

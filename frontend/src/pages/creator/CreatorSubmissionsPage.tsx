@@ -5,6 +5,7 @@ import type { ClipSubmission, SubmissionStatus } from "@/types"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { formatCurrency } from "@/lib/currency"
 import {
   Video,
   Clock,
@@ -64,6 +65,7 @@ export const CreatorSubmissionsPage: React.FC = () => {
       approvedCount: approved.length,
       pendingCount: pending.length,
       revisionCount: revisions.length,
+      totalEarnedFormatted: formatCurrency(totalEarnedCents, "INR", true, true),
       totalEarnedUSD: (totalEarnedCents / 100).toFixed(2),
       totalViews,
     }
@@ -213,7 +215,7 @@ export const CreatorSubmissionsPage: React.FC = () => {
             <span>Approved Rewards (Demo)</span>
             <DollarSign className="w-4 h-4 text-[#9A6ADF]" />
           </div>
-          <div className="text-2xl font-black text-[#111111]">${metrics.totalEarnedUSD}</div>
+          <div className="text-2xl font-black text-[#111111]">{metrics.totalEarnedFormatted}</div>
           <div className="text-[11px] text-[#9A6ADF] font-medium mt-1">
             Earned reward credits (Simulation)
           </div>
@@ -394,7 +396,7 @@ export const CreatorSubmissionsPage: React.FC = () => {
                   <div className="flex flex-row md:flex-col items-center md:items-end justify-between md:justify-start gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
                     <div className="text-left md:text-right">
                       <div className="text-sm font-black text-[#111111]">
-                        ${((sub.earned_cents || 0) / 100).toFixed(2)}
+                        {formatCurrency(sub.earned_cents, "INR", true, true)}
                         <span className="text-[10px] font-semibold text-slate-400 block">
                           {sub.status === "APPROVED" ? "Approved Reward (Demo)" : "Pending Review"}
                         </span>

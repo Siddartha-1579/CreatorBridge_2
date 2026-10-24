@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { ImageWithFallback } from "@/components/common/ImageWithFallback"
 import { creatorMatchesTool, getAvailableToolsForCreators, isToolMatch } from "@/lib/toolMatching"
 import { isMatchCompatible, parseMatchScore, formatMatchScore } from "@/lib/matchCompatibility"
+import { formatCurrency } from "@/lib/currency"
 import {
   Search,
   Sparkles,
@@ -59,7 +60,7 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
   const [selectedStyle, setSelectedStyle] = useState<string>("all")
   const [selectedTool, setSelectedTool] = useState<string>("all")
   const [minMatchScore, setMinMatchScore] = useState<number>(0)
-  const [maxHourlyRate, setMaxHourlyRate] = useState<number>(500)
+  const [maxHourlyRate, setMaxHourlyRate] = useState<number>(50000)
   const [minRating, setMinRating] = useState<number>(0)
   const [selectedAvailability, setSelectedAvailability] = useState<string>("all")
 
@@ -266,9 +267,9 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
         // Min match score filter
         const matchesScore = isMatchCompatible(matchInfo?.overall_match_score, minMatchScore)
 
-        // Rate filter
-        const rateDollars = creator.hourly_rate_cents ? creator.hourly_rate_cents / 100 : 75
-        const matchesRate = rateDollars <= maxHourlyRate
+        // Rate filter (INR)
+        const rateRupees = creator.hourly_rate_cents ? creator.hourly_rate_cents / 100 : 2500
+        const matchesRate = rateRupees <= maxHourlyRate
 
         // Rating filter
         const rawRating = creator.reputation_score ?? creator.reputationScore
@@ -351,7 +352,7 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
               <option value="general">Global Benchmark (General Discovery)</option>
               {briefs.map((b) => (
                 <option key={b.id} value={b.id}>
-                  {b.title} {b.budget_cents ? `($${b.budget_cents / 100})` : ""}
+                  {b.title} {b.budget_cents ? `(${formatCurrency(b.budget_cents, b.currency || "INR", true)})` : ""}
                 </option>
               ))}
             </select>
@@ -389,7 +390,7 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
           <div className="flex items-center gap-3 text-xs">
             {selectedBrief.budget_cents && (
               <span className="px-3 py-1 rounded-lg bg-white border border-[#D8B8FF] text-emerald-700 font-mono font-bold">
-                Budget: ${(selectedBrief.budget_cents / 100).toLocaleString()}
+                Budget: {formatCurrency(selectedBrief.budget_cents, selectedBrief.currency || "INR", true)}
               </span>
             )}
             <Link to={`/brand/briefs/${selectedBrief.id}`}>
@@ -510,17 +511,17 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
           {/* 6. Max Hourly Rate */}
           <div>
             <label className="block text-[10px] font-bold text-[#4B4652] uppercase mb-1">
-              Max Rate (${maxHourlyRate}/hr)
+              Max Rate ({maxHourlyRate >= 50000 ? "Any" : `₹${maxHourlyRate.toLocaleString()}/hr`})
             </label>
             <select
               value={maxHourlyRate}
               onChange={(e) => setMaxHourlyRate(Number(e.target.value))}
               className="w-full bg-[#FFFDFD] border border-[#D8B8FF] rounded-xl px-2.5 py-1.5 text-xs text-[#111111] font-medium focus:outline-none focus:ring-2 focus:ring-[#9A6ADF]/40"
             >
-              <option value="500">Any Budget</option>
-              <option value="75">Under $75/hr</option>
-              <option value="120">Under $120/hr</option>
-              <option value="200">Under $200/hr</option>
+              <option value="50000">Any Rate</option>
+              <option value="3000">Under ₹3,000/hr</option>
+              <option value="7500">Under ₹7,500/hr</option>
+              <option value="15000">Under ₹15,000/hr</option>
             </select>
           </div>
         </div>
@@ -547,7 +548,7 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
               setSelectedStyle("all")
               setSelectedTool("all")
               setMinMatchScore(0)
-              setMaxHourlyRate(500)
+              setMaxHourlyRate(50000)
               setMinRating(0)
               setSelectedAvailability("all")
             }}
@@ -735,7 +736,7 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
                     </div>
                     {creator.hourly_rate_cents && (
                       <span className="text-[#111111] font-mono font-semibold">
-                        ${(creator.hourly_rate_cents / 100).toFixed(0)}/hr
+                        {formatCurrency(creator.hourly_rate_cents, "INR", true)}/hr
                       </span>
                     )}
                   </div>
@@ -946,7 +947,7 @@ export const BrandDiscoverPage: React.FC<BrandDiscoverPageProps> = ({ isPublicVi
                       {briefs.length > 0 ? (
                         briefs.map((b) => (
                           <option key={b.id} value={b.id}>
-                            {b.title} {b.budget_cents ? `($${b.budget_cents / 100})` : ""}
+                            {b.title} {b.budget_cents ? `(${formatCurrency(b.budget_cents, b.currency || "INR", true)})` : ""}
                           </option>
                         ))
                       ) : (

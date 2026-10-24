@@ -303,8 +303,8 @@ Return a valid JSON object matching this schema:
   }},
   "suggested_commercial_terms": {{
     "budget_tier": "GROWTH",
-    "budget_cents": 250000,
-    "currency": "USD",
+    "budget_cents": 25000000,
+    "currency": "INR",
     "compensation_model": "PAID",
     "payment_model": "MILESTONE",
     "intended_usage": ["PAID_ADS"],
@@ -531,13 +531,13 @@ Return a valid JSON object matching this schema:
 
         # 7. Commercial Terms
         total_items = sum(d.quantity for d in deliverables)
-        estimated_budget_cents = max(150000, total_items * 35000)
+        estimated_budget_cents = max(7500000, total_items * 2500000)
 
         commercial_terms = CommercialTerms(
             budget_tier="GROWTH",
             budget_cents=estimated_budget_cents,
             budget_per_deliverable_cents=estimated_budget_cents // max(1, total_items),
-            currency="USD",
+            currency="INR",
             compensation_model="PAID",
             payment_model="MILESTONE",
             intended_usage=["PAID_ADS", "ORGANIC_SOCIAL", "WEBSITE"],

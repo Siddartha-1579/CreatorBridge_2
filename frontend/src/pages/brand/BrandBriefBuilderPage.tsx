@@ -16,6 +16,7 @@ import {
   BrandBriefInspirationCarousel,
   type BriefTemplate,
 } from "@/components/brand/BrandBriefInspirationCarousel"
+import { getCurrencySymbol, formatCurrency } from "@/lib/currency"
 import {
   Sparkles,
   ArrowRight,
@@ -233,8 +234,9 @@ export const BrandBriefBuilderPage: React.FC = () => {
   const [creatorLanguage, setCreatorLanguage] = useState<string>("English")
   const [audienceSizeRange, setAudienceSizeRange] = useState<string>("10k - 100k+ followers")
   const [creatorLevel, setCreatorLevel] = useState<string>("LEVEL_2_VERIFIED")
-  const [totalBudgetUSD, setTotalBudgetUSD] = useState<number>(2500)
-  const [budgetPerDeliverableUSD, setBudgetPerDeliverableUSD] = useState<number>(500)
+  const [currency, setCurrency] = useState<string>("INR")
+  const [totalBudgetUSD, setTotalBudgetUSD] = useState<number>(200000)
+  const [budgetPerDeliverableUSD, setBudgetPerDeliverableUSD] = useState<number>(50000)
   const [compensationModel, setCompensationModel] = useState<string>("PAID")
   const [startDate, setStartDate] = useState<string>("")
   const [applicationDeadline, setApplicationDeadline] = useState<string>("")
@@ -309,6 +311,8 @@ export const BrandBriefBuilderPage: React.FC = () => {
           if (b.creator_capabilities.audience_size_range) setAudienceSizeRange(b.creator_capabilities.audience_size_range)
           if (b.creator_capabilities.experience_level) setCreatorLevel(b.creator_capabilities.experience_level)
         }
+        const loadedCurrency = b.commercial_terms?.currency || b.currency || "INR"
+        setCurrency(loadedCurrency)
         if (b.budget_cents) {
           setTotalBudgetUSD(Math.round(b.budget_cents / 100))
         }
@@ -394,7 +398,7 @@ export const BrandBriefBuilderPage: React.FC = () => {
         budget_tier: "GROWTH",
         budget_cents: totalBudgetUSD * 100,
         budget_per_deliverable_cents: budgetPerDeliverableUSD * 100,
-        currency: "USD",
+        currency: currency,
         compensation_model: compensationModel,
         payment_model: "MILESTONE",
         intended_usage: ["PAID_ADS", "ORGANIC_SOCIAL"],
@@ -412,6 +416,7 @@ export const BrandBriefBuilderPage: React.FC = () => {
       },
       sections: briefSections,
       budget_cents: totalBudgetUSD * 100,
+      currency: currency,
       start_date: toSafeIsoString(startDate),
       deadline: toSafeIsoString(contentDeliveryDeadline),
       required_tools: ["Runway Gen-3", "Midjourney v6.1"],
@@ -870,7 +875,11 @@ export const BrandBriefBuilderPage: React.FC = () => {
     setCampaignIdea(template.defaultDescription)
     setCampaignCategory(template.category)
     setCreativeStyle(template.visualStyle)
-    if (template.defaultBudgetUSD) setTotalBudgetUSD(template.defaultBudgetUSD)
+    if (template.defaultBudgetINR) {
+      setTotalBudgetUSD(template.defaultBudgetINR)
+    } else if (template.defaultBudgetUSD) {
+      setTotalBudgetUSD(template.defaultBudgetUSD)
+    }
     setShowInspirationCarousel(false)
     setStatusMessage(`Loaded inspiration template: ${template.title}`)
     setTimeout(() => setStatusMessage(null), 3500)
@@ -1924,15 +1933,28 @@ export const BrandBriefBuilderPage: React.FC = () => {
 
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div>
-                  <label className="mb-1 block text-xs font-semibold text-slate-700">
-                    Total Campaign Budget (USD) <span className="text-purple-600">*</span>
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-xs font-semibold text-slate-700">
+                      Total Campaign Budget ({currency === "USD" ? "USD" : "₹ / INR"}) <span className="text-purple-600">*</span>
+                    </label>
+                    <select
+                      value={currency}
+                      onChange={(e) => setCurrency(e.target.value)}
+                      aria-label="Campaign Currency"
+                      className="text-[11px] font-semibold text-purple-700 bg-purple-50 border border-purple-200 rounded-lg px-2 py-0.5 cursor-pointer"
+                    >
+                      <option value="INR">INR (₹)</option>
+                      <option value="USD">USD ($)</option>
+                    </select>
+                  </div>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-sm text-slate-400">$</span>
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-sm text-slate-400 font-bold">
+                      {getCurrencySymbol(currency)}
+                    </span>
                     <input
                       type="number"
                       min={100}
-                      step={50}
+                      step={currency === "USD" ? 50 : 500}
                       value={totalBudgetUSD}
                       onChange={(e) => setTotalBudgetUSD(Math.max(0, parseInt(e.target.value) || 0))}
                       className="w-full rounded-xl border border-slate-200 pl-8 pr-3.5 py-2.5 text-sm text-slate-900 focus:border-purple-500 focus:outline-none"
@@ -1942,13 +1964,16 @@ export const BrandBriefBuilderPage: React.FC = () => {
 
                 <div>
                   <label className="mb-1 block text-xs font-semibold text-slate-700">
-                    Budget per Deliverable (USD, Optional)
+                    Budget per Deliverable ({currency === "USD" ? "USD" : "₹ / INR"}, Optional)
                   </label>
                   <div className="relative">
-                    <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-sm text-slate-400">$</span>
+                    <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-sm text-slate-400 font-bold">
+                      {getCurrencySymbol(currency)}
+                    </span>
                     <input
                       type="number"
                       min={50}
+                      step={currency === "USD" ? 50 : 500}
                       value={budgetPerDeliverableUSD}
                       onChange={(e) => setBudgetPerDeliverableUSD(Math.max(0, parseInt(e.target.value) || 0))}
                       className="w-full rounded-xl border border-slate-200 pl-8 pr-3.5 py-2.5 text-sm text-slate-900 focus:border-purple-500 focus:outline-none"

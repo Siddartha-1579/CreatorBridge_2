@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { ImageWithFallback } from "@/components/common/ImageWithFallback"
 import { briefMatchesTool, getAvailableToolsForBriefs } from "@/lib/toolMatching"
+import { formatCurrency, getCurrencySymbol } from "@/lib/currency"
 import {
   Megaphone,
   Search,
@@ -185,7 +186,10 @@ export const CreatorCampaignsPage: React.FC = () => {
   const openApplicationModal = (brief: CampaignBrief) => {
     setApplyingBrief(brief)
     setPitch("")
-    setProposedRateUSD(brief.budget_cents ? Math.round(brief.budget_cents / 100) : 1000)
+    const defaultProposed = brief.budget_cents
+      ? Math.round(brief.budget_cents / 100)
+      : (brief.currency === "USD" ? 1000 : 50000)
+    setProposedRateUSD(defaultProposed)
     setEstimatedDays(7)
     setSelectedSkills(profile?.skills?.slice(0, 3) || [])
     setSelectedTools(profile?.ai_tools?.slice(0, 3) || [])
@@ -316,7 +320,7 @@ export const CreatorCampaignsPage: React.FC = () => {
                   <div>
                     <span className="text-[10px] uppercase font-bold text-slate-400">Rate</span>
                     <p className="text-xl sm:text-2xl font-black text-emerald-400">
-                      ${((featuredBrief.cpm_rate_cents || 0) / 100).toFixed(0)}
+                      {formatCurrency(featuredBrief.cpm_rate_cents, featuredBrief.currency || "INR", true)}
                       <span className="text-xs font-normal text-slate-300"> / 1K Views</span>
                     </p>
                   </div>
@@ -326,7 +330,7 @@ export const CreatorCampaignsPage: React.FC = () => {
                   <div>
                     <span className="text-[10px] uppercase font-bold text-slate-400">Total Pool</span>
                     <p className="text-xl sm:text-2xl font-black text-white">
-                      ${((featuredBrief.total_pool_cents || 0) / 100).toLocaleString()}
+                      {formatCurrency(featuredBrief.total_pool_cents, featuredBrief.currency || "INR", true)}
                     </p>
                   </div>
                 )}
@@ -432,7 +436,7 @@ export const CreatorCampaignsPage: React.FC = () => {
                   <div className="flex items-center gap-2 text-[11px] text-slate-500 mt-0.5">
                     {trend.cpm_rate_cents ? (
                       <span className="text-emerald-600 font-bold">
-                        ${((trend.cpm_rate_cents || 0) / 100).toFixed(0)} CPM
+                        {formatCurrency(trend.cpm_rate_cents, trend.currency || "INR", true)} CPM
                       </span>
                     ) : (
                       <span className="text-slate-600 font-semibold">Open Budget</span>
@@ -603,9 +607,9 @@ export const CreatorCampaignsPage: React.FC = () => {
                         {brief.campaign_category}
                       </span>
                     )}
-                    {cpmRateUSD && (
+                    {brief.cpm_rate_cents && (
                       <span className="rounded-full bg-emerald-600/90 backdrop-blur-md px-2.5 py-1 text-[10px] font-extrabold text-white">
-                        ${cpmRateUSD} / 1K Views
+                        {formatCurrency(brief.cpm_rate_cents, brief.currency || "INR", true)} / 1K Views
                       </span>
                     )}
                   </div>
@@ -682,7 +686,7 @@ export const CreatorCampaignsPage: React.FC = () => {
                       <div>
                         <span className="text-[10px] uppercase font-bold text-slate-400">Total Pool</span>
                         <p className="font-extrabold text-slate-900">
-                          {poolUSD ? `$${poolUSD.toLocaleString()} USD` : "Open Pool"}
+                          {brief.total_pool_cents ? formatCurrency(brief.total_pool_cents, brief.currency || "INR", true) : "Open Pool"}
                         </p>
                       </div>
 
@@ -752,7 +756,7 @@ export const CreatorCampaignsPage: React.FC = () => {
                 <p className="mt-1 text-xs text-slate-500">
                   {applyingBrief.brand_or_product_name || "Commercial Brand"} • Target Budget:{" "}
                   {applyingBrief.budget_cents
-                    ? `$${Math.round(applyingBrief.budget_cents / 100).toLocaleString()} USD`
+                    ? formatCurrency(applyingBrief.budget_cents, applyingBrief.currency || "INR", true)
                     : "Negotiable"}
                 </p>
               </div>
@@ -787,7 +791,7 @@ export const CreatorCampaignsPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-xs font-bold text-slate-700 mb-1">
-                      Proposed Rate (USD)
+                      Proposed Rate ({applyingBrief.currency === "USD" ? "USD" : "₹ / INR"})
                     </label>
                     <input
                       type="number"

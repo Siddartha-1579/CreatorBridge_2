@@ -82,15 +82,15 @@ export const RegisterPage: React.FC = () => {
             {error && <Alert variant="error">{error}</Alert>}
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zinc-300">Account Type</label>
+              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Account Type</label>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"
                   onClick={() => setRole("CREATOR")}
-                  className={`py-2 px-3 text-xs font-medium rounded-lg border text-center transition-colors ${
+                  className={`py-2 px-3 text-xs font-medium rounded-lg border text-center transition-colors cursor-pointer ${
                     role === "CREATOR"
-                      ? "bg-purple-600/20 border-purple-500 text-purple-300"
-                      : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800"
+                      ? "bg-purple-600/20 border-purple-500 text-purple-700 dark:text-purple-300 font-bold"
+                      : "bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800"
                   }`}
                 >
                   AI Creator
@@ -98,10 +98,10 @@ export const RegisterPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setRole("BRAND")}
-                  className={`py-2 px-3 text-xs font-medium rounded-lg border text-center transition-colors ${
+                  className={`py-2 px-3 text-xs font-medium rounded-lg border text-center transition-colors cursor-pointer ${
                     role === "BRAND"
-                      ? "bg-purple-600/20 border-purple-500 text-purple-300"
-                      : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:bg-zinc-800"
+                      ? "bg-purple-600/20 border-purple-500 text-purple-700 dark:text-purple-300 font-bold"
+                      : "bg-zinc-100 dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800"
                   }`}
                 >
                   Brand / Agency
@@ -110,7 +110,7 @@ export const RegisterPage: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zinc-300">Full Name</label>
+              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Full Name</label>
               <Input
                 type="text"
                 placeholder="Alex Rivera"
@@ -121,7 +121,7 @@ export const RegisterPage: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zinc-300">Email Address</label>
+              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Email Address</label>
               <Input
                 type="email"
                 placeholder="alex@example.com"
@@ -132,7 +132,7 @@ export const RegisterPage: React.FC = () => {
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-zinc-300">Password</label>
+              <label className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Password</label>
               <Input
                 type="password"
                 placeholder="••••••••"

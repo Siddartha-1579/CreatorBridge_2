@@ -5,6 +5,7 @@ import type { CampaignBrief, ClipSubmission, SubmissionStatus } from "@/types"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { formatCurrency, getCurrencySymbol } from "@/lib/currency"
 import {
   ArrowLeft,
   Video,
@@ -343,7 +344,7 @@ export const BrandCampaignSubmissionsPage: React.FC = () => {
                   <div className="flex flex-col md:items-end justify-between gap-3 shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-100">
                     <div className="text-left md:text-right">
                       <div className="text-base font-black text-slate-900">
-                        ${((sub.earned_cents || 0) / 100).toFixed(2)}
+                        {formatCurrency(sub.earned_cents, campaign?.commercial_terms?.currency || campaign?.currency || "INR", true, true)}
                         <span className="text-[10px] text-slate-400 block font-normal">
                           {sub.status === "APPROVED" ? "Approved Reward (Demo)" : "Pending Review"}
                         </span>
@@ -466,7 +467,7 @@ export const BrandCampaignSubmissionsPage: React.FC = () => {
 
                   <div>
                     <label className="block text-[11px] font-bold text-emerald-900 mb-1">
-                      Approved Reward (USD)
+                      Approved Reward ({campaign?.commercial_terms?.currency === "USD" || campaign?.currency === "USD" ? "USD" : "₹ / INR"})
                     </label>
                     <input
                       type="number"
