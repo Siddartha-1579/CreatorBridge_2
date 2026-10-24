@@ -21,7 +21,10 @@ class CreatorMatchResult(BaseModel):
     creator_name: Optional[str] = None
     creator_level: Optional[str] = None
     creator_avatar_url: Optional[str] = None
-    reputation_score: float = 4.8
+    reputation_score: float = 0.0
+    trust_score: Optional[float] = Field(default=None, ge=0.0, le=100.0)
+    trust_status: Optional[str] = None
+    priority_placement: bool = False
     overall_match_score: float = Field(ge=0.0, le=100.0)
     achievement_points: int = Field(default=0, ge=0)
     achievement_reputation_bonus: float = Field(default=0.0, ge=0.0, le=5.0)
