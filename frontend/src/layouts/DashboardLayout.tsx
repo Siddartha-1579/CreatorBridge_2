@@ -10,7 +10,7 @@ export const DashboardLayout: React.FC = () => {
   const sidebarType = isBrand ? "brand" : "creator"
 
   return (
-    <div className="min-h-screen flex flex-col bg-[var(--color-background)] text-[var(--color-text)] font-sans selection:bg-[var(--color-primary)]/20 selection:text-[var(--color-primary)] transition-colors duration-200">
+    <div className="min-h-screen flex flex-col bg-[#FFFDFD] dark:bg-[#0F0D15] text-[#111111] dark:text-[#F5F3F8] font-sans selection:bg-[#9A6ADF]/20 selection:text-[#9A6ADF] transition-colors duration-200">
       <Navbar />
       <div className="flex-1 flex container mx-auto px-4 sm:px-6">
         <Sidebar type={sidebarType} />

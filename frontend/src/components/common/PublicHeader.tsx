@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import { Link, useNavigate, useLocation } from "react-router-dom"
 import { useAuth } from "@/hooks/useAuth"
-import { ThemeSelector } from "@/components/common/ThemeSelector"
+import { ThemeToggle } from "@/components/common/ThemeToggle"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Sparkles, Menu, X, ArrowRight, User as UserIcon } from "lucide-react"
@@ -145,7 +145,7 @@ export const PublicHeader: React.FC = () => {
 
         {/* Auth CTA Actions & Theme Toggle */}
         <div className="hidden sm:flex items-center gap-3">
-          <ThemeSelector showLabel={true} />
+          <ThemeToggle />
 
           {isAuthenticated && user ? (
             <div className="flex items-center gap-3">
@@ -192,7 +192,7 @@ export const PublicHeader: React.FC = () => {
 
         {/* Mobile Header Right: Theme Toggle & Hamburger */}
         <div className="flex sm:hidden items-center gap-1.5">
-          <ThemeSelector showLabel={true} />
+          <ThemeToggle />
           <Link to="/auth">
             <Button variant="ghost" size="sm" className="text-xs text-[#4B4652] dark:text-[#C7C3D4]">
               Sign In
@@ -232,7 +232,7 @@ export const PublicHeader: React.FC = () => {
           <div className="pt-3 border-t border-[#F4E7FF] dark:border-[#2D2447] flex flex-col gap-2">
             <div className="flex items-center justify-between px-2 py-1 bg-[#F4E7FF]/30 dark:bg-[#181524] rounded-xl border border-[#D8B8FF]/40 dark:border-[#2D2447]">
               <span className="text-xs font-medium text-[#4B4652] dark:text-[#C7C3D4]">Theme Appearance</span>
-              <ThemeSelector isMobileDrawer />
+              <ThemeToggle showLabel />
             </div>
 
             <Link to="/discover" onClick={() => setMobileMenuOpen(false)}>

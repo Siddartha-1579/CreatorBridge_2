@@ -1,7 +1,6 @@
-import React, { useState } from "react"
+import React from "react"
 import { Navigate, Outlet } from "react-router-dom"
 import { useAuth } from "@/hooks/useAuth"
-import { PolicyRenewalGate } from "@/components/policy/PolicyRenewalGate"
 import type { UserRole } from "@/types"
 
 interface ProtectedRouteProps {
@@ -14,7 +13,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   redirectTo = "/login",
 }) => {
   const { user, isAuthenticated, isLoading } = useAuth()
-  const [renewalCompleted, setRenewalCompleted] = useState(false)
 
   if (isLoading) {
     return (
@@ -28,16 +26,6 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     const isBrandPath = typeof window !== "undefined" && window.location.pathname.startsWith("/brand")
     const targetAuth = isBrandPath ? "/auth/brand?mode=login" : "/auth/creator?mode=login"
     return <Navigate to={redirectTo !== "/login" ? redirectTo : targetAuth} replace />
-  }
-
-  // Enforce mandatory policy renewal if user policy is outdated
-  if (user.policyAccepted === false && !renewalCompleted) {
-    return (
-      <PolicyRenewalGate
-        user={user}
-        onAccepted={() => setRenewalCompleted(true)}
-      />
-    )
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role) && user.role !== "ADMIN") {

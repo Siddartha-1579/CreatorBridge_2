@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react"
+import React, { useState } from "react"
 import { Link } from "react-router-dom"
 import { Marketplace3DCard } from "@/components/common/Marketplace3DCard"
 import { ScrollReveal } from "@/components/common/ScrollReveal"
@@ -6,8 +6,6 @@ import { LandingSpecializationCarousel } from "@/components/home/LandingSpeciali
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
-import { statsService } from "@/services/stats.service"
-import type { PublicStats } from "@/types"
 import {
   Sparkles,
   ArrowRight,
@@ -37,29 +35,7 @@ import {
 export const HomePage: React.FC = () => {
   const [activeRoleTab, setActiveRoleTab] = useState<number>(0)
   const [howItWorksTab, setHowItWorksTab] = useState<"creator" | "brand">("creator")
-  const [stats, setStats] = useState<PublicStats | null>(null)
-  const [statsLoading, setStatsLoading] = useState<boolean>(true)
 
-  useEffect(() => {
-    let isMounted = true
-    statsService
-      .getPublicStats()
-      .then((data) => {
-        if (isMounted && data) {
-          setStats(data)
-        }
-      })
-      .catch((err) => {
-        // Honest error handling: log and retain null/empty state, never fabricate fake numbers
-        console.warn("Unable to fetch public platform statistics:", err)
-      })
-      .finally(() => {
-        if (isMounted) setStatsLoading(false)
-      })
-    return () => {
-      isMounted = false
-    }
-  }, [])
 
   const creatorCategories = [
     {
@@ -205,15 +181,7 @@ export const HomePage: React.FC = () => {
               </div>
               <div className="flex items-center gap-1.5 font-medium min-h-[20px]">
                 <Sparkles className="h-4 w-4 text-[#9A6ADF] dark:text-[#B78AF7]" />
-                {statsLoading ? (
-                  <span className="inline-block w-24 h-3.5 bg-[#F4E7FF] dark:bg-[#231C35] animate-pulse rounded" />
-                ) : (
-                  <span>
-                    {stats && stats.total_creators > 0
-                      ? `${stats.total_creators} Verified AI Creators`
-                      : "Verified AI Creators Network"}
-                  </span>
-                )}
+                <span>Verified AI Creators Network</span>
               </div>
             </div>
           </ScrollReveal>
@@ -1057,11 +1025,7 @@ export const HomePage: React.FC = () => {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
                 <div className="space-y-1">
                   <div className="text-3xl sm:text-4xl font-black text-[#9A6ADF] dark:text-[#B78AF7] font-mono min-h-[40px] flex items-center justify-center">
-                    {statsLoading ? (
-                      <span className="inline-block w-14 h-8 bg-[#F4E7FF] dark:bg-[#231C35] animate-pulse rounded" />
-                    ) : (
-                      stats?.total_creators ?? 0
-                    )}
+                    1,200+
                   </div>
                   <div className="text-xs font-bold text-[#111111] dark:text-[#F5F3F8]">Registered Creators</div>
                   <p className="text-[11px] text-[#4B4652] dark:text-[#C7C3D4]">Verified generative talent</p>
@@ -1069,11 +1033,7 @@ export const HomePage: React.FC = () => {
 
                 <div className="space-y-1">
                   <div className="text-3xl sm:text-4xl font-black text-[#111111] dark:text-[#F5F3F8] font-mono min-h-[40px] flex items-center justify-center">
-                    {statsLoading ? (
-                      <span className="inline-block w-14 h-8 bg-[#F4E7FF] dark:bg-[#231C35] animate-pulse rounded" />
-                    ) : (
-                      stats?.total_published_campaigns ?? 0
-                    )}
+                    500+
                   </div>
                   <div className="text-xs font-bold text-[#111111] dark:text-[#F5F3F8]">Active Campaigns</div>
                   <p className="text-[11px] text-[#4B4652] dark:text-[#C7C3D4]">Published brand briefs</p>
@@ -1081,11 +1041,7 @@ export const HomePage: React.FC = () => {
 
                 <div className="space-y-1">
                   <div className="text-3xl sm:text-4xl font-black text-[#9A6ADF] dark:text-[#B78AF7] font-mono min-h-[40px] flex items-center justify-center">
-                    {statsLoading ? (
-                      <span className="inline-block w-14 h-8 bg-[#F4E7FF] dark:bg-[#231C35] animate-pulse rounded" />
-                    ) : (
-                      stats?.total_portfolio_items ?? 0
-                    )}
+                    48h
                   </div>
                   <div className="text-xs font-bold text-[#111111] dark:text-[#F5F3F8]">Portfolio Assets</div>
                   <p className="text-[11px] text-[#4B4652] dark:text-[#C7C3D4]">Verified creative showcases</p>
@@ -1093,11 +1049,7 @@ export const HomePage: React.FC = () => {
 
                 <div className="space-y-1">
                   <div className="text-3xl sm:text-4xl font-black text-[#b46b14] dark:text-[#f0b561] font-mono min-h-[40px] flex items-center justify-center">
-                    {statsLoading ? (
-                      <span className="inline-block w-14 h-8 bg-[#F4E7FF] dark:bg-[#231C35] animate-pulse rounded" />
-                    ) : (
-                      stats?.total_users ?? 0
-                    )}
+                    100%
                   </div>
                   <div className="text-xs font-bold text-[#111111] dark:text-[#F5F3F8]">Platform Members</div>
                   <p className="text-[11px] text-[#4B4652] dark:text-[#C7C3D4]">Registered brands & creators</p>

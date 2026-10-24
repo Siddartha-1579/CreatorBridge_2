@@ -10,7 +10,6 @@
     <script>
       (function() {
         try {
-          // Color mode (dark/light)
           var stored = localStorage.getItem('creatorbridge_theme');
           var isDark = stored === 'dark' || ((!stored || stored === 'system') && window.matchMedia('(prefers-color-scheme: dark)').matches);
           if (isDark) {
@@ -20,12 +19,6 @@
             document.documentElement.classList.remove('dark');
             document.documentElement.style.colorScheme = 'light';
           }
-
-          // 6-Theme Palette Customization
-          var validThemes = ['ruby-marble', 'crimson-pearl', 'scarlet-ivory', 'wine-silver', 'cherry-cream', 'scarlet-ruby-rose'];
-          var storedTheme = localStorage.getItem('creatorbridge_global_theme_id');
-          var themeId = validThemes.indexOf(storedTheme) !== -1 ? storedTheme : 'ruby-marble';
-          document.documentElement.setAttribute('data-theme', themeId);
         } catch (e) {}
       })();
     </script>
