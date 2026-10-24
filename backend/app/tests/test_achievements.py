@@ -322,6 +322,9 @@ def test_matching_preserves_original_match_fit():
         assert hasattr(first, "achievement_points")
         assert hasattr(first, "achievement_reputation_bonus")
         assert hasattr(first, "temporary_priority_bonus")
+        assert hasattr(first, "trust_score")
+        assert hasattr(first, "trust_status")
+        assert hasattr(first, "priority_placement")
 
         # Priority score is overall_match_score + bonuses (capped at 100.0)
         expected_p = round(min(100.0, first.overall_match_score + first.achievement_reputation_bonus + first.temporary_priority_bonus), 1)
