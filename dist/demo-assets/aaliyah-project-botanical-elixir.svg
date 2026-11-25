@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <linearGradient id="bgFlora" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#022C22"/>
+      <stop offset="50%" stop-color="#064E3B"/>
+      <stop offset="100%" stop-color="#021E17"/>
+    </linearGradient>
+    <linearGradient id="leafGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34D399"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bgFlora)"/>
+  <!-- Botanical Product Staging Scene -->
+  <g transform="translate(400, 280)">
+    <!-- Droplet Halo -->
+    <circle cx="0" cy="0" r="140" fill="#047857" opacity="0.4"/>
+    <!-- Organic Leaf Forms -->
+    <path d="M0 -140 C80 -80 80 80 0 140 C-80 80 -80 -80 0 -140 Z" fill="url(#leafGrad)" opacity="0.85"/>
+    <path d="M-100 0 C-40 -60 60 -60 100 0 C60 60 -40 60 -100 0 Z" fill="#6EE7B7" opacity="0.6"/>
+    <!-- Central Glass Dropper -->
+    <rect x="-20" y="-80" width="40" height="160" rx="10" fill="#ECFDF5" opacity="0.9"/>
+    <circle cx="0" cy="-90" r="14" fill="#10B981"/>
+  </g>
+  <!-- Metadata Banner -->
+  <rect x="40" y="500" width="720" height="60" rx="16" fill="#021E17" fill-opacity="0.9" stroke="#10B981" stroke-width="1"/>
+  <text x="60" y="535" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="800" fill="#FFFFFF">BOTANICAL ELIXIR 3D</text>
+  <text x="60" y="552" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" fill="#A7F3D0">ComfyUI • SDXL • ControlNet Depth • C4D Integration</text>
+  <text x="730" y="538" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#34D399" text-anchor="end">ECOMMERCE 3D</text>
+</svg>

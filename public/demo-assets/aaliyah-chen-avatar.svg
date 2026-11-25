@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+  <defs>
+    <linearGradient id="aaliyahGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="50%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#047857"/>
+    </linearGradient>
+    <linearGradient id="skinAaliyah" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FEF08A"/>
+      <stop offset="100%" stop-color="#FDE047"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="400" rx="200" fill="url(#aaliyahGrad)"/>
+  <!-- Stylized Head Silhouette -->
+  <circle cx="200" cy="165" r="68" fill="#FDE68A"/>
+  <!-- Sleek Hair with Bun -->
+  <path d="M135 170 C135 90 265 90 265 170 C265 200 240 180 200 180 C160 180 135 200 135 170 Z" fill="#064E3B"/>
+  <circle cx="200" cy="90" r="30" fill="#064E3B"/>
+  <!-- Minimalist Wireframe Glasses -->
+  <rect x="150" y="150" width="40" height="28" rx="8" fill="none" stroke="#FFFFFF" stroke-width="2.5"/>
+  <rect x="210" y="150" width="40" height="28" rx="8" fill="none" stroke="#FFFFFF" stroke-width="2.5"/>
+  <line x1="190" y1="164" x2="210" y2="164" stroke="#FFFFFF" stroke-width="2"/>
+  <!-- Shoulders / Minimalist Blazer -->
+  <path d="M100 370 C100 270 300 270 300 370 Z" fill="#065F46"/>
+  <!-- 3D Poly Glyph -->
+  <polygon points="200,285 220,298 220,322 200,335 180,322 180,298" fill="#6EE7B7" opacity="0.9"/>
+  <!-- Creator Verified Badge -->
+  <circle cx="290" cy="290" r="26" fill="#10B981" stroke="#FFFFFF" stroke-width="4"/>
+  <path d="M280 290 L287 297 L302 282" stroke="#FFFFFF" stroke-width="4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

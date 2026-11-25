@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description"
+    content="CreatorBridge — Where Brands Meet Creativity. Intelligent AI Creator Marketplace connecting brands with specialized generative talent." />
+  <meta name="theme-color" content="#F4F7F7" />
+  <title>CreatorBridge — Where Brands Meet Creativity</title>
+  <script>
+    (function () {
+      try {
+        var stored = localStorage.getItem('creatorbridge_theme') || 'deep-teal';
+        var isLight = stored === 'mist-light' || stored === 'light';
+        document.documentElement.setAttribute('data-theme', stored);
+        if (isLight) {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.style.colorScheme = 'light';
+        } else {
+          document.documentElement.classList.add('dark');
+          document.documentElement.style.colorScheme = 'dark';
+        }
+      } catch (e) { }
+    })();
+  </script>
+  <script type="module" crossorigin src="/assets/index-B5No5fUs.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BGiGr0dB.css">
+</head>
+
+<body>
+  <div id="root"></div>
+</body>
+
+</html>

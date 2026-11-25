@@ -1,0 +1,1007 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* ==========================================================================
+1. DEEP TEAL & MIST COLOR TOKENS (60-30-10)
+   ========================================================================== */
+:root {
+  color-scheme: light;
+  --bg-page: #F6F9F9;
+  --bg-surface: #FFFFFF;
+  --bg-subtle: #ECF3F3;
+  --border-subtle: #DCE8E8;
+  --accent-primary: #0F5C6E;
+  --accent-hover: #09414E;
+  --accent-soft: rgba(15, 92, 110, 0.08);
+  --accent-glow: rgba(15, 92, 110, 0.16);
+  --text-primary: #0F2329;
+  --text-muted: #587279;
+
+  /* Legacy Aliases */
+  --cb-white: var(--bg-surface);
+  --cb-off-white: var(--bg-page);
+  --cb-lavender-soft: var(--bg-subtle);
+  --cb-lavender: var(--border-subtle);
+  --cb-purple: var(--accent-primary);
+  --cb-purple-hover: var(--accent-hover);
+  --cb-peach: var(--border-subtle);
+  --cb-peach-soft: var(--bg-subtle);
+  --cb-text-primary: var(--text-primary);
+  --cb-text-secondary: var(--text-muted);
+  --cb-bg: var(--bg-page);
+  --cb-surface: var(--bg-surface);
+  --cb-border: var(--border-subtle);
+}
+
+.dark {
+  color-scheme: dark;
+  --bg-page: #070E12;
+  --bg-surface: #0E1B21;
+  --bg-subtle: #152730;
+  --border-subtle: #1E3742;
+  --accent-primary: #2DD4BF;
+  --accent-hover: #5EEAD4;
+  --accent-soft: rgba(45, 212, 191, 0.12);
+  --accent-glow: rgba(45, 212, 191, 0.28);
+  --text-primary: #F8FAFC;
+  --text-muted: #9DB4BF;
+
+  /* Legacy Aliases */
+  --cb-white: var(--bg-surface);
+  --cb-off-white: var(--bg-page);
+  --cb-lavender-soft: var(--bg-subtle);
+  --cb-lavender: var(--border-subtle);
+  --cb-purple: var(--accent-primary);
+  --cb-purple-hover: var(--accent-hover);
+  --cb-peach: var(--border-subtle);
+  --cb-peach-soft: var(--bg-subtle);
+  --cb-text-primary: var(--text-primary);
+  --cb-text-secondary: var(--text-muted);
+  --cb-bg: var(--bg-page);
+  --cb-surface: var(--bg-surface);
+  --cb-border: var(--border-subtle);
+}
+
+/* ==========================================================================
+   MULTI-THEME PALETTES (Triggered via data-theme on <html>)
+   ========================================================================== */
+[data-theme="obsidian-gold"] {
+  --bg-page: #09090B;
+  --bg-surface: #121216;
+  --bg-subtle: #1C1C22;
+  --border-subtle: #2B2B33;
+  --accent-primary: #D4AF37;
+  --accent-hover: #E5C158;
+  --accent-soft: rgba(212, 175, 55, 0.14);
+  --accent-glow: rgba(212, 175, 55, 0.28);
+  --text-primary: #FAFAFA;
+  --text-muted: #A1A1AA;
+}
+
+[data-theme="carbon-crimson"] {
+  --bg-page: #0A0A0C;
+  --bg-surface: #141418;
+  --bg-subtle: #1F1F26;
+  --border-subtle: #2E2E38;
+  --accent-primary: #F43F5E;
+  --accent-hover: #FB7185;
+  --accent-soft: rgba(244, 63, 94, 0.14);
+  --accent-glow: rgba(244, 63, 94, 0.30);
+  --text-primary: #F8FAFC;
+  --text-muted: #9CA3AF;
+}
+
+[data-theme="nordic-slate"] {
+  --bg-page: #0F172A;
+  --bg-surface: #1E293B;
+  --bg-subtle: #283548;
+  --border-subtle: #334155;
+  --accent-primary: #38BDF8;
+  --accent-hover: #7DD3FC;
+  --accent-soft: rgba(56, 189, 248, 0.14);
+  --accent-glow: rgba(56, 189, 248, 0.28);
+  --text-primary: #F1F5F9;
+  --text-muted: #94A3B8;
+}
+
+@theme inline {
+  --color-cb-white: var(--bg-surface);
+  --color-cb-off-white: var(--bg-page);
+  --color-cb-lavender-soft: var(--bg-subtle);
+  --color-cb-lavender: var(--border-subtle);
+  --color-cb-purple: var(--accent-primary);
+  --color-cb-purple-hover: var(--accent-hover);
+  --color-cb-peach: var(--border-subtle);
+  --color-cb-peach-soft: var(--bg-subtle);
+  --color-cb-text-primary: var(--text-primary);
+  --color-cb-text-secondary: var(--text-muted);
+}
+
+/* ==========================================================================
+2. UNIFIED ANIMATIONS & MICRO-INTERACTIONS
+   ========================================================================== */
+@keyframes cbFadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@layer base {
+  main>* {
+    animation: cbFadeSlideUp 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  main .grid>div {
+    min-width: 0;
+  }
+
+  main .grid>div p,
+  main .grid>div span,
+  main .grid>div div {
+    overflow-wrap: anywhere;
+  }
+
+  button,
+  a,
+  input,
+  select {
+    transition:
+      background-color 0.2s ease,
+      border-color 0.2s ease,
+      color 0.2s ease,
+      transform 0.18s cubic-bezier(0.22, 1, 0.36, 1),
+      box-shadow 0.2s ease;
+  }
+
+  button:not(:disabled):hover,
+  a[class*="rounded"]:hover {
+    transform: translateY(-1px);
+  }
+
+  button:not(:disabled):active,
+  a[class*="rounded"]:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  input:focus,
+  select:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+  }
+}
+
+/* ==========================================================================
+3. BASE LAYOUT & CARD ELEVATION
+   ========================================================================== */
+@layer base {
+
+  html,
+  body,
+  #root {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: var(--bg-page);
+    color: var(--text-primary);
+    min-height: 100vh;
+    transition: background-color 0.25s ease, color 0.25s ease;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  #root {
+    display: flex;
+    flex-direction: column;
+  }
+
+  #root>div,
+  main {
+    color: var(--text-primary);
+  }
+
+  header {
+    background-color: var(--bg-surface);
+    border-color: var(--border-subtle);
+  }
+}
+
+:root:not(.dark) main .rounded-2xl,
+:root:not(.dark) main .rounded-xl {
+  box-shadow: 0 2px 12px -4px rgba(15, 92, 110, 0.06), 0 1px 2px rgba(15, 35, 41, 0.03);
+}
+
+.cb-glow-card {
+  box-shadow: 0 4px 20px -4px rgba(15, 76, 92, 0.06);
+}
+
+.dark .cb-glow-card {
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6), inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+/* ==========================================================================
+4. HEADER NAVIGATION & BUTTON POLISH
+   ========================================================================== */
+header a[aria-current="page"],
+header a.active {
+  background-color: var(--accent-soft);
+  color: var(--accent-primary);
+  border-color: var(--accent-glow);
+  font-weight: 600;
+}
+
+main button,
+main a[class*="rounded"] {
+  white-space: nowrap;
+}
+
+/* ==========================================================================
+5. LIGHT MODE REMAP
+   ========================================================================== */
+:root:not(.dark) [class*="bg-[#FFFDFD]"],
+:root:not(.dark) .bg-cb-off-white {
+  background-color: var(--bg-page);
+}
+
+:root:not(.dark) [class*="bg-purple-50"],
+:root:not(.dark) [class*="bg-violet-50"],
+:root:not(.dark) [class*="bg-indigo-50"],
+:root:not(.dark) [class*="bg-[#F4E7FF]"],
+:root:not(.dark) .bg-cb-lavender-soft {
+  background-color: var(--bg-subtle);
+  border-color: var(--border-subtle);
+}
+
+:root:not(.dark) [class*="bg-purple-600"],
+:root:not(.dark) [class*="bg-violet-600"],
+:root:not(.dark) [class*="bg-indigo-600"],
+:root:not(.dark) [class*="from-purple-"],
+:root:not(.dark) [class*="from-violet-"],
+:root:not(.dark) [class*="bg-[#9A6ADF]"],
+:root:not(.dark) .bg-cb-purple {
+  background-image: none;
+  background-color: var(--accent-primary);
+  color: #FFFFFF;
+}
+
+:root:not(.dark) [class*="bg-purple-600"]:hover,
+:root:not(.dark) [class*="bg-violet-600"]:hover,
+:root:not(.dark) .bg-cb-purple:hover {
+  background-color: var(--accent-hover);
+  box-shadow: 0 6px 16px -4px var(--accent-glow);
+}
+
+:root:not(.dark) [class*="text-purple-"],
+:root:not(.dark) [class*="text-violet-"],
+:root:not(.dark) [class*="text-indigo-"],
+:root:not(.dark) .text-cb-purple {
+  color: var(--accent-primary);
+}
+
+:root:not(.dark) [class*="border-purple-"],
+:root:not(.dark) [class*="border-violet-"],
+:root:not(.dark) .border-gray-200,
+:root:not(.dark) .border-slate-200 {
+  border-color: var(--border-subtle);
+}
+
+/* ==========================================================================
+6. PREMIUM DARK MODE (Dynamic Across All Dark Themes)
+   ========================================================================== */
+.dark [class*="bg-[#FFFDFD]"],
+.dark [class*="bg-[#0F0D15]"],
+.dark .bg-cb-off-white {
+  background-color: var(--bg-page);
+}
+
+.dark main .rounded-2xl,
+.dark main .rounded-xl,
+.dark .bg-white,
+.dark [class*="bg-[#FFFFFF]"],
+.dark [class*="bg-[#181524]"] {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  box-shadow:
+    0 10px 30px -10px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+}
+
+.dark main .rounded-2xl .rounded-xl,
+.dark main .rounded-xl .rounded-xl,
+.dark button.bg-white,
+.dark a.bg-white,
+.dark [class*="bg-gray-50"],
+.dark [class*="bg-gray-100"],
+.dark [class*="bg-slate-50"],
+.dark [class*="bg-slate-100"],
+.dark [class*="bg-zinc-50"],
+.dark .bg-cb-lavender-soft {
+  background-color: var(--bg-subtle);
+  border-color: var(--accent-soft);
+}
+
+.dark [class*="bg-emerald-"],
+.dark [class*="bg-green-"],
+.dark [class*="bg-teal-50"] {
+  background-color: var(--accent-soft);
+  border: 1px solid var(--accent-glow);
+  color: var(--accent-hover);
+}
+
+.dark [class*="text-purple"],
+.dark [class*="text-violet"],
+.dark [class*="text-indigo"],
+.dark [class*="text-fuchsia"],
+.dark [class*="text-[#9A6ADF]"],
+.dark [class*="text-[#B78AF7]"],
+.dark [class*="text-[#A855F7]"] {
+  color: var(--accent-primary);
+}
+
+.dark [class*="bg-purple"],
+.dark [class*="bg-violet"],
+.dark [class*="bg-indigo"],
+.dark [class*="from-purple"],
+.dark [class*="from-violet"] {
+  background-image: none;
+  background-color: var(--accent-soft);
+  border-color: var(--accent-glow);
+  color: var(--accent-primary);
+}
+
+.dark button[class*="bg-purple-6"],
+.dark button[class*="bg-violet-6"],
+.dark button[class*="from-purple"],
+.dark button[class*="from-violet"],
+.dark .bg-cb-purple {
+  background-color: var(--accent-primary);
+  color: var(--bg-page);
+  font-weight: 600;
+  box-shadow: 0 6px 20px -4px var(--accent-glow);
+}
+
+.dark button[class*="bg-purple-6"]:hover,
+.dark button[class*="bg-violet-6"]:hover,
+.dark .bg-cb-purple:hover {
+  background-color: var(--accent-hover);
+}
+
+.dark h1,
+.dark h2,
+.dark h3 {
+  color: var(--text-primary);
+  letter-spacing: -0.015em;
+}
+
+.dark .text-black,
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark [class*="text-[#111111]"] {
+  color: var(--text-primary);
+}
+
+.dark .text-gray-700,
+.dark .text-gray-600,
+.dark .text-gray-500,
+.dark .text-slate-600,
+.dark .text-slate-500,
+.dark [class*="text-[#4B4652]"] {
+  color: var(--text-muted);
+}
+
+.dark [class*="border-purple-"],
+.dark [class*="border-violet-"],
+.dark [class*="border-indigo-"],
+.dark .border-gray-200,
+.dark .border-gray-300,
+.dark .border-slate-200 {
+  border-color: var(--border-subtle);
+}
+
+.dark button.bg-white:hover,
+.dark a.bg-white:hover {
+  background-color: var(--bg-subtle);
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+
+/* ==========================================================================
+7. SIDEBAR BOX LAYOUT & CRISP TEXT CONTRAST
+   ========================================================================== */
+aside {
+  background-color: var(--bg-surface);
+  border-right: 1px solid var(--border-subtle);
+}
+
+aside nav a:hover,
+aside nav button:hover,
+aside>div a:hover,
+aside>div button:hover {
+  transform: translateX(3px);
+}
+
+:root:not(.dark) aside a:not([aria-current="page"]),
+:root:not(.dark) aside button:not(.active) {
+  color: #1E293B;
+}
+
+:root:not(.dark) aside a:not([aria-current="page"]):hover,
+:root:not(.dark) aside button:not(.active):hover {
+  color: #0F5C6E;
+}
+
+/* ==========================================================================
+8. CLEAN STUDIO CANVAS (NO CORNER VIGNETTE)
+   ========================================================================== */
+:root:not(.dark) body::after {
+  content: none !important;
+}
+
+:root:not(.dark) header {
+  position: sticky;
+  z-index: 40;
+}
+
+/* ==========================================================================
+9. DYNAMIC THEME GRADIENT FOR HERO HEADLINE ("One Intelligent Bridge.")
+   ========================================================================== */
+h1 [class*="bg-clip-text"],
+h1 span[class*="from-"],
+h1 span[class*="bg-gradient"] {
+  background-image: linear-gradient(135deg,
+      var(--accent-primary) 0%,
+      var(--accent-hover) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ==========================================================================
+10. DYNAMIC THEME FOR HEADER BUTTONS & FLOATING AI CHATBOT ICON
+   ========================================================================== */
+header [class*="bg-[#9A6ADF]"],
+header [class*="bg-[#B78AF7]"],
+header [class*="bg-[#8B5CF6]"],
+header [class*="bg-[#7C3AED]"],
+header [class*="from-[#9A6ADF]"],
+header [class*="from-purple"],
+header [class*="from-violet"],
+header [class*="bg-purple"],
+header [class*="bg-violet"] {
+  background-image: none;
+  background-color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: #FFFFFF;
+}
+
+.dark header [class*="bg-[#9A6ADF]"],
+.dark header [class*="bg-[#B78AF7]"],
+.dark header [class*="bg-[#8B5CF6]"],
+.dark header [class*="bg-[#7C3AED]"],
+.dark header [class*="from-[#9A6ADF]"],
+.dark header [class*="from-purple"],
+.dark header [class*="from-violet"],
+.dark header [class*="bg-purple"],
+.dark header [class*="bg-violet"] {
+  color: var(--bg-page);
+  font-weight: 600;
+}
+
+button.fixed[class*="rounded-full"],
+div.fixed button[class*="rounded-full"],
+[class*="bg-[#9A6ADF]"][class*="rounded-full"],
+[class*="from-[#9A6ADF]"][class*="rounded-full"] {
+  background-image: none;
+  background-color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  box-shadow: 0 8px 24px -4px var(--accent-glow);
+}
+
+button.fixed[class*="rounded-full"] svg,
+div.fixed button[class*="rounded-full"] svg {
+  color: #FFFFFF;
+}
+
+.dark button.fixed[class*="rounded-full"] svg,
+.dark div.fixed button[class*="rounded-full"] svg {
+  color: var(--bg-page);
+}
+
+/* ==========================================================================
+11. REMOVE UNWANTED SQUARE BOXES & FOCUS OUTLINES ON THEME SWITCH
+   ========================================================================== */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+div.fixed:has(button[class*="rounded-full"]) {
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+header a:first-child,
+header a:has(img) {
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+/* ==========================================================================
+12. GLOBAL DYNAMIC THEME RECOLORING FOR LOGO (All Pages)
+   ========================================================================== */
+img[alt*="CreatorBridge" i],
+img[alt*="logo" i],
+img[src*="logo" i],
+header a:first-child img {
+  transition: filter 0.25s ease;
+}
+
+:root:not(.dark) img[alt*="CreatorBridge" i],
+:root:not(.dark) img[alt*="logo" i],
+:root:not(.dark) img[src*="logo" i],
+[data-theme="mist-light"] img[alt*="CreatorBridge" i],
+[data-theme="mist-light"] img[alt*="logo" i],
+[data-theme="mist-light"] img[src*="logo" i] {
+  filter: hue-rotate(-100deg) saturate(1.15) brightness(0.82);
+}
+
+.dark img[alt*="CreatorBridge" i],
+.dark img[alt*="logo" i],
+.dark img[src*="logo" i],
+[data-theme="deep-teal"] img[alt*="CreatorBridge" i],
+[data-theme="deep-teal"] img[alt*="logo" i],
+[data-theme="deep-teal"] img[src*="logo" i] {
+  filter: hue-rotate(-115deg) saturate(1.25) brightness(1.2);
+}
+
+[data-theme="obsidian-gold"] img[alt*="CreatorBridge" i],
+[data-theme="obsidian-gold"] img[alt*="logo" i],
+[data-theme="obsidian-gold"] img[src*="logo" i] {
+  filter: sepia(1) saturate(2.4) hue-rotate(8deg) brightness(1.1);
+}
+
+[data-theme="carbon-crimson"] img[alt*="CreatorBridge" i],
+[data-theme="carbon-crimson"] img[alt*="logo" i],
+[data-theme="carbon-crimson"] img[src*="logo" i] {
+  filter: hue-rotate(60deg) saturate(1.45) brightness(1.05);
+}
+
+[data-theme="nordic-slate"] img[alt*="CreatorBridge" i],
+[data-theme="nordic-slate"] img[alt*="logo" i],
+[data-theme="nordic-slate"] img[src*="logo" i] {
+  filter: hue-rotate(-85deg) saturate(1.25) brightness(1.2);
+}
+
+/* ==========================================================================
+13. 3D SHAKE, SHEEN & CREATOR BADGES FOR "One Intelligent Bridge."
+   ========================================================================== */
+@keyframes cbBridge3DShakeFloat {
+
+  0%,
+  100% {
+    transform: perspective(900px) rotateX(5deg) rotateY(-5deg) translate3d(0, 0, 14px);
+  }
+
+  20% {
+    transform: perspective(900px) rotateX(-4deg) rotateY(4deg) translate3d(0, -4px, 20px);
+  }
+
+  42% {
+    transform: perspective(900px) rotateX(7deg) rotateY(-8deg) translate3d(-4px, -2px, 24px);
+  }
+
+  45% {
+    transform: perspective(900px) rotateX(-6deg) rotateY(8deg) translate3d(4px, 1px, 24px);
+  }
+
+  48% {
+    transform: perspective(900px) rotateX(5deg) rotateY(-6deg) translate3d(-3px, 1px, 22px);
+  }
+
+  51% {
+    transform: perspective(900px) rotateX(-4deg) rotateY(5deg) translate3d(3px, -1px, 22px);
+  }
+
+  75% {
+    transform: perspective(900px) rotateX(-5deg) rotateY(6deg) translate3d(0, -3px, 18px);
+  }
+}
+
+@keyframes cbBridgeSheenSweep {
+  0% {
+    background-position: -120% 50%;
+  }
+
+  100% {
+    background-position: 220% 50%;
+  }
+}
+
+h1:has([class*="bg-clip-text"]),
+h1:has(span[class*="from-"]),
+h1:has(span[class*="bg-gradient"]) {
+  perspective: 900px;
+  transform-style: preserve-3d;
+}
+
+h1 [class*="bg-clip-text"],
+h1 span[class*="from-"],
+h1 span[class*="bg-gradient"] {
+  display: inline-block;
+  transform-origin: center center;
+  transform-style: preserve-3d;
+  background-image: linear-gradient(115deg,
+      var(--accent-primary) 0%,
+      var(--accent-hover) 45%,
+      #ffffff 50%,
+      var(--accent-hover) 55%,
+      var(--accent-primary) 100%);
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter:
+    drop-shadow(0 2px 0 var(--accent-soft)) drop-shadow(0 10px 18px var(--accent-glow));
+  animation:
+    cbBridge3DShakeFloat 5.2s ease-in-out infinite,
+    cbBridgeSheenSweep 4.2s ease-in-out infinite;
+}
+
+h1:has([class*="bg-clip-text"]):hover [class*="bg-clip-text"],
+h1:has(span[class*="from-"]):hover span[class*="from-"],
+h1:has(span[class*="bg-gradient"]):hover span[class*="bg-gradient"] {
+  transform: perspective(900px) rotateX(0deg) rotateY(0deg) translate3d(0, 0, 32px) scale(1.03);
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cb-creator-float-3d,
+.dark .cb-creator-float-3d,
+:root:not(.dark) .cb-creator-float-3d {
+  background-color: color-mix(in srgb, var(--bg-surface) 72%, transparent);
+  border-color: var(--accent-glow);
+  color: var(--text-primary);
+}
+
+/* 3D Dashboard Motion Primitives */
+.cb-3d-stage {
+  perspective: 1100px;
+}
+
+.cb-3d-card {
+  position: relative;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.cb-3d-sheen {
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 220ms ease;
+  background: radial-gradient(420px circle at var(--sheen-x, 50%) var(--sheen-y, 50%),
+      color-mix(in srgb, var(--accent-glow, rgba(139, 92, 246, 0.25)) 55%, transparent),
+      transparent 70%);
+}
+
+.cb-3d-card:hover .cb-3d-sheen {
+  opacity: 1;
+}
+
+.cb-3d-icon-badge {
+  display: inline-flex;
+  align-items: center;
+  transform-style: preserve-3d;
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.cb-3d-icon-badge:hover {
+  transform: perspective(600px) rotateY(12deg) translateZ(8px);
+}
+
+.cb-3d-action-btn {
+  transform-style: preserve-3d;
+  transition: transform 160ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 160ms ease;
+  will-change: transform;
+}
+
+.cb-3d-action-btn:hover {
+  transform: perspective(700px) translate3d(0, -1px, 6px);
+}
+
+.cb-3d-action-btn:active {
+  transform: perspective(700px) translate3d(0, 1px, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .cb-3d-card,
+  .cb-3d-sheen,
+  .cb-3d-icon-badge,
+  .cb-3d-action-btn {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+/* ==========================================================================
+14. BACKGROUND CUBES, SPHERES & WAVE MOTION + CLICK REACTIONS
+   ========================================================================== */
+@keyframes cbBgWaveDrift {
+  0% {
+    transform: translate3d(-3%, -1.5%, 0) skewY(-1.5deg) scale(1.04);
+  }
+
+  50% {
+    transform: translate3d(3%, 2%, 0) skewY(1.5deg) scale(1.08);
+  }
+
+  100% {
+    transform: translate3d(-2%, 1%, 0) skewY(-1deg) scale(1.04);
+  }
+}
+
+@keyframes cbSphereFloatA {
+
+  0%,
+  100% {
+    transform: translate3d(0px, 0px, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(26px, -28px, 0) scale(1.06);
+  }
+}
+
+@keyframes cbSphereFloatB {
+
+  0%,
+  100% {
+    transform: translate3d(0px, 0px, 0) scale(1);
+  }
+
+  50% {
+    transform: translate3d(-30px, 22px, 0) scale(0.95);
+  }
+}
+
+@keyframes cbCubeSpinDrift1 {
+  0% {
+    transform: translate3d(0px, 0px, 0) rotateX(22deg) rotateY(28deg) rotateZ(0deg);
+  }
+
+  50% {
+    transform: translate3d(22px, -24px, 0) rotateX(58deg) rotateY(145deg) rotateZ(24deg);
+  }
+
+  100% {
+    transform: translate3d(-12px, 14px, 0) rotateX(95deg) rotateY(265deg) rotateZ(45deg);
+  }
+}
+
+@keyframes cbCubeSpinDrift2 {
+  0% {
+    transform: translate3d(0px, 0px, 0) rotateX(-24deg) rotateY(-32deg) rotateZ(0deg);
+  }
+
+  50% {
+    transform: translate3d(-24px, -18px, 0) rotateX(-64deg) rotateY(120deg) rotateZ(-28deg);
+  }
+
+  100% {
+    transform: translate3d(14px, 18px, 0) rotateX(-102deg) rotateY(250deg) rotateZ(-50deg);
+  }
+}
+
+@keyframes cbSocialReactionFloat {
+  0% {
+    opacity: 0;
+    transform: translate3d(-50%, -20%, 0) scale(0.45) rotate(0deg);
+  }
+
+  18% {
+    opacity: 1;
+    transform: translate3d(calc(-50% + var(--drift-x, 0px) * 0.35), -65%, 0) scale(1.18) rotate(var(--tilt, 8deg));
+  }
+
+  65% {
+    opacity: 0.92;
+    transform: translate3d(calc(-50% + var(--drift-x, 0px) * 0.85), -135%, 0) scale(1.05) rotate(calc(var(--tilt, 8deg) * -0.6));
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate3d(calc(-50% + var(--drift-x, 0px)), -195%, 0) scale(0.85) rotate(var(--tilt, 8deg));
+  }
+}
+
+@layer components {
+  .cb-bg-motion-stage {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    overflow: hidden;
+    perspective: 1100px;
+  }
+
+  .cb-bg-wave-layer {
+    position: absolute;
+    inset: -18%;
+    background:
+      radial-gradient(ellipse 65% 36% at 24% 28%,
+        color-mix(in srgb, var(--accent-primary) 16%, transparent),
+        transparent 66%),
+      radial-gradient(ellipse 70% 38% at 78% 42%,
+        color-mix(in srgb, var(--accent-primary) 20%, transparent),
+        transparent 68%),
+      repeating-linear-gradient(-10deg,
+        transparent 0px,
+        transparent 52px,
+        color-mix(in srgb, var(--accent-primary) 10%, transparent) 53px,
+        transparent 56px);
+    filter: blur(10px);
+    will-change: transform;
+    animation: cbBgWaveDrift 14s ease-in-out infinite alternate;
+  }
+
+  .cb-bg-sphere {
+    position: absolute;
+    border-radius: 9999px;
+    pointer-events: none;
+    background: radial-gradient(circle at 30% 28%,
+        color-mix(in srgb, var(--accent-hover) 55%, #ffffff 25%),
+        color-mix(in srgb, var(--accent-primary) 26%, transparent) 62%,
+        color-mix(in srgb, var(--accent-primary) 8%, transparent) 100%);
+    border: 1px solid color-mix(in srgb, var(--accent-primary) 28%, transparent);
+    box-shadow:
+      inset -8px -10px 18px color-mix(in srgb, var(--accent-primary) 18%, transparent),
+      0 10px 28px color-mix(in srgb, var(--accent-primary) 14%, transparent);
+    will-change: transform;
+  }
+
+  .cb-bg-sphere--1 {
+    width: 86px;
+    height: 86px;
+    top: 16%;
+    right: 12%;
+    animation: cbSphereFloatA 12s ease-in-out infinite;
+  }
+
+  .cb-bg-sphere--2 {
+    width: 58px;
+    height: 58px;
+    bottom: 18%;
+    left: 24%;
+    animation: cbSphereFloatB 10s ease-in-out infinite;
+  }
+
+  .cb-bg-sphere--3 {
+    width: 42px;
+    height: 42px;
+    top: 56%;
+    right: 26%;
+    animation: cbSphereFloatA 9s ease-in-out infinite reverse;
+  }
+
+  .cb-bg-cube {
+    --cube-size: 56px;
+    position: relative;
+    width: var(--cube-size);
+    height: var(--cube-size);
+    transform-style: preserve-3d;
+    pointer-events: none;
+    will-change: transform;
+  }
+
+  .cb-cube-face {
+    position: absolute;
+    inset: 0;
+    border: 1px solid color-mix(in srgb, var(--accent-primary) 42%, transparent);
+    background: color-mix(in srgb, var(--accent-primary) 11%, transparent);
+    box-shadow: inset 0 0 12px color-mix(in srgb, var(--accent-primary) 16%, transparent);
+    backface-visibility: visible;
+  }
+
+  .cb-cube-front {
+    transform: translateZ(calc(var(--cube-size) / 2));
+  }
+
+  .cb-cube-back {
+    transform: rotateY(180deg) translateZ(calc(var(--cube-size) / 2));
+  }
+
+  .cb-cube-right {
+    transform: rotateY(90deg) translateZ(calc(var(--cube-size) / 2));
+  }
+
+  .cb-cube-left {
+    transform: rotateY(-90deg) translateZ(calc(var(--cube-size) / 2));
+  }
+
+  .cb-cube-top {
+    transform: rotateX(90deg) translateZ(calc(var(--cube-size) / 2));
+  }
+
+  .cb-cube-bottom {
+    transform: rotateX(-90deg) translateZ(calc(var(--cube-size) / 2));
+  }
+
+  .cb-bg-cube--1 {
+    --cube-size: 62px;
+    position: absolute;
+    top: 22%;
+    left: 26%;
+    animation: cbCubeSpinDrift1 16s linear infinite;
+  }
+
+  .cb-bg-cube--2 {
+    --cube-size: 48px;
+    position: absolute;
+    bottom: 20%;
+    right: 14%;
+    animation: cbCubeSpinDrift2 14s linear infinite;
+  }
+
+  .cb-bg-cube--3 {
+    --cube-size: 38px;
+    position: absolute;
+    top: 64%;
+    left: 54%;
+    animation: cbCubeSpinDrift1 12s linear infinite reverse;
+  }
+
+  .cb-social-reaction {
+    position: fixed;
+    font-size: 1.35rem;
+    line-height: 1;
+    user-select: none;
+    pointer-events: none;
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.22));
+    will-change: transform, opacity;
+    animation: cbSocialReactionFloat 0.92s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .cb-bg-motion-stage,
+  .cb-bg-wave-layer,
+  .cb-bg-sphere,
+  .cb-bg-cube,
+  .cb-social-reaction {
+    display: none !important;
+    animation: none !important;
+  }
+}
