@@ -33,11 +33,15 @@ def add_cors_headers(request: Request, response: JSONResponse) -> JSONResponse:
         or bool(ALLOWED_ORIGIN_REGEX.match(cleaned))
     )
     if is_allowed:
-        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Origin"] = cleaned
         response.headers["Access-Control-Allow-Credentials"] = "true"
         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD"
-        response.headers["Access-Control-Allow-Headers"] = "*"
-        response.headers["Vary"] = "Origin"
+        response.headers["Access-Control-Allow-Headers"] = (
+            "Content-Type, Authorization, Accept, Origin, X-Requested-With"
+        )
+        existing_vary = response.headers.get("Vary", "")
+        if "Origin" not in existing_vary:
+            response.headers["Vary"] = f"{existing_vary}, Origin".lstrip(", ") if existing_vary else "Origin"
     return response
 
 

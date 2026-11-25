@@ -168,3 +168,46 @@ def test_list_my_briefs_isolation(client: TestClient, lumina_token: str, terra_t
     terra_aliases = {"usr_terra_outdoor", "00000000-0000-0000-0000-000000000011"}
     for b in terra_briefs:
         assert b["brand_id"] in terra_aliases
+
+
+def test_vercel_entrypoint_cors_preflight_and_error_responses():
+    """Verifies Vercel api.index entrypoint handles production origin preflight and errors."""
+    from api.index import app as vercel_app
+
+    with TestClient(vercel_app, raise_server_exceptions=False) as vercel_client:
+        # 1. Exact production frontend origin preflight for POST with Authorization & Content-Type
+        preflight = vercel_client.options(
+            "/api/v1/auth/login",
+            headers={
+                "Origin": "https://creatorbridge2.vercel.app",
+                "Access-Control-Request-Method": "POST",
+                "Access-Control-Request-Headers": "content-type,authorization",
+            },
+        )
+        assert preflight.status_code == 200
+        assert preflight.headers.get("access-control-allow-origin") == "https://creatorbridge2.vercel.app"
+        assert preflight.headers.get("access-control-allow-credentials") == "true"
+        assert "POST" in preflight.headers.get("access-control-allow-methods", "")
+        allow_headers = preflight.headers.get("access-control-allow-headers", "").lower()
+        assert "content-type" in allow_headers
+        assert "authorization" in allow_headers
+
+        # 2. Actual POST validation error carries exact origin and non-wildcard allow-headers
+        err_res = vercel_client.post(
+            "/api/v1/auth/login",
+            json={},
+            headers={"Origin": "https://creatorbridge2.vercel.app"},
+        )
+        assert err_res.status_code == 422
+        assert err_res.headers.get("access-control-allow-origin") == "https://creatorbridge2.vercel.app"
+        assert err_res.headers.get("access-control-allow-headers") != "*"
+
+        # 3. Disallowed origin must not receive Access-Control-Allow-Origin
+        blocked = vercel_client.options(
+            "/api/v1/auth/login",
+            headers={
+                "Origin": "https://untrusted.example.com",
+                "Access-Control-Request-Method": "POST",
+            },
+        )
+        assert blocked.headers.get("access-control-allow-origin") is None
