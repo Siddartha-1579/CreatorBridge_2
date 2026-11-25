@@ -1,4 +1,4 @@
-# HacXLerate 2026 — Security Architecture & Hardening Guide
+# Hack WITH ADITYA 2026 — Security Architecture & Hardening Guide
 
 ## 1. Executive Security Architecture
 
