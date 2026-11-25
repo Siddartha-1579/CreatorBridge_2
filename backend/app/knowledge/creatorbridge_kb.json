@@ -1,0 +1,163 @@
+{
+  "platform": {
+    "name": "CreatorBridge",
+    "tagline": "The Premier AI Creator Marketplace",
+    "description": "CreatorBridge is a specialized commercial marketplace connecting brands and agencies with certified generative AI creators. It streamlines creator discovery, AI-assisted campaign brief generation, transparent 7-factor compatibility matching, portfolio showcases with high-definition video playback, and a mathematically explainable trust and reliability scoring system.",
+    "core_actors": [
+      "Creators: Generative AI artists, prompt directors, video animators, and technical designers who showcase portfolios, apply to commercial briefs, and complete creative deliverables.",
+      "Brands: Commercial companies, marketing managers, and creative agencies who create campaigns, generate AI briefs, discover verified creators, and commission AI content.",
+      "Judges / Platform Administrators: Evaluators who review platform health, trust cases, and verification audits."
+    ]
+  },
+  "modules": [
+    {
+      "id": "creator_onboarding",
+      "category": "creator",
+      "title": "Creator Onboarding & Diagnostic Assessment",
+      "keywords": ["onboarding", "creator assessment", "diagnostic", "skills test", "certification", "badge", "survey"],
+      "summary": "Creators undergo a comprehensive diagnostic assessment covering generative AI tools, prompt engineering, multi-modal workflows, and commercial delivery standards to earn certified badges.",
+      "details": [
+        "Diagnostic Survey: A structured multi-question assessment evaluating tool proficiency (Runway, Midjourney, Kling, ComfyUI, etc.), technical prompt control, and production timelines.",
+        "Adaptive Branching: Questions dynamically adjust based on the creator's declared primary medium (video animation, cinematic stills, 3D graphics, voiceover).",
+        "Verification Badges: Successful completion earns verified skill badges displayed on the public creator profile.",
+        "Local Fallback: In development and demo environments, the assessment engine uses a curated deterministic question bank (`question_bank.py`) ensuring zero downtime."
+      ]
+    },
+    {
+      "id": "creator_portfolios",
+      "category": "creator",
+      "title": "Creator Portfolios & Media Playback",
+      "keywords": ["portfolio", "video playback", "mp4", "media", "showcase", "projects", "carousel", "16:9"],
+      "summary": "Creators showcase high-definition generative video and image assets with native 16:9 responsive playback and tool metadata.",
+      "details": [
+        "Media Formats: Supports MP4 video reels and high-resolution PNG/WebP images.",
+        "Responsive 16:9 Player: Custom HTML5 video player with play/pause, volume control, time scrub, and automatic fallback posters.",
+        "Tool Attribution: Each portfolio piece displays the specific AI tools utilized (e.g., Runway Gen-3, Midjourney v6.1, Topaz Video AI, ElevenLabs).",
+        "Demo Showcase Assets: Pre-rendered commercial advertising campaigns (Skincare, Technical Outerwear, Haute Couture, Premium Matcha) are bundled locally for instant playback with zero latency."
+      ]
+    },
+    {
+      "id": "brand_brief_builder",
+      "category": "brand",
+      "title": "Brand Campaign Brief Builder & AI Assistance",
+      "keywords": ["brief", "campaign", "brief builder", "publish campaign", "budget", "deliverables", "milestones", "ai generate"],
+      "summary": "Brands create structured commercial briefs manually or with AI generation powered by OpenAI gpt-4o-mini or deterministic creative synthesis.",
+      "details": [
+        "AI Brief Synthesis: Converts a short concept into a structured brief containing title, description, target audience, format requirements, timeline, and deliverables.",
+        "Section Regeneration: Brands can selectively refine or regenerate specific sections (such as creative directions or key themes).",
+        "Validation Engine: Briefs must pass completeness checks (valid title, budget ceiling, clear deliverables) before being published to the creator marketplace.",
+        "Fallback Synthesis: When the OpenAI API key is unavailable, `deterministic_intelligence.py` provides high-fidelity creative templates so brands can always draft campaigns."
+      ]
+    },
+    {
+      "id": "creator_discovery_and_filters",
+      "category": "discovery",
+      "title": "Creator Discovery & Filtering Engine",
+      "keywords": ["discover", "search", "filters", "runway", "midjourney", "kling", "comfyui", "flux", "hourly rate", "availability", "tools"],
+      "summary": "Brands can search and filter the verified creator roster using tool filters, match compatibility percentages, hourly rates, and availability.",
+      "details": [
+        "AI Tool Filtering: Robust tool-matching engine (`toolMatching.ts`) normalizes tool names, version numbers, and synonym clusters (e.g. 'Kling' matches 'Kling AI', 'SDXL' matches 'Stable Diffusion', 'Runway' matches 'Runway Gen-3 Alpha').",
+        "Match Compatibility Filter: Filter creators by minimum match percentage (e.g., >= 75%, >= 85%). Missing or uncomputed scores never falsely pass positive thresholds.",
+        "Hourly Rate Filter: Refine creators by hourly rate ceilings (e.g., <= $140/hr).",
+        "Availability Filter: View creators marked 'Available Now' for immediate campaign assignment."
+      ]
+    },
+    {
+      "id": "matching_engine",
+      "category": "matching",
+      "title": "7-Factor Compatibility Matching Engine",
+      "keywords": ["matching", "compatibility", "7-factor", "weights", "dimensions", "algorithm", "score", "percentage"],
+      "summary": "CreatorBridge matches creators with campaign briefs using an explainable 7-dimension weighted algorithm.",
+      "details": [
+        "1. Skills & Portfolio Match (30% weight): Tool proficiency and relevance of portfolio examples to the brief's deliverables.",
+        "2. Niche & Category Relevance (20% weight): Alignment with the brand's industry (e.g. Beauty & Skincare, Technical Gear, Fashion, Beverage).",
+        "3. Format & Platform Expertise (15% weight): Track record in target aspect ratios (9:16 vertical, 16:9 cinematic) and channels (TikTok, YouTube, Digital OOH).",
+        "4. Target Audience Alignment (10% weight): Demographic and stylistic resonance with the campaign's target market.",
+        "5. Budget Compatibility (10% weight): Match between creator's hourly/project rates and the campaign reward pool.",
+        "6. Timeline & Availability (10% weight): Availability window matching the brand's milestone deadlines.",
+        "7. Brand/Creator Values & Preferences (5% weight): Shared creative ethos and non-discriminatory preferences."
+      ]
+    },
+    {
+      "id": "trust_and_reliability",
+      "category": "trust",
+      "title": "Transparent Trust, Reliability & Demerit System",
+      "keywords": ["trust", "trust score", "demerit", "verification", "badges", "disputes", "reporting", "penalties"],
+      "summary": "CreatorBridge maintains platform honesty with a mathematically explainable trust score starting at 100 points.",
+      "details": [
+        "Base Trust Score: Every account starts with a baseline score of 100 ('New - insufficient history' until confirmed milestone completion).",
+        "Incident Severities & Base Penalties: Minor (5 pts), Moderate (15 pts), Major (30 pts), Critical (50 pts).",
+        "Recurrence Multipliers: 1.0x (1st occurrence), 1.25x (2nd occurrence), 1.5x (3rd+ occurrence), capped at 50 points per single incident.",
+        "Score Recovery: Accounts recover +5 points per 90 consecutive days without confirmed violations (maximum +15 points per rolling year).",
+        "Non-Discriminatory Safeguards: The engine explicitly rejects demerits or complaints based on race, religion, gender, politics, or the legitimate use of AI.",
+        "Dispute & Case Workflow: Reports follow an audited lifecycle: Submitted -> Awaiting Evidence -> Under Review -> Confirmed or Dismissed -> Appealed / Overturned."
+      ]
+    },
+    {
+      "id": "ai_studios_and_demo_mode",
+      "category": "infrastructure",
+      "title": "AI Generation Studios & Zero-Cost Demo Architecture",
+      "keywords": ["ai studio", "demo mode", "video generation", "image studio", "voiceover", "runway key", "cost", "free"],
+      "summary": "The platform provides AI Generation Studios for images, video, and audio, configured by default in a zero-cost demo mode.",
+      "details": [
+        "Zero-Cost Demo Mode: `VIDEO_GENERATION_MODE=demo` is active by default. Video generation dispatches instantly deliver high-definition MP4 clips without billable third-party API charges.",
+        "Supported AI Studios: Image Studio (OpenAI DALL-E 3), Video Studio (Runway Gen-3 Alpha Turbo adapter / Demo mode), Voice Studio (OpenAI TTS-1 / ElevenLabs adapter).",
+        "Resilient Fallbacks: When external provider keys are absent, creative studios and brief synthesis automatically execute local simulation engines without unhandled exceptions."
+      ]
+    },
+    {
+      "id": "platform_navigation_and_auth",
+      "category": "navigation",
+      "title": "Platform Navigation & Role-Based Authentication",
+      "keywords": ["navigation", "login", "register", "auth", "creator portal", "brand portal", "turnstile", "password", "switch roles"],
+      "summary": "CreatorBridge separates Brand and Creator experiences with strict role routing and anti-bot verification.",
+      "details": [
+        "Portal Separation: Creators log in at `/auth/creator` and access `/creator/*`; Brands log in at `/auth/brand` and access `/brand/*`. Attempting to access the wrong portal redirects to the appropriate login page.",
+        "Human Verification: Cloudflare Turnstile bot protection is integrated on registration and login. For development and judge demos, Cloudflare official test keys (`1x00000000000000000000AA`) ensure 100% verification success.",
+        "Session Persistence: Dual-persistence stores profiles locally in SQLite (`backend/data/creatorbridge.db`) with JWT token serialization."
+      ]
+    },
+    {
+      "id": "limitations_and_future_roadmap",
+      "category": "limitations",
+      "title": "Known Limitations & Demo Architecture",
+      "keywords": ["limitations", "stripe", "payments", "resend", "email", "future", "roadmap", "mock"],
+      "summary": "Honest overview of features that are currently simulated or in demo mode for hackathon evaluation.",
+      "details": [
+        "Simulated Payments & Escrow: Milestone budget escrow and creator reward disbursements are simulated via internal state machine transitions (Stripe is not currently connected to live banking).",
+        "In-App Notifications: Email notifications via Resend are an optional placeholder; all current alerts, badge issuances, and milestone updates appear in-app.",
+        "Read-Only Support Assistant: This support chatbot answers platform questions and troubleshooting queries only. It does not execute actions, modify user records, or answer off-topic queries."
+      ]
+    }
+  ],
+  "faqs": [
+    {
+      "question": "How do I create a creator portfolio on CreatorBridge?",
+      "answer": "Sign in to the Creator Portal at `/auth/creator`, navigate to 'Portfolio' in your sidebar, and click 'Add Portfolio Item'. You can upload MP4 video clips or high-resolution images, tag the AI tools you used (e.g. Runway, Midjourney, Kling), select your niche, and publish it to your public showcase."
+    },
+    {
+      "question": "How does a brand publish a campaign brief?",
+      "answer": "Sign in to the Brand Portal at `/auth/brand`, navigate to 'Briefs', and click 'Create Brief'. You can enter your campaign requirements manually or click 'Generate with AI' to let our brief builder auto-structure the deliverables, target audience, format requirements, and timeline."
+    },
+    {
+      "question": "How does creator matching work?",
+      "answer": "CreatorBridge uses an explainable 7-factor weighted algorithm: Skills & Portfolio Match (30%), Niche Relevance (20%), Format & Platform Expertise (15%), Target Audience Alignment (10%), Budget Compatibility (10%), Timeline & Availability (10%), and Brand/Creator Values (5%)."
+    },
+    {
+      "question": "What AI tools can creators tag in their profiles?",
+      "answer": "Creators can tag all major commercial generative AI tools, including Kling AI, Midjourney, Runway (Gen-3 Alpha), FLUX, Stable Diffusion (SDXL), ComfyUI, Topaz Video AI, Blender, Magnific AI, ElevenLabs, Adobe Photoshop / Firefly, Luma Dream Machine, Suno AI, ControlNet, and Unreal Engine 5."
+    },
+    {
+      "question": "Why does video generation complete so quickly in the demo?",
+      "answer": "The platform is currently operating in `VIDEO_GENERATION_MODE=demo`. In this mode, generation jobs deliver pre-rendered commercial showcase assets with zero latency and zero billable API costs for smooth hackathon demonstration."
+    },
+    {
+      "question": "How do trust scores work and can they be recovered?",
+      "answer": "Trust scores start at 100 points. Demerits range from Minor (5 pts) to Critical (50 pts) with recurrence multipliers. Accounts recover +5 points for every 90 consecutive days without confirmed violations (up to +15 pts per year). Complaints targeting race, religion, gender, or the legitimate use of AI are strictly prohibited."
+    },
+    {
+      "question": "Can this chatbot write code, do homework, or answer general trivia?",
+      "answer": "No. I am specifically restricted to answering questions about CreatorBridge's platform features, workflows, creator portfolios, brand campaigns, matching algorithms, and troubleshooting. For general coding or trivia, please use general-purpose tools."
+    }
+  ]
+}

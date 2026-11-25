@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <linearGradient id="bgFlux" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="50%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#020617"/>
+    </linearGradient>
+    <linearGradient id="fluxRing" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="50%" stop-color="#EF4444"/>
+      <stop offset="100%" stop-color="#8B5CF6"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="600" fill="url(#bgFlux)"/>
+  <!-- Temporal Loop Tunnel Graphic -->
+  <g transform="translate(400, 270)">
+    <ellipse cx="0" cy="0" rx="220" ry="120" stroke="url(#fluxRing)" stroke-width="4" fill="none"/>
+    <ellipse cx="0" cy="0" rx="160" ry="85" stroke="#F59E0B" stroke-width="2.5" fill="none" opacity="0.8"/>
+    <ellipse cx="0" cy="0" rx="100" ry="55" stroke="#EF4444" stroke-width="2" fill="none" opacity="0.6"/>
+    <ellipse cx="0" cy="0" rx="50" ry="25" fill="#FFFFFF" opacity="0.9"/>
+  </g>
+  <!-- Metadata Banner -->
+  <rect x="40" y="500" width="720" height="60" rx="16" fill="#0B132B" fill-opacity="0.9" stroke="#EF4444" stroke-width="1"/>
+  <text x="60" y="535" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="800" fill="#FFFFFF">TEMPORAL FLUX REEL</text>
+  <text x="60" y="552" font-family="system-ui, -apple-system, sans-serif" font-size="11" font-weight="600" fill="#FCA5A5">Kling AI 1.5 • Luma Dream Machine • Social Hook 9:16</text>
+  <text x="730" y="538" font-family="system-ui, -apple-system, sans-serif" font-size="13" font-weight="700" fill="#F59E0B" text-anchor="end">VIRAL REEL</text>
+</svg>

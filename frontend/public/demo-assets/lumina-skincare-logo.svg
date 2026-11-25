@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <linearGradient id="luminaBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FDF4ED"/>
+      <stop offset="100%" stop-color="#F3DEC8"/>
+    </linearGradient>
+    <linearGradient id="luminaGold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D4AF37"/>
+      <stop offset="100%" stop-color="#AA7C11"/>
+    </linearGradient>
+  </defs>
+  <rect width="300" height="300" rx="40" fill="url(#luminaBg)"/>
+  <!-- Elegant Sun/Radiance Mark -->
+  <circle cx="150" cy="120" r="45" fill="none" stroke="url(#luminaGold)" stroke-width="3"/>
+  <circle cx="150" cy="120" r="25" fill="#AA7C11" opacity="0.15"/>
+  <circle cx="150" cy="120" r="8" fill="url(#luminaGold)"/>
+  <line x1="150" y1="60" x2="150" y2="70" stroke="url(#luminaGold)" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="150" y1="170" x2="150" y2="180" stroke="url(#luminaGold)" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="90" y1="120" x2="100" y2="120" stroke="url(#luminaGold)" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="200" y1="120" x2="210" y2="120" stroke="url(#luminaGold)" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Typography -->
+  <text x="150" y="220" font-family="system-ui, -apple-system, sans-serif" font-size="20" font-weight="800" fill="#221108" text-anchor="middle" letter-spacing="4">LUMINA</text>
+  <text x="150" y="242" font-family="system-ui, -apple-system, sans-serif" font-size="9" font-weight="600" fill="#AA7C11" text-anchor="middle" letter-spacing="2">SKINCARE</text>
+</svg>

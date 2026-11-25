@@ -1,0 +1,24 @@
+﻿# Local secrets
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+dist/
+frontend/dist/
+
+# Local databases and generated data
+backend/data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Python cache and virtual environments
+__pycache__/
+*.py[cod]
+.venv/
+venv/
