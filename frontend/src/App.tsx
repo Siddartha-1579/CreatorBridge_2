@@ -56,7 +56,6 @@ import { IntegrationsSettingsPage } from "@/pages/settings/IntegrationsSettingsP
 
 // Support Chatbot & Global Click Effects
 import { ChatbotWidget } from "@/components/chatbot/ChatbotWidget"
-import { ClickBurstOverlay } from "@/components/common/ClickBurstOverlay"
 
 interface ErrorBoundaryState {
   hasError: boolean
@@ -214,7 +213,6 @@ export const App: React.FC = () => {
                 {/* Fallback Catch-All */}
                 <Route path="*" element={<Navigate to="/404" replace />} />
               </Routes>
-              <ClickBurstOverlay />
               <ChatbotWidget />
             </BrowserRouter>
           </AuthProvider>
